@@ -107,7 +107,7 @@
   </section>
 </div>
 
-<div id="view"><div id="hud">ドラッグで回転、ホイールで拡大、右ドラッグで移動</div></div>
+<div id="view"><div id="hud">読み込み中…（three.js を取得しています）</div><div id="err" style="display:none;position:absolute;left:10px;bottom:10px;right:10px;background:#3a0a0a;border:1px solid #7a1212;border-radius:6px;padding:8px 10px;font-size:12px"></div></div>
 
 <div id="right">
   <h3>バックエンドへ渡す／返る JSON</h3>
@@ -120,10 +120,40 @@
 </div>
 
 <script id="site" type="application/json">/*__SITE_JSON__*/</script>
-<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script>
+  // module が動く前、または three.js の読み込みに失敗したときのための仮の関数とエラー表示
+  window.__ready = false;
+  const __notReady = () => { const e=document.getElementById('err'); e.style.display='block'; e.textContent='まだ読み込み中です。数秒待ってからもう一度押してください。読み込みが終わらない場合はネット接続（three.js を CDN から取得）を確認してください。'; };
+  window.go = window.preset = window.approve = __notReady;
+  window.__fail = msg => { const e=document.getElementById('err'); e.style.display='block'; e.textContent=msg; document.getElementById('hud').textContent='読み込み失敗'; };
+  window.addEventListener('error', ev => { if (!window.__ready) window.__fail('読み込み中にエラー: ' + (ev.message||ev.type)); });
+  window.addEventListener('unhandledrejection', ev => { if (!window.__ready) window.__fail('読み込み中にエラー: ' + (ev.reason && ev.reason.message || ev.reason)); });
+</script>
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// three.js は CDN を順に試す（社内プロキシ等で一つが落ちても動くように）
+const CDNS = [
+  'https://unpkg.com/three@0.160.0/build/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js',
+];
+let THREE = null, lastErr = null;
+for (const u of CDNS) { try { THREE = await import(u); break; } catch (e) { lastErr = e; } }
+if (!THREE) { window.__fail('three.js を読み込めませんでした。ネット接続か、CDN（unpkg / jsdelivr / cdnjs）へのアクセスを確認してください。' + (lastErr ? '（' + lastErr.message + '）' : '')); throw lastErr || new Error('three.js load failed'); }
+
+// 小さな軌道カメラ操作（左ドラッグ回転、ホイール拡大、右ドラッグ移動）。OrbitControls の代わり
+class MiniOrbit {
+  constructor(camera, dom){ this.camera=camera; this.dom=dom; this.target=new THREE.Vector3(); this.theta=0.8; this.phi=1.0; this.radius=150; this.drag=null;
+    dom.addEventListener('contextmenu', e=>e.preventDefault());
+    dom.addEventListener('pointerdown', e=>{ this.drag={b:e.button,x:e.clientX,y:e.clientY}; dom.setPointerCapture(e.pointerId); });
+    dom.addEventListener('pointerup', ()=>this.drag=null);
+    dom.addEventListener('pointermove', e=>{ if(!this.drag) return; const dx=e.clientX-this.drag.x, dy=e.clientY-this.drag.y; this.drag.x=e.clientX; this.drag.y=e.clientY;
+      if (this.drag.b===0){ this.theta-=dx*0.005; this.phi=Math.min(Math.max(this.phi-dy*0.005,0.05),Math.PI/2-0.02); }
+      else { const right=new THREE.Vector3(), up=new THREE.Vector3(0,0,1); this.camera.getWorldDirection(right); right.cross(up).normalize(); const fwd=up.clone().cross(right).normalize();
+        this.target.addScaledVector(right,-dx*this.radius*0.0015); this.target.addScaledVector(fwd,dy*this.radius*0.0015); } });
+    dom.addEventListener('wheel', e=>{ e.preventDefault(); this.radius=Math.min(Math.max(this.radius*(1+Math.sign(e.deltaY)*0.1),10),800); }, {passive:false});
+  }
+  update(){ const c=this.camera; c.position.set(this.target.x+this.radius*Math.cos(this.phi)*Math.cos(this.theta), this.target.y+this.radius*Math.cos(this.phi)*Math.sin(this.theta), this.target.z+this.radius*Math.sin(this.phi)); c.up.set(0,0,1); c.lookAt(this.target); }
+}
 
 // ------------------------------------------------------------ データ
 const SITE = JSON.parse(document.getElementById('site').textContent);
@@ -218,7 +248,7 @@ const view=document.getElementById('view');
 const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio); view.appendChild(renderer.domElement);
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x111418);
 const camera=new THREE.PerspectiveCamera(50,1,0.1,2000); camera.position.set(70,-120,80); camera.up.set(0,0,1);
-const controls=new OrbitControls(camera,renderer.domElement); controls.target.set(30,-50,5);
+const controls=new MiniOrbit(camera,renderer.domElement); controls.target.set(30,-50,5); controls.theta=-1.2; controls.phi=0.6; controls.radius=160;
 scene.add(new THREE.GridHelper(260,26,0x2c343d,0x1f262e).rotateX(Math.PI/2));
 const COL={live:0xff4d4d,dead_grounded:0x39d353,dead_ungrounded:0xf5c518,FAULT:0xff3cf0,gw:0x8b949e};
 const condLines={}; // conductor id -> Line
@@ -356,6 +386,7 @@ ${last.faults.length?'計画の誤り：'+last.faults.join('、')+'\n':''}この
 window.approve=async()=>{ const txt=$('jPlan').textContent; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt)); approval={hash:'sha256:'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16)+'…', by:'APPROVER-01', at:'T+0'}; $('approvedAt').textContent=`承認済み ${approval.hash}`; renderPlan(); };
 
 preset('cb3');
+window.__ready = true; document.getElementById('hud').textContent='ドラッグで回転、ホイールで拡大、右ドラッグで移動'; document.getElementById('err').style.display='none';
 </script>
 </body>
 </html>
