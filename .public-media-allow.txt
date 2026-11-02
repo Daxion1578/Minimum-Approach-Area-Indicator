@@ -1,0 +1,4 @@
+# 公開してよい画像・PDF（合成データから生成したもの）。1行1パス。出所は docs/decisions.md に書く。
+proto/data/drawings/SITE-01_plan.pdf
+proto/data/drawings/SITE-01_section.pdf
+proto/data/drawings/SITE-01_sld.pdf
