@@ -89,7 +89,7 @@
     <div class="row"><label>据付 X（東西）<span id="bxv"></span></label><input type="range" id="bx" min="-20" max="70" step="0.5" value="26"></div>
     <div class="row"><label>据付 Y（南北）<span id="byv"></span></label><input type="range" id="by" min="-60" max="20" step="0.5" value="-27"></div>
     <div class="row"><label>ブーム起伏角 <span id="bav"></span>°</label><input type="range" id="ba" min="20" max="85" step="1" value="60"></div>
-    <div class="row"><label>旋回範囲 <span id="slv"></span></label><input type="range" id="s0" min="0" max="360" step="5" value="150"><input type="range" id="s1" min="0" max="360" step="5" value="210"></div>
+    <div class="row"><label>旋回範囲 <span id="slv"></span></label><input type="range" id="sl0" min="0" max="360" step="5" value="150"><input type="range" id="sl1" min="0" max="360" step="5" value="210"></div>
     <div class="row"><label>離隔の基準 <span class="note">（仮。出典付きの値はまだ）</span></label><input type="number" id="clr" value="3.0" step="0.1" style="width:70px"> m</div>
     <div id="verdict" class="verdict"></div>
     <table id="distTable"></table>
@@ -107,7 +107,7 @@
   </section>
 </div>
 
-<div id="view"><div id="hud">読み込み中…（three.js を取得しています）</div><div id="err" style="display:none;position:absolute;left:10px;bottom:10px;right:10px;background:#3a0a0a;border:1px solid #7a1212;border-radius:6px;padding:8px 10px;font-size:12px"></div></div>
+<div id="view"><div id="hud">読み込み中…</div><div id="err" style="display:none;position:absolute;left:10px;bottom:10px;right:10px;background:#3a0a0a;border:1px solid #7a1212;border-radius:6px;padding:8px 10px;font-size:12px"></div></div>
 
 <div id="right">
   <h3>バックエンドへ渡す／返る JSON</h3>
@@ -120,10 +120,11 @@
 </div>
 
 <script id="site" type="application/json">/*__SITE_JSON__*/</script>
+<script id="three-src" type="text/plain">/*__THREE_SRC__*/</script>
 <script>
   // module が動く前、または three.js の読み込みに失敗したときのための仮の関数とエラー表示
   window.__ready = false;
-  const __notReady = () => { const e=document.getElementById('err'); e.style.display='block'; e.textContent='まだ読み込み中です。数秒待ってからもう一度押してください。読み込みが終わらない場合はネット接続（three.js を CDN から取得）を確認してください。'; };
+  const __notReady = () => { const e=document.getElementById('err'); e.style.display='block'; e.textContent='まだ読み込み中です。数秒待ってからもう一度押してください。'; };
   window.go = window.preset = window.approve = __notReady;
   window.__fail = msg => { const e=document.getElementById('err'); e.style.display='block'; e.textContent=msg; document.getElementById('hud').textContent='読み込み失敗'; };
   window.addEventListener('error', ev => { if (!window.__ready) window.__fail('読み込み中にエラー: ' + (ev.message||ev.type)); });
@@ -132,13 +133,20 @@
 <script type="module">
 // three.js は CDN を順に試す（社内プロキシ等で一つが落ちても動くように）
 const CDNS = [
+  './vendor/three/three.module.js',   // 同梱（web/vendor/）。file:// で開いても同じフォルダから読める
   'https://unpkg.com/three@0.160.0/build/three.module.js',
   'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js',
 ];
 let THREE = null, lastErr = null;
-for (const u of CDNS) { try { THREE = await import(u); break; } catch (e) { lastErr = e; } }
-if (!THREE) { window.__fail('three.js を読み込めませんでした。ネット接続か、CDN（unpkg / jsdelivr / cdnjs）へのアクセスを確認してください。' + (lastErr ? '（' + lastErr.message + '）' : '')); throw lastErr || new Error('three.js load failed'); }
+// 1) 埋め込み（file:// でも動く。ローカルファイルの import はブラウザが拒否するので Blob URL にして読む）
+const emb = document.getElementById('three-src');
+if (emb && emb.textContent.length > 1000) {
+  try { const src = emb.textContent.replace(/<\\\//g, '</'); THREE = await import(URL.createObjectURL(new Blob([src], {type:'text/javascript'}))); } catch (e) { lastErr = e; }
+}
+// 2) 同梱ファイル／CDN（http で配信しているとき用）
+if (!THREE) for (const u of CDNS) { try { THREE = await import(u); break; } catch (e) { lastErr = e; } }
+if (!THREE) { window.__fail('three.js を読み込めませんでした。web/vendor/three/three.module.js が prototype.html と同じ階層にあるか確認してください。' + (lastErr ? '（' + lastErr.message + '）' : '')); throw lastErr || new Error('three.js load failed'); }
 
 // 小さな軌道カメラ操作（左ドラッグ回転、ホイール拡大、右ドラッグ移動）。OrbitControls の代わり
 class MiniOrbit {
@@ -304,7 +312,7 @@ window.preset=name=>{
 
 // ③ 重機
 CRANES.forEach((c,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=c.name; $('crane').appendChild(o); });
-['crane','bx','by','ba','s0','s1','clr'].forEach(id=>$(id).oninput=update);
+['crane','bx','by','ba','sl0','sl1','clr'].forEach(id=>$(id).oninput=update);
 
 // ------------------------------------------------------------ 更新
 let last={};
@@ -318,7 +326,7 @@ function update(){
   $('energSummary').innerHTML=`充電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0} ／ 誤り ${cnt.FAULT||0}` + (faults.length?`<div class="warn">充電部に接地が付いています（逆送の見落としなど）: ${faults.join(', ')}</div>`:'');
 
   // 重機
-  const m=CRANES[+$('crane').value]; const base=[+$('bx').value,+$('by').value,0]; const ang=+$('ba').value, s0=+$('s0').value, s1=+$('s1').value, clr=+$('clr').value;
+  const m=CRANES[+$('crane').value]; const base=[+$('bx').value,+$('by').value,0]; const ang=+$('ba').value, s0=+$('sl0').value, s1=+$('sl1').value, clr=+$('clr').value;
   $('bxv').textContent=base[0]+' m'; $('byv').textContent=base[1]+' m'; $('bav').textContent=ang; $('slv').textContent=`${s0}°〜${s1}°`;
   const inter=interference(SITE,ns,m,base,ang,s0,s1,clr);
   // 3D 重機
@@ -383,7 +391,10 @@ function renderPlan(){
 判定：${last.v}
 ${last.faults.length?'計画の誤り：'+last.faults.join('、')+'\n':''}この検討は机上の補助であり、現場の検電・接地・停電確認の代わりにはならない。`;
 }
-window.approve=async()=>{ const txt=$('jPlan').textContent; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt)); approval={hash:'sha256:'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16)+'…', by:'APPROVER-01', at:'T+0'}; $('approvedAt').textContent=`承認済み ${approval.hash}`; renderPlan(); };
+window.approve=async()=>{ const txt=$('jPlan').textContent; let h;
+  try { const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt)); h='sha256:'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16)+'…'; }
+  catch(e){ let x=0x811c9dc5; for (const ch of txt){ x^=ch.charCodeAt(0); x=Math.imul(x,0x01000193)>>>0; } h='fnv1a:'+x.toString(16).padStart(8,'0')+'（試作用の簡易ハッシュ）'; }
+  approval={hash:h, by:'APPROVER-01', at:'T+0'}; $('approvedAt').textContent=`承認済み ${approval.hash}`; renderPlan(); };
 
 preset('cb3');
 window.__ready = true; document.getElementById('hud').textContent='ドラッグで回転、ホイールで拡大、右ドラッグで移動'; document.getElementById('err').style.display='none';
