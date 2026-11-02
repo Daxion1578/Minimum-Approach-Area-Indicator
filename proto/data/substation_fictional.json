@@ -1,0 +1,7651 @@
+{
+ "meta": {
+  "name": "架空変電所（220/66kV, 1・1/2母線）",
+  "fictional": true,
+  "schema_version": "0.1.0",
+  "coordinate_system": {
+   "unit": "m",
+   "x": "east",
+   "y": "north",
+   "z": "up"
+  },
+  "notes": [
+   "全寸法は架空変電所の仮定値。社内標準・実在設備の値ではない。",
+   "架空地線の高さは雷遮蔽設計で決まるため一概には言えない。ここでは仮定値。",
+   "変圧器まわりの導体経路は簡略化（TODO）。",
+   "生成元: tools/gen_model.py"
+  ]
+ },
+ "voltage_levels": [
+  {
+   "id": "220",
+   "nominal_kv": 220,
+   "approach_limit_m": null,
+   "working_clearance_m": null,
+   "phase_to_ground_clearance_m": 2.6,
+   "source": "TODO: 公開資料の出典を記入"
+  },
+  {
+   "id": "66",
+   "nominal_kv": 66,
+   "approach_limit_m": null,
+   "working_clearance_m": null,
+   "phase_to_ground_clearance_m": 1.0,
+   "source": "TODO: 公開資料の出典を記入"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "220_BUSA",
+   "voltage": "220",
+   "kind": "bus",
+   "name": "220kV A母線"
+  },
+  {
+   "id": "220_BUSB",
+   "voltage": "220",
+   "kind": "bus",
+   "name": "220kV B母線"
+  },
+  {
+   "id": "220_D1_n1",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_n2",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_T1",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D1 北側回路引出点",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_n3",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_n4",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_T2",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D1 南側回路引出点",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_n5",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D1_n6",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "220_OPUS1L",
+   "voltage": "220",
+   "kind": "line",
+   "name": "Opus線1L",
+   "bay": "D1"
+  },
+  {
+   "id": "220_TR1_HV",
+   "voltage": "220",
+   "kind": "transformer_terminal",
+   "name": "1号変圧器 一次",
+   "bay": "D1"
+  },
+  {
+   "id": "220_D2_n1",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_n2",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_T1",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D2 北側回路引出点",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_n3",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_n4",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_T2",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D2 南側回路引出点",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_n5",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D2_n6",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "220_FABLE1L",
+   "voltage": "220",
+   "kind": "line",
+   "name": "Fable線1L",
+   "bay": "D2"
+  },
+  {
+   "id": "220_TR2_HV",
+   "voltage": "220",
+   "kind": "transformer_terminal",
+   "name": "2号変圧器 一次",
+   "bay": "D2"
+  },
+  {
+   "id": "220_D3_n1",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_n2",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_T1",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D3 北側回路引出点",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_n3",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_n4",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_T2",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D3 南側回路引出点",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_n5",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D3_n6",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "220_OPUS2L",
+   "voltage": "220",
+   "kind": "line",
+   "name": "Opus線2L",
+   "bay": "D3"
+  },
+  {
+   "id": "220_FABLE2L",
+   "voltage": "220",
+   "kind": "line",
+   "name": "Fable線2L",
+   "bay": "D3"
+  },
+  {
+   "id": "220_D4_n1",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_n2",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_T1",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D4 北側回路引出点",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_n3",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_n4",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_T2",
+   "voltage": "220",
+   "kind": "tap",
+   "name": "D4 南側回路引出点",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_n5",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "220_D4_n6",
+   "voltage": "220",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_BUSA",
+   "voltage": "66",
+   "kind": "bus",
+   "name": "66kV A母線"
+  },
+  {
+   "id": "66_BUSB",
+   "voltage": "66",
+   "kind": "bus",
+   "name": "66kV B母線"
+  },
+  {
+   "id": "66_D1_n1",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_n2",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_T1",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D1 北側回路引出点",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_n3",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_n4",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_T2",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D1 南側回路引出点",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_n5",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D1_n6",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D1"
+  },
+  {
+   "id": "66_SONNET1L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Sonnet線1L",
+   "bay": "D1"
+  },
+  {
+   "id": "66_TR1_LV",
+   "voltage": "66",
+   "kind": "transformer_terminal",
+   "name": "1号変圧器 二次",
+   "bay": "D1"
+  },
+  {
+   "id": "66_D2_n1",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_n2",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_T1",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D2 北側回路引出点",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_n3",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_n4",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_T2",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D2 南側回路引出点",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_n5",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D2_n6",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D2"
+  },
+  {
+   "id": "66_HAIKU1L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Haiku線1L",
+   "bay": "D2"
+  },
+  {
+   "id": "66_TR2_LV",
+   "voltage": "66",
+   "kind": "transformer_terminal",
+   "name": "2号変圧器 二次",
+   "bay": "D2"
+  },
+  {
+   "id": "66_D3_n1",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_n2",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_T1",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D3 北側回路引出点",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_n3",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_n4",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_T2",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D3 南側回路引出点",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_n5",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D3_n6",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D3"
+  },
+  {
+   "id": "66_SONNET2L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Sonnet線2L",
+   "bay": "D3"
+  },
+  {
+   "id": "66_HAIKU2L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Haiku線2L",
+   "bay": "D3"
+  },
+  {
+   "id": "66_D4_n1",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_n2",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_T1",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D4 北側回路引出点",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_n3",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_n4",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_T2",
+   "voltage": "66",
+   "kind": "tap",
+   "name": "D4 南側回路引出点",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_n5",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_D4_n6",
+   "voltage": "66",
+   "kind": "section",
+   "bay": "D4"
+  },
+  {
+   "id": "66_MYTHOS1L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Mythos線1L",
+   "bay": "D4"
+  },
+  {
+   "id": "66_MYTHOS2L",
+   "voltage": "66",
+   "kind": "line",
+   "name": "Mythos線2L",
+   "bay": "D4"
+  }
+ ],
+ "switches": [
+  {
+   "id": "220_D1_LSA",
+   "kind": "LS",
+   "from": "220_BUSA",
+   "to": "220_D1_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -6.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_CB1",
+   "kind": "CB",
+   "from": "220_D1_n1",
+   "to": "220_D1_n2",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -9.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_LS1B",
+   "kind": "LS",
+   "from": "220_D1_n2",
+   "to": "220_D1_T1",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -12.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_LS2A",
+   "kind": "LS",
+   "from": "220_D1_T1",
+   "to": "220_D1_n3",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -15.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_CB2",
+   "kind": "CB",
+   "from": "220_D1_n3",
+   "to": "220_D1_n4",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -18.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_LS2B",
+   "kind": "LS",
+   "from": "220_D1_n4",
+   "to": "220_D1_T2",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -21.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_LS3A",
+   "kind": "LS",
+   "from": "220_D1_T2",
+   "to": "220_D1_n5",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -24.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_CB3",
+   "kind": "CB",
+   "from": "220_D1_n5",
+   "to": "220_D1_n6",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -27.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D1_LSB",
+   "kind": "LS",
+   "from": "220_D1_n6",
+   "to": "220_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -30.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_OPUS1L_LS",
+   "kind": "LS",
+   "from": "220_D1_T1",
+   "to": "220_OPUS1L",
+   "normal": "closed",
+   "name": "Opus線1L 線路断路器",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -13.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_TR1_220_LS",
+   "kind": "LS",
+   "from": "220_D1_T2",
+   "to": "220_TR1_HV",
+   "normal": "closed",
+   "name": "1号変圧器 一次 断路器",
+   "bay": "D1",
+   "position": [
+    2.0,
+    -22.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LSA",
+   "kind": "LS",
+   "from": "220_BUSA",
+   "to": "220_D2_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -6.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_CB1",
+   "kind": "CB",
+   "from": "220_D2_n1",
+   "to": "220_D2_n2",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -9.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LS1B",
+   "kind": "LS",
+   "from": "220_D2_n2",
+   "to": "220_D2_T1",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -12.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LS2A",
+   "kind": "LS",
+   "from": "220_D2_T1",
+   "to": "220_D2_n3",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -15.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_CB2",
+   "kind": "CB",
+   "from": "220_D2_n3",
+   "to": "220_D2_n4",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -18.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LS2B",
+   "kind": "LS",
+   "from": "220_D2_n4",
+   "to": "220_D2_T2",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -21.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LS3A",
+   "kind": "LS",
+   "from": "220_D2_T2",
+   "to": "220_D2_n5",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -24.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_CB3",
+   "kind": "CB",
+   "from": "220_D2_n5",
+   "to": "220_D2_n6",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -27.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D2_LSB",
+   "kind": "LS",
+   "from": "220_D2_n6",
+   "to": "220_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -30.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_FABLE1L_LS",
+   "kind": "LS",
+   "from": "220_D2_T1",
+   "to": "220_FABLE1L",
+   "normal": "closed",
+   "name": "Fable線1L 線路断路器",
+   "bay": "D2",
+   "position": [
+    18.0,
+    -13.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_TR2_220_LS",
+   "kind": "LS",
+   "from": "220_D2_T2",
+   "to": "220_TR2_HV",
+   "normal": "closed",
+   "name": "2号変圧器 一次 断路器",
+   "bay": "D2",
+   "position": [
+    20.0,
+    -22.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LSA",
+   "kind": "LS",
+   "from": "220_BUSA",
+   "to": "220_D3_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -6.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_CB1",
+   "kind": "CB",
+   "from": "220_D3_n1",
+   "to": "220_D3_n2",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -9.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LS1B",
+   "kind": "LS",
+   "from": "220_D3_n2",
+   "to": "220_D3_T1",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -12.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LS2A",
+   "kind": "LS",
+   "from": "220_D3_T1",
+   "to": "220_D3_n3",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -15.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_CB2",
+   "kind": "CB",
+   "from": "220_D3_n3",
+   "to": "220_D3_n4",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -18.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LS2B",
+   "kind": "LS",
+   "from": "220_D3_n4",
+   "to": "220_D3_T2",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -21.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LS3A",
+   "kind": "LS",
+   "from": "220_D3_T2",
+   "to": "220_D3_n5",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -24.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_CB3",
+   "kind": "CB",
+   "from": "220_D3_n5",
+   "to": "220_D3_n6",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -27.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D3_LSB",
+   "kind": "LS",
+   "from": "220_D3_n6",
+   "to": "220_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -30.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_OPUS2L_LS",
+   "kind": "LS",
+   "from": "220_D3_T1",
+   "to": "220_OPUS2L",
+   "normal": "closed",
+   "name": "Opus線2L 線路断路器",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -13.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_FABLE2L_LS",
+   "kind": "LS",
+   "from": "220_D3_T2",
+   "to": "220_FABLE2L",
+   "normal": "closed",
+   "name": "Fable線2L 線路断路器",
+   "bay": "D3",
+   "position": [
+    36.0,
+    -22.5,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LSA",
+   "kind": "LS",
+   "from": "220_BUSA",
+   "to": "220_D4_n1",
+   "normal": "open",
+   "subtype": "パンタ式",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -6.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_CB1",
+   "kind": "CB",
+   "from": "220_D4_n1",
+   "to": "220_D4_n2",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -9.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LS1B",
+   "kind": "LS",
+   "from": "220_D4_n2",
+   "to": "220_D4_T1",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -12.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LS2A",
+   "kind": "LS",
+   "from": "220_D4_T1",
+   "to": "220_D4_n3",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -15.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_CB2",
+   "kind": "CB",
+   "from": "220_D4_n3",
+   "to": "220_D4_n4",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -18.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LS2B",
+   "kind": "LS",
+   "from": "220_D4_n4",
+   "to": "220_D4_T2",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -21.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LS3A",
+   "kind": "LS",
+   "from": "220_D4_T2",
+   "to": "220_D4_n5",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -24.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_CB3",
+   "kind": "CB",
+   "from": "220_D4_n5",
+   "to": "220_D4_n6",
+   "normal": "open",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -27.0,
+    5.0
+   ]
+  },
+  {
+   "id": "220_D4_LSB",
+   "kind": "LS",
+   "from": "220_D4_n6",
+   "to": "220_BUSB",
+   "normal": "open",
+   "subtype": "パンタ式",
+   "bay": "D4",
+   "position": [
+    54.0,
+    -30.0,
+    5.0
+   ]
+  },
+  {
+   "id": "66_D1_LSA",
+   "kind": "LS",
+   "from": "66_BUSA",
+   "to": "66_D1_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -84.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_CB1",
+   "kind": "CB",
+   "from": "66_D1_n1",
+   "to": "66_D1_n2",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -86.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_LS1B",
+   "kind": "LS",
+   "from": "66_D1_n2",
+   "to": "66_D1_T1",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -88.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_LS2A",
+   "kind": "LS",
+   "from": "66_D1_T1",
+   "to": "66_D1_n3",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -90.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_CB2",
+   "kind": "CB",
+   "from": "66_D1_n3",
+   "to": "66_D1_n4",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -92.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_LS2B",
+   "kind": "LS",
+   "from": "66_D1_n4",
+   "to": "66_D1_T2",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -94.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_LS3A",
+   "kind": "LS",
+   "from": "66_D1_T2",
+   "to": "66_D1_n5",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -96.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_CB3",
+   "kind": "CB",
+   "from": "66_D1_n5",
+   "to": "66_D1_n6",
+   "normal": "closed",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -98.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D1_LSB",
+   "kind": "LS",
+   "from": "66_D1_n6",
+   "to": "66_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -100.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_SONNET1L_LS",
+   "kind": "LS",
+   "from": "66_D1_T1",
+   "to": "66_SONNET1L",
+   "normal": "closed",
+   "name": "Sonnet線1L 線路断路器",
+   "bay": "D1",
+   "position": [
+    0.0,
+    -89.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_TR1_66_LS",
+   "kind": "LS",
+   "from": "66_D1_T2",
+   "to": "66_TR1_LV",
+   "normal": "closed",
+   "name": "1号変圧器 二次 断路器",
+   "bay": "D1",
+   "position": [
+    2.0,
+    -95.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LSA",
+   "kind": "LS",
+   "from": "66_BUSA",
+   "to": "66_D2_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -84.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_CB1",
+   "kind": "CB",
+   "from": "66_D2_n1",
+   "to": "66_D2_n2",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -86.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LS1B",
+   "kind": "LS",
+   "from": "66_D2_n2",
+   "to": "66_D2_T1",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -88.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LS2A",
+   "kind": "LS",
+   "from": "66_D2_T1",
+   "to": "66_D2_n3",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -90.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_CB2",
+   "kind": "CB",
+   "from": "66_D2_n3",
+   "to": "66_D2_n4",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -92.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LS2B",
+   "kind": "LS",
+   "from": "66_D2_n4",
+   "to": "66_D2_T2",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -94.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LS3A",
+   "kind": "LS",
+   "from": "66_D2_T2",
+   "to": "66_D2_n5",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -96.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_CB3",
+   "kind": "CB",
+   "from": "66_D2_n5",
+   "to": "66_D2_n6",
+   "normal": "closed",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -98.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D2_LSB",
+   "kind": "LS",
+   "from": "66_D2_n6",
+   "to": "66_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -100.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_HAIKU1L_LS",
+   "kind": "LS",
+   "from": "66_D2_T1",
+   "to": "66_HAIKU1L",
+   "normal": "closed",
+   "name": "Haiku線1L 線路断路器",
+   "bay": "D2",
+   "position": [
+    10.0,
+    -89.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_TR2_66_LS",
+   "kind": "LS",
+   "from": "66_D2_T2",
+   "to": "66_TR2_LV",
+   "normal": "closed",
+   "name": "2号変圧器 二次 断路器",
+   "bay": "D2",
+   "position": [
+    12.0,
+    -95.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LSA",
+   "kind": "LS",
+   "from": "66_BUSA",
+   "to": "66_D3_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -84.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_CB1",
+   "kind": "CB",
+   "from": "66_D3_n1",
+   "to": "66_D3_n2",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -86.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LS1B",
+   "kind": "LS",
+   "from": "66_D3_n2",
+   "to": "66_D3_T1",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -88.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LS2A",
+   "kind": "LS",
+   "from": "66_D3_T1",
+   "to": "66_D3_n3",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -90.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_CB2",
+   "kind": "CB",
+   "from": "66_D3_n3",
+   "to": "66_D3_n4",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -92.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LS2B",
+   "kind": "LS",
+   "from": "66_D3_n4",
+   "to": "66_D3_T2",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -94.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LS3A",
+   "kind": "LS",
+   "from": "66_D3_T2",
+   "to": "66_D3_n5",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -96.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_CB3",
+   "kind": "CB",
+   "from": "66_D3_n5",
+   "to": "66_D3_n6",
+   "normal": "closed",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -98.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D3_LSB",
+   "kind": "LS",
+   "from": "66_D3_n6",
+   "to": "66_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -100.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_SONNET2L_LS",
+   "kind": "LS",
+   "from": "66_D3_T1",
+   "to": "66_SONNET2L",
+   "normal": "closed",
+   "name": "Sonnet線2L 線路断路器",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -89.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_HAIKU2L_LS",
+   "kind": "LS",
+   "from": "66_D3_T2",
+   "to": "66_HAIKU2L",
+   "normal": "closed",
+   "name": "Haiku線2L 線路断路器",
+   "bay": "D3",
+   "position": [
+    20.0,
+    -95.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LSA",
+   "kind": "LS",
+   "from": "66_BUSA",
+   "to": "66_D4_n1",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -84.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_CB1",
+   "kind": "CB",
+   "from": "66_D4_n1",
+   "to": "66_D4_n2",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -86.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LS1B",
+   "kind": "LS",
+   "from": "66_D4_n2",
+   "to": "66_D4_T1",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -88.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LS2A",
+   "kind": "LS",
+   "from": "66_D4_T1",
+   "to": "66_D4_n3",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -90.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_CB2",
+   "kind": "CB",
+   "from": "66_D4_n3",
+   "to": "66_D4_n4",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -92.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LS2B",
+   "kind": "LS",
+   "from": "66_D4_n4",
+   "to": "66_D4_T2",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -94.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LS3A",
+   "kind": "LS",
+   "from": "66_D4_T2",
+   "to": "66_D4_n5",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -96.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_CB3",
+   "kind": "CB",
+   "from": "66_D4_n5",
+   "to": "66_D4_n6",
+   "normal": "closed",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -98.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_D4_LSB",
+   "kind": "LS",
+   "from": "66_D4_n6",
+   "to": "66_BUSB",
+   "normal": "closed",
+   "subtype": "パンタ式",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -100.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_MYTHOS1L_LS",
+   "kind": "LS",
+   "from": "66_D4_T1",
+   "to": "66_MYTHOS1L",
+   "normal": "closed",
+   "name": "Mythos線1L 線路断路器",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -89.0,
+    3.0
+   ]
+  },
+  {
+   "id": "66_MYTHOS2L_LS",
+   "kind": "LS",
+   "from": "66_D4_T2",
+   "to": "66_MYTHOS2L",
+   "normal": "closed",
+   "name": "Mythos線2L 線路断路器",
+   "bay": "D4",
+   "position": [
+    30.0,
+    -95.0,
+    3.0
+   ]
+  }
+ ],
+ "earth_switches": [
+  {
+   "id": "220_BUSA_ES",
+   "node": "220_BUSA",
+   "normal": "open",
+   "name": "220kV A母線接地"
+  },
+  {
+   "id": "220_BUSB_ES",
+   "node": "220_BUSB",
+   "normal": "open",
+   "name": "220kV B母線接地"
+  },
+  {
+   "id": "220_D1_T1_ES",
+   "node": "220_D1_T1",
+   "normal": "open",
+   "position": [
+    1.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D1_T2_ES",
+   "node": "220_D1_T2",
+   "normal": "open",
+   "position": [
+    1.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_OPUS1L_ES",
+   "node": "220_OPUS1L",
+   "normal": "open",
+   "name": "Opus線1L 線路接地",
+   "position": [
+    -1.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_TR1_220_ES",
+   "node": "220_TR1_HV",
+   "normal": "open",
+   "name": "1号変圧器 一次 接地",
+   "position": [
+    3.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D2_T1_ES",
+   "node": "220_D2_T1",
+   "normal": "open",
+   "position": [
+    19.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D2_T2_ES",
+   "node": "220_D2_T2",
+   "normal": "open",
+   "position": [
+    19.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_FABLE1L_ES",
+   "node": "220_FABLE1L",
+   "normal": "open",
+   "name": "Fable線1L 線路接地",
+   "position": [
+    17.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_TR2_220_ES",
+   "node": "220_TR2_HV",
+   "normal": "open",
+   "name": "2号変圧器 一次 接地",
+   "position": [
+    21.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D3_T1_ES",
+   "node": "220_D3_T1",
+   "normal": "open",
+   "position": [
+    37.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D3_T2_ES",
+   "node": "220_D3_T2",
+   "normal": "open",
+   "position": [
+    37.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_OPUS2L_ES",
+   "node": "220_OPUS2L",
+   "normal": "open",
+   "name": "Opus線2L 線路接地",
+   "position": [
+    35.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_FABLE2L_ES",
+   "node": "220_FABLE2L",
+   "normal": "open",
+   "name": "Fable線2L 線路接地",
+   "position": [
+    35.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D4_T1_ES",
+   "node": "220_D4_T1",
+   "normal": "open",
+   "position": [
+    55.0,
+    -13.5,
+    1.5
+   ]
+  },
+  {
+   "id": "220_D4_T2_ES",
+   "node": "220_D4_T2",
+   "normal": "open",
+   "position": [
+    55.0,
+    -22.5,
+    1.5
+   ]
+  },
+  {
+   "id": "66_BUSA_ES",
+   "node": "66_BUSA",
+   "normal": "open",
+   "name": "66kV A母線接地"
+  },
+  {
+   "id": "66_BUSB_ES",
+   "node": "66_BUSB",
+   "normal": "open",
+   "name": "66kV B母線接地"
+  },
+  {
+   "id": "66_D1_T1_ES",
+   "node": "66_D1_T1",
+   "normal": "open",
+   "position": [
+    1.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D1_T2_ES",
+   "node": "66_D1_T2",
+   "normal": "open",
+   "position": [
+    1.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_SONNET1L_ES",
+   "node": "66_SONNET1L",
+   "normal": "open",
+   "name": "Sonnet線1L 線路接地",
+   "position": [
+    -1.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_TR1_66_ES",
+   "node": "66_TR1_LV",
+   "normal": "open",
+   "name": "1号変圧器 二次 接地",
+   "position": [
+    3.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D2_T1_ES",
+   "node": "66_D2_T1",
+   "normal": "open",
+   "position": [
+    11.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D2_T2_ES",
+   "node": "66_D2_T2",
+   "normal": "open",
+   "position": [
+    11.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_HAIKU1L_ES",
+   "node": "66_HAIKU1L",
+   "normal": "open",
+   "name": "Haiku線1L 線路接地",
+   "position": [
+    9.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_TR2_66_ES",
+   "node": "66_TR2_LV",
+   "normal": "open",
+   "name": "2号変圧器 二次 接地",
+   "position": [
+    13.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D3_T1_ES",
+   "node": "66_D3_T1",
+   "normal": "open",
+   "position": [
+    21.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D3_T2_ES",
+   "node": "66_D3_T2",
+   "normal": "open",
+   "position": [
+    21.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_SONNET2L_ES",
+   "node": "66_SONNET2L",
+   "normal": "open",
+   "name": "Sonnet線2L 線路接地",
+   "position": [
+    19.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_HAIKU2L_ES",
+   "node": "66_HAIKU2L",
+   "normal": "open",
+   "name": "Haiku線2L 線路接地",
+   "position": [
+    19.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D4_T1_ES",
+   "node": "66_D4_T1",
+   "normal": "open",
+   "position": [
+    31.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_D4_T2_ES",
+   "node": "66_D4_T2",
+   "normal": "open",
+   "position": [
+    31.0,
+    -95.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_MYTHOS1L_ES",
+   "node": "66_MYTHOS1L",
+   "normal": "open",
+   "name": "Mythos線1L 線路接地",
+   "position": [
+    29.0,
+    -89.0,
+    1.5
+   ]
+  },
+  {
+   "id": "66_MYTHOS2L_ES",
+   "node": "66_MYTHOS2L",
+   "normal": "open",
+   "name": "Mythos線2L 線路接地",
+   "position": [
+    29.0,
+    -95.0,
+    1.5
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "id": "SRC_220_OPUS1L",
+   "node": "220_OPUS1L",
+   "in_service": true,
+   "name": "Opus線1L"
+  },
+  {
+   "id": "SRC_220_FABLE1L",
+   "node": "220_FABLE1L",
+   "in_service": true,
+   "name": "Fable線1L"
+  },
+  {
+   "id": "SRC_220_OPUS2L",
+   "node": "220_OPUS2L",
+   "in_service": true,
+   "name": "Opus線2L"
+  },
+  {
+   "id": "SRC_220_FABLE2L",
+   "node": "220_FABLE2L",
+   "in_service": true,
+   "name": "Fable線2L"
+  },
+  {
+   "id": "SRC_66_SONNET1L",
+   "node": "66_SONNET1L",
+   "in_service": true,
+   "name": "Sonnet線1L"
+  },
+  {
+   "id": "SRC_66_HAIKU1L",
+   "node": "66_HAIKU1L",
+   "in_service": true,
+   "name": "Haiku線1L"
+  },
+  {
+   "id": "SRC_66_SONNET2L",
+   "node": "66_SONNET2L",
+   "in_service": true,
+   "name": "Sonnet線2L"
+  },
+  {
+   "id": "SRC_66_HAIKU2L",
+   "node": "66_HAIKU2L",
+   "in_service": true,
+   "name": "Haiku線2L"
+  },
+  {
+   "id": "SRC_66_MYTHOS1L",
+   "node": "66_MYTHOS1L",
+   "in_service": true,
+   "name": "Mythos線1L"
+  },
+  {
+   "id": "SRC_66_MYTHOS2L",
+   "node": "66_MYTHOS2L",
+   "in_service": true,
+   "name": "Mythos線2L"
+  }
+ ],
+ "transformers": [
+  {
+   "id": "TR1",
+   "hv_node": "220_TR1_HV",
+   "lv_node": "66_TR1_LV",
+   "mva": 300,
+   "name": "TR1 300MVA 220/66kV",
+   "position": [
+    9.0,
+    -22.5,
+    0.0
+   ]
+  },
+  {
+   "id": "TR2",
+   "hv_node": "220_TR2_HV",
+   "lv_node": "66_TR2_LV",
+   "mva": 300,
+   "name": "TR2 300MVA 220/66kV",
+   "position": [
+    27.0,
+    -22.5,
+    0.0
+   ]
+  }
+ ],
+ "conductors": [
+  {
+   "id": "220_BUSA_R",
+   "node": "220_BUSA",
+   "phase": "R",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     4.0,
+     10.5
+    ],
+    [
+     63.0,
+     4.0,
+     10.5
+    ]
+   ]
+  },
+  {
+   "id": "220_BUSB_R",
+   "node": "220_BUSB",
+   "phase": "R",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     -32.0,
+     6.5
+    ],
+    [
+     63.0,
+     -32.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "220_BUSA_S",
+   "node": "220_BUSA",
+   "phase": "S",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     0.0,
+     10.5
+    ],
+    [
+     63.0,
+     0.0,
+     10.5
+    ]
+   ]
+  },
+  {
+   "id": "220_BUSB_S",
+   "node": "220_BUSB",
+   "phase": "S",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     -36.0,
+     6.5
+    ],
+    [
+     63.0,
+     -36.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "220_BUSA_T",
+   "node": "220_BUSA",
+   "phase": "T",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     -4.0,
+     10.5
+    ],
+    [
+     63.0,
+     -4.0,
+     10.5
+    ]
+   ]
+  },
+  {
+   "id": "220_BUSB_T",
+   "node": "220_BUSB",
+   "phase": "T",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -9.0,
+     -40.0,
+     6.5
+    ],
+    [
+     63.0,
+     -40.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropA_R",
+   "node": "220_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     4.0,
+     10.5
+    ],
+    [
+     -4.0,
+     4.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropB_R",
+   "node": "220_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -32.0,
+     6.5
+    ],
+    [
+     -4.0,
+     -32.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n1_R",
+   "node": "220_D1_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -6.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n2_R",
+   "node": "220_D1_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -9.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T1_R",
+   "node": "220_D1_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -12.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n3_R",
+   "node": "220_D1_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -15.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n4_R",
+   "node": "220_D1_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -18.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T2_R",
+   "node": "220_D1_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -21.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n5_R",
+   "node": "220_D1_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -24.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n6_R",
+   "node": "220_D1_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -27.0,
+     5.0
+    ],
+    [
+     -4.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropA_S",
+   "node": "220_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     0.0,
+     10.5
+    ],
+    [
+     0.0,
+     0.0,
+     5.0
+    ],
+    [
+     0.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropB_S",
+   "node": "220_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -36.0,
+     6.5
+    ],
+    [
+     0.0,
+     -36.0,
+     5.0
+    ],
+    [
+     0.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n1_S",
+   "node": "220_D1_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -6.0,
+     5.0
+    ],
+    [
+     0.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n2_S",
+   "node": "220_D1_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -9.0,
+     5.0
+    ],
+    [
+     0.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T1_S",
+   "node": "220_D1_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -12.0,
+     5.0
+    ],
+    [
+     0.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n3_S",
+   "node": "220_D1_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -15.0,
+     5.0
+    ],
+    [
+     0.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n4_S",
+   "node": "220_D1_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -18.0,
+     5.0
+    ],
+    [
+     0.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T2_S",
+   "node": "220_D1_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -21.0,
+     5.0
+    ],
+    [
+     0.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n5_S",
+   "node": "220_D1_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -24.0,
+     5.0
+    ],
+    [
+     0.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n6_S",
+   "node": "220_D1_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -27.0,
+     5.0
+    ],
+    [
+     0.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropA_T",
+   "node": "220_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -4.0,
+     10.5
+    ],
+    [
+     4.0,
+     -4.0,
+     5.0
+    ],
+    [
+     4.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_dropB_T",
+   "node": "220_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -40.0,
+     6.5
+    ],
+    [
+     4.0,
+     -40.0,
+     5.0
+    ],
+    [
+     4.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n1_T",
+   "node": "220_D1_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -6.0,
+     5.0
+    ],
+    [
+     4.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n2_T",
+   "node": "220_D1_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -9.0,
+     5.0
+    ],
+    [
+     4.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T1_T",
+   "node": "220_D1_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -12.0,
+     5.0
+    ],
+    [
+     4.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n3_T",
+   "node": "220_D1_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -15.0,
+     5.0
+    ],
+    [
+     4.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n4_T",
+   "node": "220_D1_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -18.0,
+     5.0
+    ],
+    [
+     4.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_T2_T",
+   "node": "220_D1_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -21.0,
+     5.0
+    ],
+    [
+     4.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n5_T",
+   "node": "220_D1_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -24.0,
+     5.0
+    ],
+    [
+     4.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D1_n6_T",
+   "node": "220_D1_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -27.0,
+     5.0
+    ],
+    [
+     4.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS1L_R",
+   "node": "220_OPUS1L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -13.5,
+     5.0
+    ],
+    [
+     -4.0,
+     -13.5,
+     16.0
+    ],
+    [
+     -4.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS1L_S",
+   "node": "220_OPUS1L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -13.5,
+     5.0
+    ],
+    [
+     0.0,
+     -13.5,
+     16.0
+    ],
+    [
+     0.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS1L_T",
+   "node": "220_OPUS1L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -13.5,
+     5.0
+    ],
+    [
+     4.0,
+     -13.5,
+     16.0
+    ],
+    [
+     4.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR1_HV_R",
+   "node": "220_TR1_HV",
+   "phase": "R",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -4.0,
+     -22.5,
+     5.0
+    ],
+    [
+     5.0,
+     -22.5,
+     5.0
+    ],
+    [
+     5.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR1_HV_S",
+   "node": "220_TR1_HV",
+   "phase": "S",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -22.5,
+     5.0
+    ],
+    [
+     9.0,
+     -22.5,
+     5.0
+    ],
+    [
+     9.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR1_HV_T",
+   "node": "220_TR1_HV",
+   "phase": "T",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     4.0,
+     -22.5,
+     5.0
+    ],
+    [
+     13.0,
+     -22.5,
+     5.0
+    ],
+    [
+     13.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropA_R",
+   "node": "220_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     4.0,
+     10.5
+    ],
+    [
+     14.0,
+     4.0,
+     5.0
+    ],
+    [
+     14.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropB_R",
+   "node": "220_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -32.0,
+     6.5
+    ],
+    [
+     14.0,
+     -32.0,
+     5.0
+    ],
+    [
+     14.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n1_R",
+   "node": "220_D2_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -6.0,
+     5.0
+    ],
+    [
+     14.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n2_R",
+   "node": "220_D2_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -9.0,
+     5.0
+    ],
+    [
+     14.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T1_R",
+   "node": "220_D2_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -12.0,
+     5.0
+    ],
+    [
+     14.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n3_R",
+   "node": "220_D2_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -15.0,
+     5.0
+    ],
+    [
+     14.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n4_R",
+   "node": "220_D2_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -18.0,
+     5.0
+    ],
+    [
+     14.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T2_R",
+   "node": "220_D2_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -21.0,
+     5.0
+    ],
+    [
+     14.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n5_R",
+   "node": "220_D2_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -24.0,
+     5.0
+    ],
+    [
+     14.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n6_R",
+   "node": "220_D2_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -27.0,
+     5.0
+    ],
+    [
+     14.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropA_S",
+   "node": "220_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     0.0,
+     10.5
+    ],
+    [
+     18.0,
+     0.0,
+     5.0
+    ],
+    [
+     18.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropB_S",
+   "node": "220_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -36.0,
+     6.5
+    ],
+    [
+     18.0,
+     -36.0,
+     5.0
+    ],
+    [
+     18.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n1_S",
+   "node": "220_D2_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -6.0,
+     5.0
+    ],
+    [
+     18.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n2_S",
+   "node": "220_D2_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -9.0,
+     5.0
+    ],
+    [
+     18.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T1_S",
+   "node": "220_D2_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -12.0,
+     5.0
+    ],
+    [
+     18.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n3_S",
+   "node": "220_D2_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -15.0,
+     5.0
+    ],
+    [
+     18.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n4_S",
+   "node": "220_D2_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -18.0,
+     5.0
+    ],
+    [
+     18.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T2_S",
+   "node": "220_D2_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -21.0,
+     5.0
+    ],
+    [
+     18.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n5_S",
+   "node": "220_D2_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -24.0,
+     5.0
+    ],
+    [
+     18.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n6_S",
+   "node": "220_D2_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -27.0,
+     5.0
+    ],
+    [
+     18.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropA_T",
+   "node": "220_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -4.0,
+     10.5
+    ],
+    [
+     22.0,
+     -4.0,
+     5.0
+    ],
+    [
+     22.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_dropB_T",
+   "node": "220_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -40.0,
+     6.5
+    ],
+    [
+     22.0,
+     -40.0,
+     5.0
+    ],
+    [
+     22.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n1_T",
+   "node": "220_D2_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -6.0,
+     5.0
+    ],
+    [
+     22.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n2_T",
+   "node": "220_D2_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -9.0,
+     5.0
+    ],
+    [
+     22.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T1_T",
+   "node": "220_D2_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -12.0,
+     5.0
+    ],
+    [
+     22.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n3_T",
+   "node": "220_D2_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -15.0,
+     5.0
+    ],
+    [
+     22.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n4_T",
+   "node": "220_D2_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -18.0,
+     5.0
+    ],
+    [
+     22.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_T2_T",
+   "node": "220_D2_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -21.0,
+     5.0
+    ],
+    [
+     22.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n5_T",
+   "node": "220_D2_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -24.0,
+     5.0
+    ],
+    [
+     22.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D2_n6_T",
+   "node": "220_D2_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -27.0,
+     5.0
+    ],
+    [
+     22.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE1L_R",
+   "node": "220_FABLE1L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -13.5,
+     5.0
+    ],
+    [
+     14.0,
+     -13.5,
+     16.0
+    ],
+    [
+     14.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE1L_S",
+   "node": "220_FABLE1L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -13.5,
+     5.0
+    ],
+    [
+     18.0,
+     -13.5,
+     16.0
+    ],
+    [
+     18.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE1L_T",
+   "node": "220_FABLE1L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -13.5,
+     5.0
+    ],
+    [
+     22.0,
+     -13.5,
+     16.0
+    ],
+    [
+     22.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR2_HV_R",
+   "node": "220_TR2_HV",
+   "phase": "R",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     14.0,
+     -22.5,
+     5.0
+    ],
+    [
+     23.0,
+     -22.5,
+     5.0
+    ],
+    [
+     23.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR2_HV_S",
+   "node": "220_TR2_HV",
+   "phase": "S",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -22.5,
+     5.0
+    ],
+    [
+     27.0,
+     -22.5,
+     5.0
+    ],
+    [
+     27.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_TR2_HV_T",
+   "node": "220_TR2_HV",
+   "phase": "T",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -22.5,
+     5.0
+    ],
+    [
+     31.0,
+     -22.5,
+     5.0
+    ],
+    [
+     31.0,
+     -22.5,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropA_R",
+   "node": "220_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     4.0,
+     10.5
+    ],
+    [
+     32.0,
+     4.0,
+     5.0
+    ],
+    [
+     32.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropB_R",
+   "node": "220_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -32.0,
+     6.5
+    ],
+    [
+     32.0,
+     -32.0,
+     5.0
+    ],
+    [
+     32.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n1_R",
+   "node": "220_D3_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -6.0,
+     5.0
+    ],
+    [
+     32.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n2_R",
+   "node": "220_D3_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -9.0,
+     5.0
+    ],
+    [
+     32.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T1_R",
+   "node": "220_D3_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -12.0,
+     5.0
+    ],
+    [
+     32.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n3_R",
+   "node": "220_D3_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -15.0,
+     5.0
+    ],
+    [
+     32.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n4_R",
+   "node": "220_D3_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -18.0,
+     5.0
+    ],
+    [
+     32.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T2_R",
+   "node": "220_D3_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -21.0,
+     5.0
+    ],
+    [
+     32.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n5_R",
+   "node": "220_D3_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -24.0,
+     5.0
+    ],
+    [
+     32.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n6_R",
+   "node": "220_D3_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -27.0,
+     5.0
+    ],
+    [
+     32.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropA_S",
+   "node": "220_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     0.0,
+     10.5
+    ],
+    [
+     36.0,
+     0.0,
+     5.0
+    ],
+    [
+     36.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropB_S",
+   "node": "220_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -36.0,
+     6.5
+    ],
+    [
+     36.0,
+     -36.0,
+     5.0
+    ],
+    [
+     36.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n1_S",
+   "node": "220_D3_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -6.0,
+     5.0
+    ],
+    [
+     36.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n2_S",
+   "node": "220_D3_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -9.0,
+     5.0
+    ],
+    [
+     36.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T1_S",
+   "node": "220_D3_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -12.0,
+     5.0
+    ],
+    [
+     36.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n3_S",
+   "node": "220_D3_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -15.0,
+     5.0
+    ],
+    [
+     36.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n4_S",
+   "node": "220_D3_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -18.0,
+     5.0
+    ],
+    [
+     36.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T2_S",
+   "node": "220_D3_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -21.0,
+     5.0
+    ],
+    [
+     36.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n5_S",
+   "node": "220_D3_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -24.0,
+     5.0
+    ],
+    [
+     36.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n6_S",
+   "node": "220_D3_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -27.0,
+     5.0
+    ],
+    [
+     36.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropA_T",
+   "node": "220_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -4.0,
+     10.5
+    ],
+    [
+     40.0,
+     -4.0,
+     5.0
+    ],
+    [
+     40.0,
+     -6.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_dropB_T",
+   "node": "220_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -40.0,
+     6.5
+    ],
+    [
+     40.0,
+     -40.0,
+     5.0
+    ],
+    [
+     40.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n1_T",
+   "node": "220_D3_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -6.0,
+     5.0
+    ],
+    [
+     40.0,
+     -9.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n2_T",
+   "node": "220_D3_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -9.0,
+     5.0
+    ],
+    [
+     40.0,
+     -12.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T1_T",
+   "node": "220_D3_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -12.0,
+     5.0
+    ],
+    [
+     40.0,
+     -15.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n3_T",
+   "node": "220_D3_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -15.0,
+     5.0
+    ],
+    [
+     40.0,
+     -18.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n4_T",
+   "node": "220_D3_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -18.0,
+     5.0
+    ],
+    [
+     40.0,
+     -21.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_T2_T",
+   "node": "220_D3_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -21.0,
+     5.0
+    ],
+    [
+     40.0,
+     -24.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n5_T",
+   "node": "220_D3_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -24.0,
+     5.0
+    ],
+    [
+     40.0,
+     -27.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_D3_n6_T",
+   "node": "220_D3_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -27.0,
+     5.0
+    ],
+    [
+     40.0,
+     -30.0,
+     5.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS2L_R",
+   "node": "220_OPUS2L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -13.5,
+     5.0
+    ],
+    [
+     32.0,
+     -13.5,
+     16.0
+    ],
+    [
+     32.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS2L_S",
+   "node": "220_OPUS2L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -13.5,
+     5.0
+    ],
+    [
+     36.0,
+     -13.5,
+     16.0
+    ],
+    [
+     36.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_OPUS2L_T",
+   "node": "220_OPUS2L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -13.5,
+     5.0
+    ],
+    [
+     40.0,
+     -13.5,
+     16.0
+    ],
+    [
+     40.0,
+     8.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE2L_R",
+   "node": "220_FABLE2L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -22.5,
+     5.0
+    ],
+    [
+     32.0,
+     -22.5,
+     16.0
+    ],
+    [
+     32.0,
+     -44.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE2L_S",
+   "node": "220_FABLE2L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     36.0,
+     -22.5,
+     5.0
+    ],
+    [
+     36.0,
+     -22.5,
+     16.0
+    ],
+    [
+     36.0,
+     -44.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "220_FABLE2L_T",
+   "node": "220_FABLE2L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     40.0,
+     -22.5,
+     5.0
+    ],
+    [
+     40.0,
+     -22.5,
+     16.0
+    ],
+    [
+     40.0,
+     -44.0,
+     20.0
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSA_R",
+   "node": "66_BUSA",
+   "phase": "R",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -78.0,
+     6.5
+    ],
+    [
+     35.0,
+     -78.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSB_R",
+   "node": "66_BUSB",
+   "phase": "R",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -102.0,
+     4.5
+    ],
+    [
+     35.0,
+     -102.0,
+     4.5
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSA_S",
+   "node": "66_BUSA",
+   "phase": "S",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -80.0,
+     6.5
+    ],
+    [
+     35.0,
+     -80.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSB_S",
+   "node": "66_BUSB",
+   "phase": "S",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -104.0,
+     4.5
+    ],
+    [
+     35.0,
+     -104.0,
+     4.5
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSA_T",
+   "node": "66_BUSA",
+   "phase": "T",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -82.0,
+     6.5
+    ],
+    [
+     35.0,
+     -82.0,
+     6.5
+    ]
+   ]
+  },
+  {
+   "id": "66_BUSB_T",
+   "node": "66_BUSB",
+   "phase": "T",
+   "type": "bus",
+   "radius_m": 0.03,
+   "polyline": [
+    [
+     -5.0,
+     -106.0,
+     4.5
+    ],
+    [
+     35.0,
+     -106.0,
+     4.5
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropA_R",
+   "node": "66_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -78.0,
+     6.5
+    ],
+    [
+     -2.0,
+     -78.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropB_R",
+   "node": "66_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -102.0,
+     4.5
+    ],
+    [
+     -2.0,
+     -102.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n1_R",
+   "node": "66_D1_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -84.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n2_R",
+   "node": "66_D1_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -86.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T1_R",
+   "node": "66_D1_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -88.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n3_R",
+   "node": "66_D1_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -90.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n4_R",
+   "node": "66_D1_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -92.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T2_R",
+   "node": "66_D1_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -94.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n5_R",
+   "node": "66_D1_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -96.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n6_R",
+   "node": "66_D1_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -98.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropA_S",
+   "node": "66_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -80.0,
+     6.5
+    ],
+    [
+     0.0,
+     -80.0,
+     3.0
+    ],
+    [
+     0.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropB_S",
+   "node": "66_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -104.0,
+     4.5
+    ],
+    [
+     0.0,
+     -104.0,
+     3.0
+    ],
+    [
+     0.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n1_S",
+   "node": "66_D1_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -84.0,
+     3.0
+    ],
+    [
+     0.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n2_S",
+   "node": "66_D1_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -86.0,
+     3.0
+    ],
+    [
+     0.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T1_S",
+   "node": "66_D1_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -88.0,
+     3.0
+    ],
+    [
+     0.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n3_S",
+   "node": "66_D1_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -90.0,
+     3.0
+    ],
+    [
+     0.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n4_S",
+   "node": "66_D1_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -92.0,
+     3.0
+    ],
+    [
+     0.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T2_S",
+   "node": "66_D1_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -94.0,
+     3.0
+    ],
+    [
+     0.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n5_S",
+   "node": "66_D1_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -96.0,
+     3.0
+    ],
+    [
+     0.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n6_S",
+   "node": "66_D1_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -98.0,
+     3.0
+    ],
+    [
+     0.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropA_T",
+   "node": "66_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -82.0,
+     6.5
+    ],
+    [
+     2.0,
+     -82.0,
+     3.0
+    ],
+    [
+     2.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_dropB_T",
+   "node": "66_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -106.0,
+     4.5
+    ],
+    [
+     2.0,
+     -106.0,
+     3.0
+    ],
+    [
+     2.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n1_T",
+   "node": "66_D1_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -84.0,
+     3.0
+    ],
+    [
+     2.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n2_T",
+   "node": "66_D1_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -86.0,
+     3.0
+    ],
+    [
+     2.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T1_T",
+   "node": "66_D1_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -88.0,
+     3.0
+    ],
+    [
+     2.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n3_T",
+   "node": "66_D1_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -90.0,
+     3.0
+    ],
+    [
+     2.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n4_T",
+   "node": "66_D1_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -92.0,
+     3.0
+    ],
+    [
+     2.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_T2_T",
+   "node": "66_D1_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -94.0,
+     3.0
+    ],
+    [
+     2.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n5_T",
+   "node": "66_D1_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -96.0,
+     3.0
+    ],
+    [
+     2.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D1_n6_T",
+   "node": "66_D1_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -98.0,
+     3.0
+    ],
+    [
+     2.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET1L_R",
+   "node": "66_SONNET1L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -89.0,
+     3.0
+    ],
+    [
+     -2.0,
+     -89.0,
+     6.0
+    ],
+    [
+     -2.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET1L_S",
+   "node": "66_SONNET1L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -89.0,
+     3.0
+    ],
+    [
+     0.0,
+     -89.0,
+     6.0
+    ],
+    [
+     0.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET1L_T",
+   "node": "66_SONNET1L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -89.0,
+     3.0
+    ],
+    [
+     2.0,
+     -89.0,
+     6.0
+    ],
+    [
+     2.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR1_LV_R",
+   "node": "66_TR1_LV",
+   "phase": "R",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     -2.0,
+     -95.0,
+     3.0
+    ],
+    [
+     3.0,
+     -95.0,
+     3.0
+    ],
+    [
+     3.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR1_LV_S",
+   "node": "66_TR1_LV",
+   "phase": "S",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     0.0,
+     -95.0,
+     3.0
+    ],
+    [
+     5.0,
+     -95.0,
+     3.0
+    ],
+    [
+     5.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR1_LV_T",
+   "node": "66_TR1_LV",
+   "phase": "T",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     2.0,
+     -95.0,
+     3.0
+    ],
+    [
+     7.0,
+     -95.0,
+     3.0
+    ],
+    [
+     7.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropA_R",
+   "node": "66_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -78.0,
+     6.5
+    ],
+    [
+     8.0,
+     -78.0,
+     3.0
+    ],
+    [
+     8.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropB_R",
+   "node": "66_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -102.0,
+     4.5
+    ],
+    [
+     8.0,
+     -102.0,
+     3.0
+    ],
+    [
+     8.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n1_R",
+   "node": "66_D2_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -84.0,
+     3.0
+    ],
+    [
+     8.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n2_R",
+   "node": "66_D2_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -86.0,
+     3.0
+    ],
+    [
+     8.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T1_R",
+   "node": "66_D2_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -88.0,
+     3.0
+    ],
+    [
+     8.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n3_R",
+   "node": "66_D2_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -90.0,
+     3.0
+    ],
+    [
+     8.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n4_R",
+   "node": "66_D2_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -92.0,
+     3.0
+    ],
+    [
+     8.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T2_R",
+   "node": "66_D2_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -94.0,
+     3.0
+    ],
+    [
+     8.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n5_R",
+   "node": "66_D2_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -96.0,
+     3.0
+    ],
+    [
+     8.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n6_R",
+   "node": "66_D2_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -98.0,
+     3.0
+    ],
+    [
+     8.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropA_S",
+   "node": "66_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -80.0,
+     6.5
+    ],
+    [
+     10.0,
+     -80.0,
+     3.0
+    ],
+    [
+     10.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropB_S",
+   "node": "66_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -104.0,
+     4.5
+    ],
+    [
+     10.0,
+     -104.0,
+     3.0
+    ],
+    [
+     10.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n1_S",
+   "node": "66_D2_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -84.0,
+     3.0
+    ],
+    [
+     10.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n2_S",
+   "node": "66_D2_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -86.0,
+     3.0
+    ],
+    [
+     10.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T1_S",
+   "node": "66_D2_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -88.0,
+     3.0
+    ],
+    [
+     10.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n3_S",
+   "node": "66_D2_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -90.0,
+     3.0
+    ],
+    [
+     10.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n4_S",
+   "node": "66_D2_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -92.0,
+     3.0
+    ],
+    [
+     10.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T2_S",
+   "node": "66_D2_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -94.0,
+     3.0
+    ],
+    [
+     10.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n5_S",
+   "node": "66_D2_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -96.0,
+     3.0
+    ],
+    [
+     10.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n6_S",
+   "node": "66_D2_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -98.0,
+     3.0
+    ],
+    [
+     10.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropA_T",
+   "node": "66_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -82.0,
+     6.5
+    ],
+    [
+     12.0,
+     -82.0,
+     3.0
+    ],
+    [
+     12.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_dropB_T",
+   "node": "66_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -106.0,
+     4.5
+    ],
+    [
+     12.0,
+     -106.0,
+     3.0
+    ],
+    [
+     12.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n1_T",
+   "node": "66_D2_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -84.0,
+     3.0
+    ],
+    [
+     12.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n2_T",
+   "node": "66_D2_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -86.0,
+     3.0
+    ],
+    [
+     12.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T1_T",
+   "node": "66_D2_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -88.0,
+     3.0
+    ],
+    [
+     12.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n3_T",
+   "node": "66_D2_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -90.0,
+     3.0
+    ],
+    [
+     12.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n4_T",
+   "node": "66_D2_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -92.0,
+     3.0
+    ],
+    [
+     12.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_T2_T",
+   "node": "66_D2_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -94.0,
+     3.0
+    ],
+    [
+     12.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n5_T",
+   "node": "66_D2_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -96.0,
+     3.0
+    ],
+    [
+     12.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D2_n6_T",
+   "node": "66_D2_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -98.0,
+     3.0
+    ],
+    [
+     12.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU1L_R",
+   "node": "66_HAIKU1L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -89.0,
+     3.0
+    ],
+    [
+     8.0,
+     -89.0,
+     6.0
+    ],
+    [
+     8.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU1L_S",
+   "node": "66_HAIKU1L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -89.0,
+     3.0
+    ],
+    [
+     10.0,
+     -89.0,
+     6.0
+    ],
+    [
+     10.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU1L_T",
+   "node": "66_HAIKU1L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -89.0,
+     3.0
+    ],
+    [
+     12.0,
+     -89.0,
+     6.0
+    ],
+    [
+     12.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR2_LV_R",
+   "node": "66_TR2_LV",
+   "phase": "R",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     8.0,
+     -95.0,
+     3.0
+    ],
+    [
+     13.0,
+     -95.0,
+     3.0
+    ],
+    [
+     13.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR2_LV_S",
+   "node": "66_TR2_LV",
+   "phase": "S",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     10.0,
+     -95.0,
+     3.0
+    ],
+    [
+     15.0,
+     -95.0,
+     3.0
+    ],
+    [
+     15.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_TR2_LV_T",
+   "node": "66_TR2_LV",
+   "phase": "T",
+   "type": "jumper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     12.0,
+     -95.0,
+     3.0
+    ],
+    [
+     17.0,
+     -95.0,
+     3.0
+    ],
+    [
+     17.0,
+     -95.0,
+     2.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropA_R",
+   "node": "66_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -78.0,
+     6.5
+    ],
+    [
+     18.0,
+     -78.0,
+     3.0
+    ],
+    [
+     18.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropB_R",
+   "node": "66_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -102.0,
+     4.5
+    ],
+    [
+     18.0,
+     -102.0,
+     3.0
+    ],
+    [
+     18.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n1_R",
+   "node": "66_D3_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -84.0,
+     3.0
+    ],
+    [
+     18.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n2_R",
+   "node": "66_D3_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -86.0,
+     3.0
+    ],
+    [
+     18.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T1_R",
+   "node": "66_D3_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -88.0,
+     3.0
+    ],
+    [
+     18.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n3_R",
+   "node": "66_D3_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -90.0,
+     3.0
+    ],
+    [
+     18.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n4_R",
+   "node": "66_D3_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -92.0,
+     3.0
+    ],
+    [
+     18.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T2_R",
+   "node": "66_D3_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -94.0,
+     3.0
+    ],
+    [
+     18.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n5_R",
+   "node": "66_D3_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -96.0,
+     3.0
+    ],
+    [
+     18.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n6_R",
+   "node": "66_D3_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -98.0,
+     3.0
+    ],
+    [
+     18.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropA_S",
+   "node": "66_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -80.0,
+     6.5
+    ],
+    [
+     20.0,
+     -80.0,
+     3.0
+    ],
+    [
+     20.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropB_S",
+   "node": "66_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -104.0,
+     4.5
+    ],
+    [
+     20.0,
+     -104.0,
+     3.0
+    ],
+    [
+     20.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n1_S",
+   "node": "66_D3_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -84.0,
+     3.0
+    ],
+    [
+     20.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n2_S",
+   "node": "66_D3_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -86.0,
+     3.0
+    ],
+    [
+     20.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T1_S",
+   "node": "66_D3_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -88.0,
+     3.0
+    ],
+    [
+     20.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n3_S",
+   "node": "66_D3_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -90.0,
+     3.0
+    ],
+    [
+     20.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n4_S",
+   "node": "66_D3_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -92.0,
+     3.0
+    ],
+    [
+     20.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T2_S",
+   "node": "66_D3_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -94.0,
+     3.0
+    ],
+    [
+     20.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n5_S",
+   "node": "66_D3_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -96.0,
+     3.0
+    ],
+    [
+     20.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n6_S",
+   "node": "66_D3_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -98.0,
+     3.0
+    ],
+    [
+     20.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropA_T",
+   "node": "66_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -82.0,
+     6.5
+    ],
+    [
+     22.0,
+     -82.0,
+     3.0
+    ],
+    [
+     22.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_dropB_T",
+   "node": "66_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -106.0,
+     4.5
+    ],
+    [
+     22.0,
+     -106.0,
+     3.0
+    ],
+    [
+     22.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n1_T",
+   "node": "66_D3_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -84.0,
+     3.0
+    ],
+    [
+     22.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n2_T",
+   "node": "66_D3_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -86.0,
+     3.0
+    ],
+    [
+     22.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T1_T",
+   "node": "66_D3_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -88.0,
+     3.0
+    ],
+    [
+     22.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n3_T",
+   "node": "66_D3_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -90.0,
+     3.0
+    ],
+    [
+     22.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n4_T",
+   "node": "66_D3_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -92.0,
+     3.0
+    ],
+    [
+     22.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_T2_T",
+   "node": "66_D3_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -94.0,
+     3.0
+    ],
+    [
+     22.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n5_T",
+   "node": "66_D3_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -96.0,
+     3.0
+    ],
+    [
+     22.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D3_n6_T",
+   "node": "66_D3_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -98.0,
+     3.0
+    ],
+    [
+     22.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET2L_R",
+   "node": "66_SONNET2L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -89.0,
+     3.0
+    ],
+    [
+     18.0,
+     -89.0,
+     6.0
+    ],
+    [
+     18.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET2L_S",
+   "node": "66_SONNET2L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -89.0,
+     3.0
+    ],
+    [
+     20.0,
+     -89.0,
+     6.0
+    ],
+    [
+     20.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_SONNET2L_T",
+   "node": "66_SONNET2L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -89.0,
+     3.0
+    ],
+    [
+     22.0,
+     -89.0,
+     6.0
+    ],
+    [
+     22.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU2L_R",
+   "node": "66_HAIKU2L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     18.0,
+     -95.0,
+     3.0
+    ],
+    [
+     18.0,
+     -95.0,
+     6.0
+    ],
+    [
+     18.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU2L_S",
+   "node": "66_HAIKU2L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     20.0,
+     -95.0,
+     3.0
+    ],
+    [
+     20.0,
+     -95.0,
+     6.0
+    ],
+    [
+     20.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_HAIKU2L_T",
+   "node": "66_HAIKU2L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     22.0,
+     -95.0,
+     3.0
+    ],
+    [
+     22.0,
+     -95.0,
+     6.0
+    ],
+    [
+     22.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropA_R",
+   "node": "66_BUSA",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -78.0,
+     6.5
+    ],
+    [
+     28.0,
+     -78.0,
+     3.0
+    ],
+    [
+     28.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropB_R",
+   "node": "66_BUSB",
+   "phase": "R",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -102.0,
+     4.5
+    ],
+    [
+     28.0,
+     -102.0,
+     3.0
+    ],
+    [
+     28.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n1_R",
+   "node": "66_D4_n1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -84.0,
+     3.0
+    ],
+    [
+     28.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n2_R",
+   "node": "66_D4_n2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -86.0,
+     3.0
+    ],
+    [
+     28.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T1_R",
+   "node": "66_D4_T1",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -88.0,
+     3.0
+    ],
+    [
+     28.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n3_R",
+   "node": "66_D4_n3",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -90.0,
+     3.0
+    ],
+    [
+     28.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n4_R",
+   "node": "66_D4_n4",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -92.0,
+     3.0
+    ],
+    [
+     28.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T2_R",
+   "node": "66_D4_T2",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -94.0,
+     3.0
+    ],
+    [
+     28.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n5_R",
+   "node": "66_D4_n5",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -96.0,
+     3.0
+    ],
+    [
+     28.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n6_R",
+   "node": "66_D4_n6",
+   "phase": "R",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -98.0,
+     3.0
+    ],
+    [
+     28.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropA_S",
+   "node": "66_BUSA",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -80.0,
+     6.5
+    ],
+    [
+     30.0,
+     -80.0,
+     3.0
+    ],
+    [
+     30.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropB_S",
+   "node": "66_BUSB",
+   "phase": "S",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -104.0,
+     4.5
+    ],
+    [
+     30.0,
+     -104.0,
+     3.0
+    ],
+    [
+     30.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n1_S",
+   "node": "66_D4_n1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -84.0,
+     3.0
+    ],
+    [
+     30.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n2_S",
+   "node": "66_D4_n2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -86.0,
+     3.0
+    ],
+    [
+     30.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T1_S",
+   "node": "66_D4_T1",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -88.0,
+     3.0
+    ],
+    [
+     30.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n3_S",
+   "node": "66_D4_n3",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -90.0,
+     3.0
+    ],
+    [
+     30.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n4_S",
+   "node": "66_D4_n4",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -92.0,
+     3.0
+    ],
+    [
+     30.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T2_S",
+   "node": "66_D4_T2",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -94.0,
+     3.0
+    ],
+    [
+     30.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n5_S",
+   "node": "66_D4_n5",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -96.0,
+     3.0
+    ],
+    [
+     30.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n6_S",
+   "node": "66_D4_n6",
+   "phase": "S",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -98.0,
+     3.0
+    ],
+    [
+     30.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropA_T",
+   "node": "66_BUSA",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -82.0,
+     6.5
+    ],
+    [
+     32.0,
+     -82.0,
+     3.0
+    ],
+    [
+     32.0,
+     -84.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_dropB_T",
+   "node": "66_BUSB",
+   "phase": "T",
+   "type": "dropper",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -106.0,
+     4.5
+    ],
+    [
+     32.0,
+     -106.0,
+     3.0
+    ],
+    [
+     32.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n1_T",
+   "node": "66_D4_n1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -84.0,
+     3.0
+    ],
+    [
+     32.0,
+     -86.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n2_T",
+   "node": "66_D4_n2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -86.0,
+     3.0
+    ],
+    [
+     32.0,
+     -88.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T1_T",
+   "node": "66_D4_T1",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -88.0,
+     3.0
+    ],
+    [
+     32.0,
+     -90.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n3_T",
+   "node": "66_D4_n3",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -90.0,
+     3.0
+    ],
+    [
+     32.0,
+     -92.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n4_T",
+   "node": "66_D4_n4",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -92.0,
+     3.0
+    ],
+    [
+     32.0,
+     -94.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_T2_T",
+   "node": "66_D4_T2",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -94.0,
+     3.0
+    ],
+    [
+     32.0,
+     -96.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n5_T",
+   "node": "66_D4_n5",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -96.0,
+     3.0
+    ],
+    [
+     32.0,
+     -98.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_D4_n6_T",
+   "node": "66_D4_n6",
+   "phase": "T",
+   "type": "equipment",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -98.0,
+     3.0
+    ],
+    [
+     32.0,
+     -100.0,
+     3.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS1L_R",
+   "node": "66_MYTHOS1L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -89.0,
+     3.0
+    ],
+    [
+     28.0,
+     -89.0,
+     6.0
+    ],
+    [
+     28.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS1L_S",
+   "node": "66_MYTHOS1L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -89.0,
+     3.0
+    ],
+    [
+     30.0,
+     -89.0,
+     6.0
+    ],
+    [
+     30.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS1L_T",
+   "node": "66_MYTHOS1L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -89.0,
+     3.0
+    ],
+    [
+     32.0,
+     -89.0,
+     6.0
+    ],
+    [
+     32.0,
+     -72.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS2L_R",
+   "node": "66_MYTHOS2L",
+   "phase": "R",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     28.0,
+     -95.0,
+     3.0
+    ],
+    [
+     28.0,
+     -95.0,
+     6.0
+    ],
+    [
+     28.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS2L_S",
+   "node": "66_MYTHOS2L",
+   "phase": "S",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     30.0,
+     -95.0,
+     3.0
+    ],
+    [
+     30.0,
+     -95.0,
+     6.0
+    ],
+    [
+     30.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  },
+  {
+   "id": "66_MYTHOS2L_T",
+   "node": "66_MYTHOS2L",
+   "phase": "T",
+   "type": "line",
+   "radius_m": 0.02,
+   "polyline": [
+    [
+     32.0,
+     -95.0,
+     3.0
+    ],
+    [
+     32.0,
+     -95.0,
+     6.0
+    ],
+    [
+     32.0,
+     -112.0,
+     10.0
+    ]
+   ]
+  }
+ ],
+ "structures": [
+  {
+   "id": "220_GW_N",
+   "type": "ground_wire",
+   "polyline": [
+    [
+     -14.0,
+     8.0,
+     25.0
+    ],
+    [
+     68.0,
+     8.0,
+     25.0
+    ]
+   ],
+   "name": "220kV 架空地線（北）",
+   "radius_m": 0.01
+  },
+  {
+   "id": "220_GW_S",
+   "type": "ground_wire",
+   "polyline": [
+    [
+     -14.0,
+     -44.0,
+     25.0
+    ],
+    [
+     68.0,
+     -44.0,
+     25.0
+    ]
+   ],
+   "name": "220kV 架空地線（南）",
+   "radius_m": 0.01
+  },
+  {
+   "id": "66_GW_N",
+   "type": "ground_wire",
+   "polyline": [
+    [
+     -10.0,
+     -72.0,
+     14.0
+    ],
+    [
+     40.0,
+     -72.0,
+     14.0
+    ]
+   ],
+   "name": "66kV 架空地線（北）",
+   "radius_m": 0.01
+  },
+  {
+   "id": "66_GW_S",
+   "type": "ground_wire",
+   "polyline": [
+    [
+     -10.0,
+     -112.0,
+     14.0
+    ],
+    [
+     40.0,
+     -112.0,
+     14.0
+    ]
+   ],
+   "name": "66kV 架空地線（南）",
+   "radius_m": 0.01
+  }
+ ]
+}
