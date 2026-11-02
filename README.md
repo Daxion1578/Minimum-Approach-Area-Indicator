@@ -33,6 +33,7 @@ MAAI は、この「見えない間合い」を次の流れで目に見える形
 
 ## ドキュメント
 
+- [進み具合](STATUS.md)
 - [仕組みの図](docs/architecture.md)
 - [仕様書](docs/spec.md)
 - [設計判断の記録](docs/decisions.md)
