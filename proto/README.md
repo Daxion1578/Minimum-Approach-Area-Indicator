@@ -10,4 +10,4 @@
 
 実行: `python3 proto/tests/test_energize.py` または `python -m pytest proto/tests -q`
 
-採用するなら `engine/energize.py`・`synth/`・`contracts/` へ移し、§6 の契約を書き換える。採用しないなら、テストケース（逆送 FAULT、1・1/2 の運転継続）だけを `tests/` に移植する。
+11/3 の判断：契約は仕様§6 のまま。ここのロジックとテスト、合成変電所の構成を §6 の契約に移植して `engine/`・`synth/`・`tests/` に入れる。移植が終わったら `proto/` は消す。
