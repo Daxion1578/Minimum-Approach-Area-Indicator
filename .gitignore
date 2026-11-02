@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude Code の個人設定
 .claude/settings.local.json
+
+# 報告（ローカルで読むもの）
+reports/
