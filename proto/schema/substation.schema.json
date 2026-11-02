@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/maai/substation.schema.json",
+  "title": "MAAI substation model",
+  "description": "変電所構内モデル。電気的な接続（ノード・開閉器・接地・電源・変圧器）と、空間（導体の3Dポリライン・構造物）を一つのファイルで持つ。座標は m、x=東、y=北、z=上。",
+  "type": "object",
+  "required": ["meta", "voltage_levels", "nodes", "switches", "earth_switches", "sources", "transformers", "conductors", "structures"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["name", "fictional", "schema_version", "coordinate_system"],
+      "properties": {
+        "name": { "type": "string" },
+        "fictional": { "type": "boolean", "const": true, "description": "公開リポジトリに置くモデルは必ず架空であること" },
+        "schema_version": { "type": "string" },
+        "coordinate_system": {
+          "type": "object",
+          "required": ["unit", "x", "y", "z"],
+          "properties": {
+            "unit": { "const": "m" },
+            "x": { "const": "east" },
+            "y": { "const": "north" },
+            "z": { "const": "up" }
+          }
+        },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "voltage_levels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "nominal_kv"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "nominal_kv": { "type": "number" },
+          "approach_limit_m": { "type": ["number", "null"], "description": "法令上の接近限界距離。出典を source に書く。未設定なら null" },
+          "working_clearance_m": { "type": ["number", "null"], "description": "判定に使う安全離隔（運用値）。未設定なら null" },
+          "phase_to_ground_clearance_m": { "type": ["number", "null"], "description": "設計上の対地絶縁距離（参考）" },
+          "source": { "type": "string", "description": "基準値の出典（公開資料のみ）" }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "電気的に一体の導体群（母線、開閉器間の区間、線路引込点など）",
+      "items": {
+        "type": "object",
+        "required": ["id", "voltage", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "voltage": { "type": "string" },
+          "kind": { "enum": ["bus", "section", "tap", "line", "transformer_terminal"] },
+          "name": { "type": "string" },
+          "bay": { "type": "string", "description": "所属ベイ（ダイヤ）" }
+        }
+      }
+    },
+    "switches": {
+      "type": "array",
+      "description": "2ノード間を接続する開閉器（CB, LS, GDS など）",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "from", "to", "normal"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["CB", "LS", "GDS"], "description": "CB=遮断器, LS=断路器, GDS=ガス断路器" },
+          "subtype": { "type": "string", "description": "パンタ式、垂直一点切 など自由記述" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "normal": { "enum": ["open", "closed"] },
+          "name": { "type": "string" },
+          "bay": { "type": "string" },
+          "position": { "$ref": "#/definitions/point", "description": "機器の代表位置（3D表示用）" }
+        }
+      }
+    },
+    "earth_switches": {
+      "type": "array",
+      "description": "ノードに接地を付ける接地開閉器",
+      "items": {
+        "type": "object",
+        "required": ["id", "node", "normal"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "node": { "type": "string" },
+          "normal": { "enum": ["open", "closed"] },
+          "name": { "type": "string" },
+          "position": { "$ref": "#/definitions/point" }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "電源。線路の引込点など、外部系統から電圧が来るノード",
+      "items": {
+        "type": "object",
+        "required": ["id", "node", "in_service"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "node": { "type": "string" },
+          "in_service": { "type": "boolean" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    "transformers": {
+      "type": "array",
+      "description": "変圧器。hv_node と lv_node は電気的に連結する（逆送を含む）",
+      "items": {
+        "type": "object",
+        "required": ["id", "hv_node", "lv_node"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "hv_node": { "type": "string" },
+          "lv_node": { "type": "string" },
+          "mva": { "type": "number" },
+          "name": { "type": "string" },
+          "position": { "$ref": "#/definitions/point" }
+        }
+      }
+    },
+    "conductors": {
+      "type": "array",
+      "description": "空間上の導体。node に所属し、充停電は node から継承する。相ごとに1本",
+      "items": {
+        "type": "object",
+        "required": ["id", "node", "phase", "polyline"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "node": { "type": "string" },
+          "phase": { "enum": ["R", "S", "T"] },
+          "type": { "enum": ["bus", "dropper", "jumper", "equipment", "line", "bushing", "gis_internal"] },
+          "exposed": { "type": "boolean", "default": true, "description": "露出導体か。GIS内部導体は false（充停電判定の対象だが、離隔判定の対象外）" },
+          "radius_m": { "type": "number", "default": 0.02 },
+          "polyline": { "type": "array", "minItems": 2, "items": { "$ref": "#/definitions/point" } }
+        }
+      }
+    },
+    "structures": {
+      "type": "array",
+      "description": "非充電の構造物・架空地線・埋設物。離隔ではなく接触判定の対象",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "polyline"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "enum": ["ground_wire", "gantry", "building", "buried_pipe", "fence", "other"] },
+          "name": { "type": "string" },
+          "radius_m": { "type": "number" },
+          "polyline": { "type": "array", "minItems": 2, "items": { "$ref": "#/definitions/point" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "point": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    }
+  }
+}
