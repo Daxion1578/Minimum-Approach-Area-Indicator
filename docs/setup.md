@@ -48,19 +48,24 @@ python scripts/doctor.py
 - `/status` — 認証が Max のアカウントになっていること（API キーになっていないこと）。
 - `/hooks` — PreToolUse（公開前チェック）と PostToolUse（engine 編集後のテスト）の2本が見えること。
 
-## 6. 日々の回し方
+## 6. 日々の回し方（打つのは2つだけ）
 
-1. `claude` を起動し、`/slice` で今日の縦切りを確認してから着手させる。
-2. 縦切りが終わったら `/verify` で手元確認の手順を出させ、自分で画面を見て確かめる。
-3. 判断をしたら `docs/decisions.md` に1〜3行残させる。
-4. push の前に `/publish-check`（中で `safety-reviewer` が点検する）。push は毎回確認が出るので、差分を見てから許可する。
+1. 朝: `claude` を起動し `/daily` と打つ。批評 → `TASKS.md` の更新 → 「今日の一つ」の提案で止まるので、「やって」で着手させる。
+2. 途中で判断を求められたら、`STATUS.md` の表の番号で答える（1枚1判断のカードで来る）。
+3. 夜: `/wrap` と打つ。テスト → 公開前点検 → 判断の記録 → `STATUS.md` の更新 → コミットまで進み、最後に「push してよいか」と聞いてくるので、差分を見て許可する。
+4. 自分で確かめたいときは `/verify`（手元確認の手順）。それ以外のコマンドは覚えなくてよい。
 
-## 7. 最初の指示（11/2 夜）
+## 7. 既に clone 済みの場合（11/3 以降）
 
+PowerShell で:
+
+```powershell
+cd F:\Dev\Minimum-Approach-Area-Indicator
+git pull
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python scripts/doctor.py
+claude
 ```
-docs/spec.md の §6 に沿って、contracts/ に JSON Schema の雛形を作ってください。
-対象は topology, layout, state, energization, envelope, machine, plan, interference, proposal の9つです。
-あわせて data/sites/SITE-01/site.json（§10 の SITE-01 のサイト定義）を合成データで作ってください。
-エンジンやサーバのコードはまだ書かないでください。
-最後に、スキーマでサイト定義を検証するテストを1本だけ書き、python -m pytest -q が通ることを確認して、私が手元で確認する手順を示してください。
-```
+
+`.venv` がまだ無ければ §2 の `python -m venv .venv` から。`claude` が立ち上がったら `/status` で Max のログインであることを確かめ、`/daily` と打つ。
