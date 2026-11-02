@@ -55,7 +55,11 @@ python scripts/doctor.py
 3. 夜: `/wrap` と打つ。テスト → 公開前点検 → 判断の記録 → `STATUS.md` の更新 → コミットまで進み、最後に「push してよいか」と聞いてくるので、差分を見て許可する。
 4. 自分で確かめたいときは `/verify`（手元確認の手順）。それ以外のコマンドは覚えなくてよい。
 
-## 7. 既に clone 済みの場合（11/3 以降）
+## 7. 試作画面を見る
+
+`web/prototype.html` をダブルクリックで開く（three.js を CDN から読むのでネット接続が要る）。合成変電所のデータを変えたら `python scripts/build_prototype.py` で作り直す。
+
+## 8. 既に clone 済みの場合（11/3 以降）
 
 PowerShell で:
 

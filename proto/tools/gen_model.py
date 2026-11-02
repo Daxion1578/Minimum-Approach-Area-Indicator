@@ -184,9 +184,12 @@ class Model:
         self.switch(f"{pre}_CB3", "CB", n5, n6, nrm, bay=bay, pos=pos(y_CB3))
         self.switch(f"{pre}_LSB", "LS", n6, bus_b, nrm, bay=bay, pos=pos(y_LSB), subtype="パンタ式")
 
-        # 接地開閉器（引出点）
+        # 接地開閉器（引出点と、遮断器両側の区間。点検用）
         self.es(f"{pre}_T1_ES", t1, pos=(x_bay + 1.0, (y_LS1B + y_LS2A) / 2, 1.5))
         self.es(f"{pre}_T2_ES", t2, pos=(x_bay + 1.0, (y_LS2B + y_LS3A) / 2, 1.5))
+        for nid, y0, y1 in ((n1, y_LSA, y_CB1), (n2, y_CB1, y_LS1B), (n3, y_LS2A, y_CB2),
+                            (n4, y_CB2, y_LS2B), (n5, y_LS3A, y_CB3), (n6, y_CB3, y_LSB)):
+            self.es(f"{nid}_ES", nid, pos=(x_bay + 1.0, (y0 + y1) / 2, 1.5))
 
         if new_bay:
             # 新設ベイ：母線は延長済み。機器導体は未設置なので母線側ドロッパーのみ生成しない。
