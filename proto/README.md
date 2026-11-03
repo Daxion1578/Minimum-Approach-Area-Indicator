@@ -1,13 +1,11 @@
-# proto/ — 課電判定の試作（契約案B）
+# proto/ — 図面生成の試作（移植待ち）
 
-11/3 未明に作った試作。`docs/spec.md` §6 の契約とは形が違うので、採用を決めるまで `proto/` に置く。
+11/3 未明の試作のうち、まだ `synth/` に移していないものだけが残っている。
 
-- `schema/substation.schema.json` 構内モデル（電気的接続＋空間を1ファイル。開閉器は辺、区間はノード）
-- `tools/gen_model.py` 合成変電所の生成（220/66kV 1・1/2 母線。寸法は全部仮定値、`P` に集約）
-- `src/energize.py` 課電判定（live / dead_grounded / dead_ungrounded / FAULT_LIVE_GROUNDED）
-- `tests/test_energize.py` 7件。変圧器逆送の FAULT 検出、新設ベイ付近の充電導体の抽出を含む
-- `FREEZE.md` 凍結事項（作る／作らない／仮定値／日程）
+- `tools/gen_model.py` と `data/substation_fictional.json` 旧契約の構内モデル（`tools/gen_drawings.py` がこれを読む）
+- `tools/gen_drawings.py` 合成図面 3 枚（配置図・断面図・単線結線図、ベクター PDF）→ `data/drawings/`
+- `FREEZE.md` 試作時の凍結事項（11/3 の判断で一部は変わっている。正は `docs/decisions.md`）
 
-実行: `python3 proto/tests/test_energize.py` または `python -m pytest proto/tests -q`
+移植済み（11/3）: 課電判定とテストは `engine/energize.py` と `tests/`、合成変電所の構成は `synth/gen_site.py`（契約 §6 の形で `data/sites/SITE-01/truth/` に出す）。
 
-11/3 の判断：契約は仕様§6 のまま。ここのロジックとテスト、合成変電所の構成を §6 の契約に移植して `engine/`・`synth/`・`tests/` に入れる。移植が終わったら `proto/` は消す。
+図面生成を `synth/` に移し、描き方のルール（本人から受け取る）に合わせて書き直したら、`proto/` は消す。

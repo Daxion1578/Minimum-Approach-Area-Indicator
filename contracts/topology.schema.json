@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maai.example/contracts/topology.schema.json",
+  "title": "topology.json — 図面の構造（開閉器の状態は含めない）",
+  "description": "docs/spec.md §6.1。機器をノード、導体を辺で表す。端子の参照は `ノードID` または `ノードID.端子名`。開閉器（breaker / disconnector）は端子 a・b、変圧器は hv・lv、それ以外は端子が一つ（ノードIDだけで参照する）。開閉器を端子名なしで参照した辺は、辺の並び順で最初の1本が a、次の1本が b に割り当てられ、3本目はエラー。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "site_id", "nodes", "edges"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1" },
+    "site_id": { "$ref": "#/$defs/siteId" },
+    "source_drawing_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "generated_by": { "type": "string" },
+    "name": { "type": "string", "description": "構内の呼び名（合成データであることが分かる名前）" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "questions": {
+      "type": "array",
+      "description": "図面構造化のときに Claude が出した未確定箇所。承認時に空であること。",
+      "items": { "$ref": "#/$defs/question" }
+    }
+  },
+  "$defs": {
+    "siteId": { "type": "string", "pattern": "^SITE-[0-9]{2}$" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "terminalRef": {
+      "type": "string",
+      "description": "`ノードID` または `ノードID.端子名`（端子名は a, b, hv, lv）",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(\\.(a|b|hv|lv))?$"
+    },
+    "voltageKv": { "type": "number", "exclusiveMinimum": 0 },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "type": "string",
+          "enum": ["source", "bus", "breaker", "disconnector", "earthing", "transformer", "terminal", "load"]
+        },
+        "name": { "type": "string" },
+        "bay": { "type": "string" },
+        "voltage_kv": { "$ref": "#/$defs/voltageKv" },
+        "windings": {
+          "type": "object",
+          "required": ["hv", "lv"],
+          "additionalProperties": false,
+          "properties": {
+            "hv": { "type": "object", "required": ["voltage_kv"], "properties": { "voltage_kv": { "$ref": "#/$defs/voltageKv" } } },
+            "lv": { "type": "object", "required": ["voltage_kv"], "properties": { "voltage_kv": { "$ref": "#/$defs/voltageKv" } } }
+          }
+        },
+        "attached_to": {
+          "$ref": "#/$defs/terminalRef",
+          "description": "earthing のみ。接地開閉器を閉じたときに接地される端子。"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "transformer" } } },
+          "then": { "required": ["windings"] },
+          "else": { "required": ["voltage_kv"], "not": { "required": ["windings"] } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "earthing" } } },
+          "then": { "required": ["attached_to"] },
+          "else": { "not": { "required": ["attached_to"] } }
+        }
+      ]
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "conductor"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id", "description": "省略時は `from--to`" },
+        "from": { "$ref": "#/$defs/terminalRef" },
+        "to": { "$ref": "#/$defs/terminalRef" },
+        "conductor": {
+          "type": "string",
+          "enum": ["bare", "insulated", "enclosed"],
+          "description": "bare: 露出（離隔判定の相手）。insulated: 絶縁電線。enclosed: GIS など外箱内（課電判定の対象だが離隔判定の相手ではない）"
+        },
+        "name": { "type": "string" }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": ["at", "issue"],
+      "properties": {
+        "at": { "type": "string" },
+        "issue": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "evidence": { "type": "string" }
+      }
+    }
+  }
+}

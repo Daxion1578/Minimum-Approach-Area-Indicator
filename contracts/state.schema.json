@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maai.example/contracts/state.schema.json",
+  "title": "state.json — 開閉器の状態（1ステップ分）",
+  "description": "docs/spec.md §6.3。`switches` には breaker / disconnector / earthing の全ノードを書く。書かれていないものは保守側に倒す（開閉器は closed、接地開閉器は open、電源は live）。`sources` には source ノードを書く。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "site_id", "step", "sources", "switches"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1" },
+    "site_id": { "type": "string", "pattern": "^SITE-[0-9]{2}$" },
+    "step": { "type": "integer", "minimum": 0 },
+    "note": { "type": "string" },
+    "sources": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "enum": ["live", "dead"] }
+    },
+    "switches": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "enum": ["open", "closed"] }
+    }
+  }
+}

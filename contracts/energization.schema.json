@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maai.example/contracts/energization.schema.json",
+  "title": "energization.json — 課電判定の結果",
+  "description": "docs/spec.md §6.4。閉じた開閉器と導体でつながる連結成分ごとに状態を持つ。開閉器が open のときは端子 a と b が別の成分に入り、`nodes` には `ノードID.端子名` で現れる。`invalid` は充電しているのに接地されている成分（計画ミス）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "site_id", "step", "components", "errors"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1" },
+    "site_id": { "type": "string", "pattern": "^SITE-[0-9]{2}$" },
+    "step": { "type": "integer", "minimum": 0 },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["nodes", "edges", "state"],
+        "additionalProperties": false,
+        "properties": {
+          "nodes": { "type": "array", "items": { "type": "string" } },
+          "edges": { "type": "array", "items": { "type": "string" } },
+          "state": { "type": "string", "enum": ["live", "dead_grounded", "dead_ungrounded", "invalid"] },
+          "live_sources": { "type": "array", "items": { "type": "string" } },
+          "grounded_by": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string", "enum": ["live_grounded", "unknown_switch", "unknown_source"] },
+          "message": { "type": "string" },
+          "nodes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,12 @@
 
 ## 2026-11-03
 
+- **契約 §6 の端子の約束を決め、`contracts/` に落とした。** 端子の参照は `ノードID` か `ノードID.端子名`。開閉器（breaker / disconnector）は端子 a・b、変圧器は hv・lv、それ以外は端子一つ。開閉器を端子名なしで参照した辺は、辺の並び順で 1 本目が a、2 本目が b、3 本目はエラー。接地開閉器は `attached_to` の端子に接地する。開閉器が open のときは a 側と b 側が別の成分に入り、課電判定の結果に `CB-1.a` のように現れる。
+- **`state.json` に書かれていない機器は保守側に倒す。** 開閉器は closed、接地開閉器は open、電源は live（§7.1 の「迷ったら保守側」をここにも適用）。無いIDは `errors` に `unknown_switch` / `unknown_source` で返す。
+- **充電している成分に接地が入ったら成分全体を `invalid` にする。** 接地開閉器を閉じた瞬間に電気的に一体になるため、接地点だけを赤くする根拠がない。どの接地が原因かは `grounded_by` で分かる。
+- **課電判定と合成変電所を §6 の契約に移植し、`proto/` の課電判定部分（src・tests・schema）を消した。** `engine/energize.py`（純粋なグラフ探索）、`synth/gen_site.py`（`data/sites/SITE-01/truth/` に topology / layout / states）、`tests/` 19 件。`proto/tools/` は図面生成が `synth/` に移るまで残す。
+- **合成サイトの線路名を Opus / Fable などから方面名・番号（東線1L、北線1L、港線1L…）に改めた。** 初見の人に模型のおもちゃに見える、という批評（`docs/critique/1103.md`）を受けて。実在の線路名との一致は意図していない。
+- **MCP サーバ化は今週は採用しない。** §16 の未決から外し §13 に記した。動くものが無い段階で決める材料がなく、閉じても後から足せる。
 - **合成変電所の図面3枚（配置図・断面図・単線結線図）をベクター PDF で生成し、`proto/data/drawings/` に置いた。** 出所は `proto/tools/gen_drawings.py`（合成モデル `proto/data/substation_fictional.json` から機械生成。実図面・実写は一切含まない）。公開前チェックの媒体許可リスト `.public-media-allow.txt` に登録。文字は PDF のテキストとして入っているので、PDF 取込（縦切り3）の試験入力に使う。
 - **動きを先に見るため、試作画面 `web/prototype.html` を作った。** 4ステップ（図面取込→停止条件→重機配置→計画確定）と3D、右側に「画面→engine／engine→画面」の JSON を §6 の形で常時表示。試作では課電・離隔を画面内で計算しているが、本番はこの JSON を `server/` に送って `engine/` が計算する。画面は本番の `web/index.html` の土台にする。
 - **遮断器両側の区間に点検用の接地開閉器を置く。** CB3 取替で「片側だけ切って接地」すると母線ごと接地になる誤り（FAULT）を見せられる。
