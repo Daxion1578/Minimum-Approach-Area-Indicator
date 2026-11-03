@@ -4,6 +4,7 @@
 
 ## 2026-11-03
 
+- **AR 試作を公開前点検の指摘で保守側に直した。** 表示範囲の既定は全部にし、絞ったときは非表示の本数を常に出す。step 未指定なら全包絡を課電色にする（§5）。読めない包絡は本数を出す。`envelope.json` に `reference_points` があればそちらを優先する（承認の対象に入るため。契約に入れるかは要判断）。
 - **AR 位置合わせ検証の試作 `web/ar.html` を作った（仕様§9-5）。** WebXR（Android Chrome）で地面のテープ2点をタップして合わせ、engine の `envelope.json` を実寸で重ねる。基準点は `layout.json` の `reference_points` を読む（§5 の「envelope.json を読むだけ」との差は要判断）。P1–P2 の 40 m が取れない場所のため、B は P1→P2 の線上で 20/10/5 m の点も選べる。距離・干渉の数値は出さない。重なった包絡は手前の面だけを1回塗る（半透明を重ねると赤一色で読めない）。サンプルは `scripts/make_ar_sample.py` が engine を呼んで書き出す。
 - **画面の絵 `docs/img/step2-tr2-outage.png` を置いた。** 出所: `web/index.html` を headless Chrome で開いて撮ったもの（合成変電所 SITE-01、状態 tr2-outage）。実物は映っていない。`.public-media-allow.txt` に登録。
 - **縦切り1 の後半: `server/app.py`（FastAPI）と `web/index.html` を作り、3D は engine の結果を受け取って塗るだけにした。** API は契約の形（state → energization + envelope）。試作画面 `web/prototype.html` の画面内計算は本番に持ち込まない。包絡は three.js の CapsuleGeometry で半透明に描く。

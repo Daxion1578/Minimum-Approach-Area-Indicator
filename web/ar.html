@@ -165,6 +165,7 @@
       <span class="chip" id="chipTrack">追跡 —</span>
       <span class="chip" id="chipFloor">地面 —</span>
       <span class="chip" id="chipAlign">位置合わせ 未</span>
+      <span class="chip warn" id="chipHidden" hidden></span>
     </div>
     <div id="banner"></div>
   </div>
@@ -190,7 +191,7 @@
         <label><input type="checkbox" id="tgRefs" checked> 基準点</label>
       </div>
       <label>包絡の濃さ <input type="range" id="opacity" min="4" max="60" step="2" value="20"> <span id="opacityV" class="mono">20%</span></label>
-      <label>表示する範囲 <input type="range" id="range" min="10" max="150" step="5" value="40"> <span id="rangeV" class="mono">半径 40 m</span></label>
+      <label>表示する範囲 <input type="range" id="range" min="10" max="150" step="5" value="150"> <span id="rangeV" class="mono">全部</span></label>
     </div>
     <div id="logPanel" class="panel2" hidden>
       <div class="tablewrap"><table id="logTableXR"></table></div>
@@ -230,18 +231,28 @@ const sgn = (v, d = 2) => { if (v == null || !isFinite(v)) return '—'; const r
 const SAMPLE = { env: './sample/SITE-01.envelope.json', layout: '../data/sites/SITE-01/truth/layout.json', api: '/api/sites/SITE-01' };
 let ENV = null, REFS = [], envLabel = '', layoutLabel = '';
 let ENVS = [];   // 正規化した包絡 {id, kv, clr, state, a:[x,y,z], b:[x,y,z], r}
+let SKIPPED = 0; // 読めなかった包絡（カプセル以外・半径0以下）。黙って捨てずに画面に出す
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function normalizeEnvelope(json) {
   if (!json || !Array.isArray(json.envelopes)) throw new Error('envelopes の配列がありません');
-  const out = [];
+  const forceLive = json.step == null;   // 仕様§5: 停止ステップが未指定なら全導体を課電扱いで表示する
+  const out = []; let skipped = 0;
   for (const e of json.envelopes) {
     const p = e.primitive || {};
-    if (p.type !== 'capsule' || !Array.isArray(p.a) || !Array.isArray(p.b) || !(p.r > 0)) continue;
-    out.push({ id: String(e.conductor_id ?? ''), kv: e.voltage_kv, clr: e.clearance_m, state: e.state || 'live', status: e.clearance_status || '',
+    if (p.type !== 'capsule' || !Array.isArray(p.a) || !Array.isArray(p.b) || !(p.r > 0)) { skipped++; continue; }
+    out.push({ id: String(e.conductor_id ?? ''), kv: e.voltage_kv, clr: e.clearance_m, state: forceLive ? 'live' : (e.state || 'live'), status: e.clearance_status || '',
                a: p.a.map(Number), b: p.b.map(Number), r: Number(p.r) });
   }
   if (!out.length) throw new Error('カプセルの包絡が1つもありません');
+  SKIPPED = skipped;
   return out;
+}
+// 基準点は envelope.json に含まれていればそれを使い（承認の対象に入る）、無ければ layout.json から読む
+function refsFrom(envJson, layoutJson) {
+  if (envJson && Array.isArray(envJson.reference_points) && envJson.reference_points.length >= 2) return { refs: normalizeRefs(envJson), label: 'envelope.json 内' };
+  if (!layoutJson) throw new Error('基準点（layout.json の reference_points）を読めませんでした');
+  return { refs: normalizeRefs(layoutJson), label: (layoutJson.site_id || '') + ' の layout.json' };
 }
 function normalizeRefs(json) {
   const list = (json && json.reference_points) || [];
@@ -286,7 +297,7 @@ const UNIT_ROD = new THREE.CylinderGeometry(1, 1, 1, 10, 1, false);
 // 包絡は重なりが多い（220kV は半径 5m 超）。半透明を重ねると赤く塗りつぶれるので、
 // ① 一番手前の面の深度だけを先に書き（envDepthMat）、② その面にだけ色を1回塗る（envMat）。包絡の和集合が1枚の膜に見える。
 // 導体・真下線・基準点は①より先に描く（不透明・renderOrder 0）ので、膜の向こうでも透けて見える。
-const view = { opacity: 0.2, range: 40 };
+const view = { opacity: 0.2, range: 150 };   // 既定は全部表示（範囲で絞ったときは非表示の本数を常に出す）
 const envDepthMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
 const envMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: view.opacity, depthWrite: false, depthFunc: THREE.LessEqualDepth, side: THREE.DoubleSide });
 const ringMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.64, depthWrite: false });
@@ -349,6 +360,9 @@ function buildScene() {
   if (!ENVS.length) return;
   const all = view.range >= 150;
   const sel = ENVS.filter(e => all || dist2DPointSeg(center.x, center.y, e.a, e.b) <= view.range);
+  const hidden = ENVS.length - sel.length;   // 範囲外で描いていない包絡。黙って消さず、本数を出す
+  const ch = $('chipHidden'); ch.hidden = hidden === 0; ch.textContent = `範囲外の包絡 ${hidden} 本は非表示`;
+  $('rangeV').textContent = all ? '全部' : `半径 ${view.range} m（非表示 ${hidden} 本）`;
   const segs = sel.filter(e => Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1], e.b[2] - e.a[2]) > 1e-6);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), dir = new THREE.Vector3(), col = new THREE.Color();
 
@@ -492,7 +506,7 @@ new ResizeObserver(resizePreview).observe(previewEl);
 // ------------------------------------------------------------ 開始画面の UI
 function refreshSelects() {
   for (const [el, idx] of [[$('refA'), selA], [$('refB'), selB]]) {
-    el.innerHTML = REFS.map((P, i) => `<option value="${i}">${P.id}</option>`).join('');
+    el.innerHTML = REFS.map((P, i) => `<option value="${i}">${esc(P.id)}</option>`).join('');
     el.value = String(idx);
   }
   updatePair();
@@ -503,7 +517,7 @@ function refreshTapeLen() {
   const full = Math.hypot(B.x - A.x, B.y - A.y);
   const opts = [{ v: 0, t: `${fmt(full)} m（図面どおり ${B.id}）` }, ...[20, 10, 5].filter(v => v < full - 0.01).map(v => ({ v, t: `${v} m` }))];
   if (!opts.some(o => o.v === tapeLen)) tapeLen = 0;
-  el.innerHTML = opts.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
+  el.innerHTML = opts.map(o => `<option value="${o.v}">${esc(o.t)}</option>`).join('');
   el.value = String(tapeLen);
 }
 function updatePair() {
@@ -526,7 +540,7 @@ function renderDataInfo() {
   const byKv = new Map();
   for (const e of ENVS) { const k = e.kv; if (!byKv.has(k)) byKv.set(k, { n: 0, clr: e.clr }); byKv.get(k).n++; }
   const kvText = [...byKv.entries()].sort((a, b) => b[0] - a[0]).map(([kv, v]) => `${kv}kV 離隔${v.clr}m ×${v.n}`).join('、');
-  const approved = ENV && ENV.approved ? `承認済み（${String(ENV.approved.hash || '').slice(0, 18)}…）` : '未承認';
+  const approved = ENV && ENV.approved ? `承認済み（${String(ENV.approved.hash || '').slice(0, 18)}…）` : '未承認・検証用';
   const step = !ENV || ENV.step == null ? '停止ステップ未指定（全導体を課電扱い）'
     : ENV.state_name ? `状態 ${ENV.state_name}${ENV.state_note ? '（' + ENV.state_note + '）' : ''}` : `ステップ ${ENV.step}`;
   const statuses = [...new Set(ENVS.map(e => e.status).filter(Boolean))];
@@ -537,8 +551,9 @@ function renderDataInfo() {
     ['離隔表', `${ENV?.clearance_table_id ?? '—'}（${clrNote}）`],
     ['保守側', ENV && ENV.treat_ungrounded_as_live ? '未接地の停止区間も包絡を作る' : '—'],
     ['基準点', `${layoutLabel}・${REFS.length} 個`],
-  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-  $('banner').textContent = `${approved}／${step}／離隔は${clrNote}`;
+    ...(SKIPPED ? [['読めない包絡', `${SKIPPED} 本（カプセル以外・半径0以下。表示していません）`]] : []),
+  ].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  $('banner').textContent = `${approved}／${step}／離隔は${clrNote}` + (SKIPPED ? `／読めない包絡 ${SKIPPED} 本` : '');
 }
 function setStatus(text, cls) { const el = $('support'); el.textContent = text; el.className = 'pill ' + (cls || ''); }
 
@@ -550,7 +565,11 @@ function readFile(input, onJson) {
     fr.readAsText(f);
   });
 }
-readFile($('fileEnv'), (j, name) => { ENVS = normalizeEnvelope(j); ENV = j; envLabel = name; $('fatal').hidden = true; renderDataInfo(); updatePair(); });
+readFile($('fileEnv'), (j, name) => {
+  ENVS = normalizeEnvelope(j); ENV = j; envLabel = name; $('fatal').hidden = true;
+  if (Array.isArray(j.reference_points) && j.reference_points.length >= 2) { const r = refsFrom(j, null); REFS = r.refs; layoutLabel = r.label; selA = 0; selB = 1; refreshSelects(); }
+  renderDataInfo(); updatePair();
+});
 readFile($('fileLayout'), (j, name) => { REFS = normalizeRefs(j); layoutLabel = name; selA = 0; selB = 1; $('fatal').hidden = true; renderDataInfo(); refreshSelects(); });
 
 // ------------------------------------------------------------ AR（WebXR immersive-ar）
@@ -689,7 +708,7 @@ function renderTargets() {
   const wrap = $('targetsWrap');
   const tp = REFS.length >= 2 && selA !== selB ? tapePoints() : null;
   const list = tp ? [tp.A, tp.B] : [];
-  wrap.innerHTML = list.map((P, i) => `<button data-i="${i}" class="${i === target ? 'on' : ''}">${i === 0 ? 'A' : 'B'}（${P.label}）</button>`).join('');
+  wrap.innerHTML = list.map((P, i) => `<button data-i="${i}" class="${i === target ? 'on' : ''}">${i === 0 ? 'A' : 'B'}（${esc(P.label)}）</button>`).join('');
   wrap.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { target = +b.dataset.i; renderTargets(); updateXRUI(performance.now()); }));
   wrap.hidden = phase !== 'aligned';
 }
@@ -750,7 +769,7 @@ function toMarkdown() {
 }
 function renderLogs() {
   const html = '<tr><th>経過</th><th>種別</th><th>基準点</th><th>水平 m</th><th>東 m</th><th>北 m</th><th>高さ m</th><th>歩行 m</th><th>備考</th></tr>' +
-    logs.map(r => `<tr><td class="num">${mmss(r.t)}</td><td>${r.kind}</td><td>${r.ref}</td><td class="num">${fmt(r.h)}</td><td class="num">${sgn(r.dx)}</td><td class="num">${sgn(r.dy)}</td><td class="num">${sgn(r.dz)}</td><td class="num">${fmt(r.walk, 1)}</td><td>${r.note || ''}</td></tr>`).join('');
+    logs.map(r => `<tr><td class="num">${mmss(r.t)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td class="num">${fmt(r.h)}</td><td class="num">${sgn(r.dx)}</td><td class="num">${sgn(r.dy)}</td><td class="num">${sgn(r.dz)}</td><td class="num">${fmt(r.walk, 1)}</td><td>${esc(r.note)}</td></tr>`).join('');
   $('logTable').innerHTML = html; $('logTableXR').innerHTML = html;
   $('logBox').hidden = logs.length === 0; $('logCount').textContent = String(logs.length);
 }
@@ -775,9 +794,9 @@ async function loadLayout() {   // GitHub Pages などではリポジトリの l
   catch (e) { const site = await fetchJSON(SAMPLE.api); return site.layout; }
 }
 try {
-  const [envJson, layoutJson] = await Promise.all([fetchJSON(SAMPLE.env), loadLayout()]);
+  const [envJson, layoutJson] = await Promise.all([fetchJSON(SAMPLE.env), loadLayout().catch(() => null)]);
   ENV = envJson; ENVS = normalizeEnvelope(envJson); envLabel = 'サンプル ' + (envJson.site_id || '');
-  REFS = normalizeRefs(layoutJson); layoutLabel = (layoutJson.site_id || '') + ' の layout.json';
+  const r = refsFrom(envJson, layoutJson); REFS = r.refs; layoutLabel = r.label;
 } catch (e) {
   window.__fail('サンプルを読めませんでした（' + e.message + '）。https:// の URL で開くか、envelope.json と layout.json を読み込んでください。');
 }
@@ -799,7 +818,8 @@ window.__maai = {
   worldToModel(p) { return worldToModel(V3(...p)); },
   measureAt(p, i) { target = i; return measureAt(V3(...p)); },
   markdown: () => toMarkdown(),
-  counts: () => ({ envelopes: ENVS.length, refs: REFS.length, envChildren: layers.env.children.length }),
+  counts: () => ({ envelopes: ENVS.length, refs: REFS.length, envChildren: layers.env.children.length, skipped: SKIPPED, refsFrom: layoutLabel,
+                   states: ENVS.reduce((m, e) => (m[e.state] = (m[e.state] || 0) + 1, m), {}) }),
   // AR 画面の配置確認用（実際の AR ではなく、表示だけを再現する）
   debugOverlay(ph) {
     overlay.classList.add('on'); phase = ph; tracking = 'ok'; floorOK = true;
