@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAAI — 間合い</title>
+<style>
+  :root { --bg:#111418; --panel:#1b2026; --line:#2c343d; --fg:#e6e8eb; --mute:#8b949e;
+          --live:#ff4d4d; --deadg:#39d353; --deadu:#f5c518; --invalid:#ff3cf0; --gw:#8b949e; --accent:#4ea1ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.5 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif; height:100vh; display:grid; grid-template-columns:380px 1fr 360px; grid-template-rows:44px 1fr; }
+  header { grid-column:1/4; display:flex; align-items:center; gap:16px; padding:0 14px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header b { font-size:15px; } header small { color:var(--mute); }
+  #left { border-right:1px solid var(--line); background:var(--panel); overflow:auto; display:flex; flex-direction:column; }
+  #right { border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:10px 12px; }
+  #view { position:relative; min-width:0; }
+  canvas { display:block; }
+  .tabs { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--line); }
+  .tabs button { background:none; border:0; color:var(--mute); padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent; font-size:13px; }
+  .tabs button.on { color:var(--fg); border-bottom-color:var(--accent); }
+  .step { display:none; padding:12px 14px; } .step.on { display:block; }
+  h3 { margin:6px 0 8px; font-size:14px; } h4 { margin:12px 0 6px; font-size:13px; color:var(--mute); }
+  .note { color:var(--mute); font-size:12px; margin:6px 0; }
+  .row { display:flex; align-items:center; gap:8px; margin:4px 0; }
+  .row label { flex:1; }
+  .row label.k { flex:0 0 auto; }
+  .row select { flex:1; min-width:0; max-width:100%; }
+  select, input[type=number] { background:#0d1117; color:var(--fg); border:1px solid var(--line); border-radius:4px; padding:4px 6px; }
+  button.act { background:var(--accent); color:#06121f; border:0; border-radius:6px; padding:7px 12px; cursor:pointer; font-weight:600; }
+  button.sub { background:#2a3340; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 10px; cursor:pointer; font-size:12px; }
+  .bay { border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin:6px 0; }
+  .bay summary { cursor:pointer; color:var(--mute); }
+  .sw { display:flex; align-items:center; gap:6px; font-size:12px; padding:2px 0; }
+  .sw .id { flex:1; font-family:ui-monospace,Menlo,Consolas,monospace; }
+  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:12px; margin:8px 0; }
+  table { border-collapse:collapse; width:100%; font-size:12px; } td,th { border-bottom:1px solid var(--line); padding:3px 4px; text-align:left; } th { color:var(--mute); font-weight:500; }
+  pre { background:#0d1117; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:11px; overflow:auto; max-height:280px; margin:4px 0 12px; }
+  #hud { position:absolute; left:10px; top:10px; background:rgba(27,32,38,.85); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; pointer-events:none; }
+  .warn { background:#3a0a0a; border:1px solid #7a1212; border-radius:6px; padding:6px 8px; font-size:12px; margin:8px 0; }
+  .soon { color:var(--mute); font-style:italic; }
+</style>
+</head>
+<body>
+<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定はサーバの engine/ が行い、画面は表示だけ。データはすべて合成。</small></header>
+
+<div id="left">
+  <div class="tabs">
+    <button class="on" data-step="s0">1 図面取込</button>
+    <button data-step="s1">2 停止条件</button>
+    <button data-step="s2">3 重機配置</button>
+    <button data-step="s3">4 計画確定</button>
+  </div>
+
+  <section class="step on" id="s0">
+    <h3>構内モデル</h3>
+    <div class="note">今はサンプル（合成変電所）を読み込む。図面（ベクター PDF / DXF）の投げ込みは縦切り3。</div>
+    <div class="row"><label class="k">サイト</label><select id="siteSel"></select></div>
+    <table id="siteSummary"></table>
+    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止条件へ →</button></div>
+  </section>
+
+  <section class="step" id="s1">
+    <h3>停止条件</h3>
+    <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
+    <div class="row"><label>未接地の停止区間も課電扱い（保守側）</label><input type="checkbox" id="conservative" checked></div>
+    <div class="row"><label>包絡を表示</label><input type="checkbox" id="showEnv" checked></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--live)"></i> 課電</span>
+      <span><i class="dot" style="background:var(--deadg)"></i> 停電・接地あり</span>
+      <span><i class="dot" style="background:var(--deadu)"></i> 停電・未接地</span>
+      <span><i class="dot" style="background:var(--invalid)"></i> 充電部に接地（計画ミス）</span>
+    </div>
+    <div id="energSummary" class="note"></div>
+    <div id="errors"></div>
+    <h4>開閉器（チェック＝閉）</h4>
+    <div id="switchList"></div>
+  </section>
+
+  <section class="step" id="s2">
+    <h3>重機配置</h3>
+    <div class="soon">縦切り2（11/4）。クレーンを置くと包絡との最短距離と干渉が出る。</div>
+  </section>
+
+  <section class="step" id="s3">
+    <h3>計画確定</h3>
+    <div class="soon">縦切り4（11/6）。承認すると停止ステップ表と envelope.json / glb を書き出す。</div>
+  </section>
+</div>
+
+<div id="view"><div id="hud">読み込み中…</div></div>
+
+<div id="right">
+  <h4>state.json（画面 → engine）</h4><pre id="jState"></pre>
+  <h4>energization.json（engine → 画面）</h4><pre id="jEnerg"></pre>
+  <h4>envelope.json（engine → 画面、承認前）</h4><pre id="jEnv"></pre>
+</div>
+
+<script type="module">
+import * as THREE from './web/vendor/three/three.module.js';
+
+// ------------------------------------------------------------ 軌道カメラ（左ドラッグ回転、ホイール拡大、右ドラッグ移動）
+class MiniOrbit {
+  constructor(camera, dom){ this.camera=camera; this.dom=dom; this.target=new THREE.Vector3(30,-50,0); this.theta=0.8; this.phi=0.9; this.radius=170; this.drag=null;
+    dom.addEventListener('contextmenu', e=>e.preventDefault());
+    dom.addEventListener('pointerdown', e=>{ this.drag={b:e.button,x:e.clientX,y:e.clientY}; dom.setPointerCapture(e.pointerId); });
+    dom.addEventListener('pointerup', ()=>this.drag=null);
+    dom.addEventListener('pointermove', e=>{ if(!this.drag) return; const dx=e.clientX-this.drag.x, dy=e.clientY-this.drag.y; this.drag.x=e.clientX; this.drag.y=e.clientY;
+      if (this.drag.b===0){ this.theta-=dx*0.005; this.phi=Math.min(Math.max(this.phi-dy*0.005,0.05),Math.PI/2-0.02); }
+      else { const right=new THREE.Vector3(), up=new THREE.Vector3(0,0,1); this.camera.getWorldDirection(right); right.cross(up).normalize(); const fwd=up.clone().cross(right).normalize();
+        this.target.addScaledVector(right,-dx*this.radius*0.0015); this.target.addScaledVector(fwd,dy*this.radius*0.0015); } });
+    dom.addEventListener('wheel', e=>{ e.preventDefault(); this.radius=Math.min(Math.max(this.radius*(1+Math.sign(e.deltaY)*0.1),10),800); }, {passive:false});
+  }
+  update(){ const c=this.camera; c.position.set(this.target.x+this.radius*Math.cos(this.phi)*Math.cos(this.theta), this.target.y+this.radius*Math.cos(this.phi)*Math.sin(this.theta), this.target.z+this.radius*Math.sin(this.phi)); c.up.set(0,0,1); c.lookAt(this.target); }
+}
+
+// ------------------------------------------------------------ 3D
+const view=document.getElementById('view'), hud=document.getElementById('hud');
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio); view.appendChild(renderer.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x111418);
+const camera=new THREE.PerspectiveCamera(50,1,0.1,2000); camera.up.set(0,0,1);
+const controls=new MiniOrbit(camera, renderer.domElement);
+scene.add(new THREE.GridHelper(300,30,0x2c343d,0x1f262e).rotateX(Math.PI/2));
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
+const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0xf5c518, invalid:0xff3cf0};
+const siteGroup=new THREE.Group(), envGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup);
+const condLines={}, switchMeshes={};
+function resize(){ const w=view.clientWidth,h=view.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+addEventListener('resize',resize); resize();
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+
+function capsuleMesh(a,b,r,color,opacity){
+  const va=new THREE.Vector3(...a), vb=new THREE.Vector3(...b), len=va.distanceTo(vb);
+  const geo=new THREE.CapsuleGeometry(r, len, 4, 12);   // Y 軸方向の長さ len
+  const mat=new THREE.MeshBasicMaterial({color, transparent:true, opacity, depthWrite:false});
+  const m=new THREE.Mesh(geo,mat);
+  m.position.copy(va.clone().add(vb).multiplyScalar(0.5));
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), vb.clone().sub(va).normalize());
+  return m;
+}
+function clearGroup(g){ while(g.children.length){ const c=g.children.pop(); c.geometry?.dispose(); c.material?.dispose(); } }
+
+function buildSite(site){
+  clearGroup(siteGroup); for (const k in condLines) delete condLines[k]; for (const k in switchMeshes) delete switchMeshes[k];
+  const kinds=Object.fromEntries(site.topology.nodes.map(n=>[n.id,n.kind]));
+  for (const it of site.layout.items){
+    if (it.primitives.length){
+      const pts=[]; for (const p of it.primitives){ pts.push(new THREE.Vector3(...p.a), new THREE.Vector3(...p.b)); }
+      const l=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:COL.live}));
+      siteGroup.add(l); condLines[it.id]=l;
+    }
+    if (it.at && (kinds[it.id]==='breaker'||kinds[it.id]==='disconnector'||kinds[it.id]==='earthing'||kinds[it.id]==='transformer')){
+      const k=kinds[it.id];
+      const geo = k==='transformer' ? new THREE.BoxGeometry(6,4,3) : k==='breaker' ? new THREE.BoxGeometry(0.9,0.9,1.4) : new THREE.BoxGeometry(0.6,0.6,1.0);
+      const m=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: k==='transformer'?0x3a4452 : k==='breaker'?0x4ea1ff : k==='earthing'?0x9b7a2f : 0x6b7785}));
+      m.position.set(it.at[0], it.at[1], it.at[2] + (k==='transformer'?1.5:0)); siteGroup.add(m); switchMeshes[it.id]=m;
+    }
+  }
+  for (const s of site.layout.structures||[]){
+    const pts=[]; for (const p of s.primitives){ pts.push(new THREE.Vector3(...p.a), new THREE.Vector3(...p.b)); }
+    const l=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0x8b949e,dashSize:1,gapSize:0.6})); l.computeLineDistances(); siteGroup.add(l);
+  }
+}
+
+function paint(energ, env, showEnv){
+  const st={}; for (const c of energ.components){ for (const n of c.nodes) st[n]=c.state; for (const e of c.edges) st[e]=c.state; }
+  const stateOf=id => st[id] ?? st[id+'.a'] ?? st[id+'.hv'];
+  for (const id in condLines){ const s=stateOf(id); condLines[id].material.color.setHex(COL[s] ?? 0x6b7785); }
+  for (const id in switchMeshes){ const pos=state.switches[id]; if (pos) switchMeshes[id].material.opacity = pos==='open'?0.35:1, switchMeshes[id].material.transparent=true; }
+  clearGroup(envGroup);
+  if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, COL[e.state] ?? 0xff4d4d, e.state==='dead_ungrounded'?0.05:0.09)); }
+  const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
+  hud.innerHTML = `課電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>包絡 ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、要確認）`;
+}
+
+// ------------------------------------------------------------ データと操作
+let site=null, state=null;
+const $=id=>document.getElementById(id);
+window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.step===s)); document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s)); };
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.step));
+
+async function loadSites(){
+  const sites=await (await fetch('/api/sites')).json();
+  $('siteSel').innerHTML=sites.map(s=>`<option value="${s.site_id}">${s.site_id} ${s.name}</option>`).join('');
+  $('siteSel').onchange=()=>loadSite($('siteSel').value);
+  await loadSite(sites[0].site_id);
+}
+async function loadSite(id){
+  site=await (await fetch('/api/sites/'+id)).json();
+  const t=site.topology, by=k=>t.nodes.filter(n=>n.kind===k).length;
+  $('siteSummary').innerHTML=[['名前',t.name],['ノード',t.nodes.length],['辺',t.edges.length],['電源',by('source')],['遮断器／断路器',`${by('breaker')}／${by('disconnector')}`],['接地開閉器',by('earthing')],['変圧器',by('transformer')]].map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('');
+  $('stateSel').innerHTML=Object.entries(site.states).map(([k,v])=>`<option value="${k}">${k} — ${v.note||''}</option>`).join('');
+  $('stateSel').onchange=()=>{ state=structuredClone(site.states[$('stateSel').value]); buildSwitchList(); update(); };
+  state=structuredClone(Object.values(site.states)[0]);
+  buildSite(site); buildSwitchList(); update();
+}
+function buildSwitchList(){
+  const bays={}; for (const n of site.topology.nodes){ if (!(n.id in state.switches)) continue; (bays[n.bay||'母線・共通'] ??= []).push(n); }
+  $('switchList').innerHTML=Object.entries(bays).map(([bay,ns])=>`<details class="bay"><summary>${bay}（${ns.length}）</summary>`+ns.map(n=>
+    `<label class="sw"><input type="checkbox" data-id="${n.id}" ${state.switches[n.id]==='closed'?'checked':''}><span class="id">${n.id}</span><span class="note">${n.kind==='earthing'?'接地':n.kind==='breaker'?'遮断器':'断路器'}${n.name?' '+n.name:''}</span></label>`).join('')+`</details>`).join('');
+  $('switchList').querySelectorAll('input').forEach(cb=>cb.onchange=()=>{ state.switches[cb.dataset.id]=cb.checked?'closed':'open'; update(); });
+}
+let pending=null;
+async function update(){
+  $('jState').textContent=JSON.stringify(state,null,1);
+  const body={state, treat_ungrounded_as_live:$('conservative').checked};
+  const r=await fetch(`/api/sites/${site.site_id}/energize`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  if (!r.ok){ $('errors').innerHTML=`<div class="warn">サーバ エラー ${r.status}</div>`; return; }
+  const {energization, envelope}=await r.json();
+  $('jEnerg').textContent=JSON.stringify(energization,null,1);
+  $('jEnv').textContent=JSON.stringify({...envelope, envelopes: envelope.envelopes.slice(0,8), _note:`全 ${envelope.envelopes.length} 本のうち先頭 8 本`},null,1);
+  paint(energization, envelope, $('showEnv').checked);
+  const cnt={}; for (const c of energization.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
+  $('energSummary').textContent=`成分 ${energization.components.length}。課電 ${cnt.live||0}、停電・接地 ${cnt.dead_grounded||0}、停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?`、充電部に接地 ${cnt.invalid}`:'');
+  $('errors').innerHTML=energization.errors.map(e=>`<div class="warn"><b>${e.code}</b> ${e.message}${e.nodes?`<br><span class="note">${e.nodes.slice(0,6).join(', ')}${e.nodes.length>6?' …':''}</span>`:''}</div>`).join('');
+}
+$('conservative').onchange=update; $('showEnv').onchange=update;
+loadSites().catch(e=>{ hud.textContent='読み込みに失敗: '+e.message; });
+</script>
+</body>
+</html>

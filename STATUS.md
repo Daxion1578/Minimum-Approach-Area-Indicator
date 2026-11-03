@@ -17,16 +17,18 @@ gantt
   提出                           :milestone, m1, 2026-11-08, 0d
 ```
 
-更新: 2026-11-03 10:30
+更新: 2026-11-03 11:20
 
 ## 結論
 
-一部完了。縦切り1 の前半（契約・課電判定・合成変電所の生成器）ができ、本番に残るコードが初めてできた。残りは 3D 表示と包絡。
+縦切り1 完了（手元確認待ち）。契約・課電判定・合成変電所・安全包絡・サーバ・3D 画面が一続きで動く。判断はすべて `engine/`、画面は表示だけ。
 
 ## 確かめた結果
 
-- `python -m pytest -q`: 19 件通過（課電判定 10 件、契約・生成器 9 件）。逆送で `invalid`、1・1/2 母線の運転継続、新設ベイ付近の充電導体は母線だけ、の 3 場面を含む
+- `python -m pytest -q`: 23 件通過（課電判定 10、契約・生成器 9、包絡 4）。逆送で `invalid`、1・1/2 母線の運転継続、新設ベイ付近の充電導体は母線だけ、の 3 場面を含む
 - `python -m synth.gen_site` → `data/sites/SITE-01/truth/` に topology（252 ノード・176 辺）、layout（254 項目）、状態 3 本（通常／2号変圧器 220kV 側のみ停止／両側停止）。すべて `contracts/` の契約に合格
+- `uvicorn server.app:app` → http://localhost:8000 を headless Chrome で通し: 状態 3 本の切替、開閉器のチェックで再判定、JS エラー 0（favicon の 404 のみ）。画面 `docs/img/step2-tr2-outage.png`
+- 包絡: 220kV 5.2 m・66kV 2.2 m（目安値、要確認）。未接地の停止区間も既定で包絡を作る（保守側、画面で切替可）
 - `proto/` の課電判定部分（src・tests・schema）は削除。図面生成（`proto/tools/`）は `synth/` へ移すまで残す
 - 公開前チェック: OK（禁止語リストは未登録のまま）
 - 初回の外部批評 `docs/critique/1103.md`: 10/20。最重要「本番に残るコードがゼロ」は、この縦切りで解消に向かう
@@ -40,8 +42,8 @@ gantt
 
 ## 次の一手
 
-1. 3D 表示（three.js）と電圧階級別の包絡を `web/index.html` と `server/` で動かす（縦切り1 の後半）。試作画面の 3D 部分を流用し、課電は `engine/` の結果を受け取る
-2. 手元確認（今できる分）: `git pull` → `python -m pytest -q` が `19 passed` → `python -m engine.energize data/sites/SITE-01/truth/topology.json data/sites/SITE-01/truth/states/tr2-outage-220-only.json` で `"invalid"` と `live_grounded` が出れば合格
+1. 手元確認（縦切り1）: `git pull` → `pip install -r requirements.txt` → `python -m pytest -q` が `23 passed` → `uvicorn server.app:app` → http://localhost:8000 → タブ「2 停止条件」。「normal」で導体が全部赤、「tr2-outage」で 2号変圧器まわり（D2 南側）が緑、「tr2-outage-220-only」で紫＋警告、包絡が半透明の赤で見えれば合格
+2. 縦切り2（11/4）: 幾何（線分間距離・5 ケース）→ クレーン包絡 → 干渉判定 → 画面で赤線と最小距離。クレーン仮定値が届けばそれを、届かなければ例示値で
 3. 図面の描き方のルール 6 点、クレーン仮定値、困り具合の概数（前回と同じ待ち）
 
 ## 引き継ぎ（この時点で知っておくこと）

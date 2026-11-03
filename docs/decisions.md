@@ -4,6 +4,10 @@
 
 ## 2026-11-03
 
+- **画面の絵 `docs/img/step2-tr2-outage.png` を置いた。** 出所: `web/index.html` を headless Chrome で開いて撮ったもの（合成変電所 SITE-01、状態 tr2-outage）。実物は映っていない。`.public-media-allow.txt` に登録。
+- **縦切り1 の後半: `server/app.py`（FastAPI）と `web/index.html` を作り、3D は engine の結果を受け取って塗るだけにした。** API は契約の形（state → energization + envelope）。試作画面 `web/prototype.html` の画面内計算は本番に持ち込まない。包絡は three.js の CapsuleGeometry で半透明に描く。
+- **離隔表 `data/tables/clearance.csv` は §7.3 の目安値を「要確認」の印つきで入れた。** 220kV は 2.0 + 0.2×16 = 5.2 m、66kV は 2.2 m になる（10kV 単位は切り上げ）。原文照合と会社基準の上書きは §16 のまま。画面の HUD にも「要確認」と出す。
+- **§15 縦切り1 の手元確認の場面を「2号変圧器の停止」に差し替える（提案、`STATUS.md` 判断 2）。** 旧 SITE-01（66kV 単母線・B回線）は無くなった。
 - **契約 §6 の端子の約束を決め、`contracts/` に落とした。** 端子の参照は `ノードID` か `ノードID.端子名`。開閉器（breaker / disconnector）は端子 a・b、変圧器は hv・lv、それ以外は端子一つ。開閉器を端子名なしで参照した辺は、辺の並び順で 1 本目が a、2 本目が b、3 本目はエラー。接地開閉器は `attached_to` の端子に接地する。開閉器が open のときは a 側と b 側が別の成分に入り、課電判定の結果に `CB-1.a` のように現れる。
 - **`state.json` に書かれていない機器は保守側に倒す。** 開閉器は closed、接地開閉器は open、電源は live（§7.1 の「迷ったら保守側」をここにも適用）。無いIDは `errors` に `unknown_switch` / `unknown_source` で返す。
 - **充電している成分に接地が入ったら成分全体を `invalid` にする。** 接地開閉器を閉じた瞬間に電気的に一体になるため、接地点だけを赤くする根拠がない。どの接地が原因かは `grounded_by` で分かる。

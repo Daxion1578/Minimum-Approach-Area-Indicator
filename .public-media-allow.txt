@@ -2,3 +2,4 @@
 proto/data/drawings/SITE-01_plan.pdf
 proto/data/drawings/SITE-01_section.pdf
 proto/data/drawings/SITE-01_sld.pdf
+docs/img/step2-tr2-outage.png
