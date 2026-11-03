@@ -1,0 +1,7669 @@
+{
+ "schema_version": "0.1",
+ "site_id": "SITE-01",
+ "step": 0,
+ "clearance_table_id": "default-jp",
+ "treat_ungrounded_as_live": true,
+ "envelopes": [
+  {
+   "conductor_id": "220-BUS-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     4.0,
+     10.5
+    ],
+    "b": [
+     63.0,
+     4.0,
+     10.5
+    ],
+    "r": 5.23,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-BUS-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     0.0,
+     10.5
+    ],
+    "b": [
+     63.0,
+     0.0,
+     10.5
+    ],
+    "r": 5.23,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-BUS-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     -4.0,
+     10.5
+    ],
+    "b": [
+     63.0,
+     -4.0,
+     10.5
+    ],
+    "r": 5.23,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-BUS-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     -32.0,
+     6.5
+    ],
+    "b": [
+     63.0,
+     -32.0,
+     6.5
+    ],
+    "r": 5.23,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-BUS-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     -36.0,
+     6.5
+    ],
+    "b": [
+     63.0,
+     -36.0,
+     6.5
+    ],
+    "r": 5.23,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-BUS-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -9.0,
+     -40.0,
+     6.5
+    ],
+    "b": [
+     63.0,
+     -40.0,
+     6.5
+    ],
+    "r": 5.23,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     4.0,
+     10.5
+    ],
+    "b": [
+     -4.0,
+     4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     4.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     0.0,
+     10.5
+    ],
+    "b": [
+     0.0,
+     0.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     0.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -4.0,
+     10.5
+    ],
+    "b": [
+     4.0,
+     -4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -4.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -32.0,
+     6.5
+    ],
+    "b": [
+     -4.0,
+     -32.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -32.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -36.0,
+     6.5
+    ],
+    "b": [
+     0.0,
+     -36.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -36.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -40.0,
+     6.5
+    ],
+    "b": [
+     4.0,
+     -40.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -40.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D1-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     -4.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     -4.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     0.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     0.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     4.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     4.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -4.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     5.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     5.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     5.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     9.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     9.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     9.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     4.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     13.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-TR-1-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     13.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     13.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     4.0,
+     10.5
+    ],
+    "b": [
+     14.0,
+     4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     4.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     0.0,
+     10.5
+    ],
+    "b": [
+     18.0,
+     0.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     0.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -4.0,
+     10.5
+    ],
+    "b": [
+     22.0,
+     -4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -4.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -32.0,
+     6.5
+    ],
+    "b": [
+     14.0,
+     -32.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -32.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -36.0,
+     6.5
+    ],
+    "b": [
+     18.0,
+     -36.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -36.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -40.0,
+     6.5
+    ],
+    "b": [
+     22.0,
+     -40.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -40.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D2-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     14.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     14.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     18.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     18.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     22.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-E2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     22.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     14.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     23.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     23.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     23.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     27.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     27.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     27.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     31.0,
+     -22.5,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-TR-2-HV",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     31.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     31.0,
+     -22.5,
+     3.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     4.0,
+     10.5
+    ],
+    "b": [
+     32.0,
+     4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     4.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     0.0,
+     10.5
+    ],
+    "b": [
+     36.0,
+     0.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     0.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -4.0,
+     10.5
+    ],
+    "b": [
+     40.0,
+     -4.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-A",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -4.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -6.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -32.0,
+     6.5
+    ],
+    "b": [
+     32.0,
+     -32.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -32.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -36.0,
+     6.5
+    ],
+    "b": [
+     36.0,
+     -36.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -36.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -40.0,
+     6.5
+    ],
+    "b": [
+     40.0,
+     -40.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-DROP-B",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -40.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -6.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -9.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -9.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -12.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -12.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -15.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N3",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -15.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -18.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N4",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -18.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -21.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-T2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -21.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -24.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N5",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -24.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -27.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-D3-N6",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -27.0,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -30.0,
+     5.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     32.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     36.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -13.5,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -13.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W1",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -13.5,
+     16.0
+    ],
+    "b": [
+     40.0,
+     8.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     32.0,
+     -22.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -22.5,
+     16.0
+    ],
+    "b": [
+     32.0,
+     -44.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     36.0,
+     -22.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     36.0,
+     -22.5,
+     16.0
+    ],
+    "b": [
+     36.0,
+     -44.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -22.5,
+     5.0
+    ],
+    "b": [
+     40.0,
+     -22.5,
+     16.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "220-LINE-W2",
+   "voltage_kv": 220,
+   "clearance_m": 5.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     40.0,
+     -22.5,
+     16.0
+    ],
+    "b": [
+     40.0,
+     -44.0,
+     20.0
+    ],
+    "r": 5.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -78.0,
+     6.5
+    ],
+    "b": [
+     35.0,
+     -78.0,
+     6.5
+    ],
+    "r": 2.23,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -80.0,
+     6.5
+    ],
+    "b": [
+     35.0,
+     -80.0,
+     6.5
+    ],
+    "r": 2.23,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -82.0,
+     6.5
+    ],
+    "b": [
+     35.0,
+     -82.0,
+     6.5
+    ],
+    "r": 2.23,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -102.0,
+     4.5
+    ],
+    "b": [
+     35.0,
+     -102.0,
+     4.5
+    ],
+    "r": 2.23,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -104.0,
+     4.5
+    ],
+    "b": [
+     35.0,
+     -104.0,
+     4.5
+    ],
+    "r": 2.23,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-BUS-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -5.0,
+     -106.0,
+     4.5
+    ],
+    "b": [
+     35.0,
+     -106.0,
+     4.5
+    ],
+    "r": 2.23,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -78.0,
+     6.5
+    ],
+    "b": [
+     -2.0,
+     -78.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -78.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -80.0,
+     6.5
+    ],
+    "b": [
+     0.0,
+     -80.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -80.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -82.0,
+     6.5
+    ],
+    "b": [
+     2.0,
+     -82.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -82.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -102.0,
+     4.5
+    ],
+    "b": [
+     -2.0,
+     -102.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -102.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -104.0,
+     4.5
+    ],
+    "b": [
+     0.0,
+     -104.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -104.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -106.0,
+     4.5
+    ],
+    "b": [
+     2.0,
+     -106.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -106.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D1-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     -2.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     -2.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     0.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     0.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     2.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     2.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     -2.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     3.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     3.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     3.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     0.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     5.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     5.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     5.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     2.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     7.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-TR-1-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     7.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     7.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -78.0,
+     6.5
+    ],
+    "b": [
+     8.0,
+     -78.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -78.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -80.0,
+     6.5
+    ],
+    "b": [
+     10.0,
+     -80.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -80.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -82.0,
+     6.5
+    ],
+    "b": [
+     12.0,
+     -82.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -82.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -102.0,
+     4.5
+    ],
+    "b": [
+     8.0,
+     -102.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -102.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -104.0,
+     4.5
+    ],
+    "b": [
+     10.0,
+     -104.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -104.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -106.0,
+     4.5
+    ],
+    "b": [
+     12.0,
+     -106.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -106.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D2-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     8.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     8.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     10.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     10.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     12.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     12.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     8.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     13.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     13.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     13.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     10.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     15.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     15.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     15.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     12.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     17.0,
+     -95.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-TR-2-LV",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     17.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     17.0,
+     -95.0,
+     2.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -78.0,
+     6.5
+    ],
+    "b": [
+     18.0,
+     -78.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -78.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -80.0,
+     6.5
+    ],
+    "b": [
+     20.0,
+     -80.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -80.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -82.0,
+     6.5
+    ],
+    "b": [
+     22.0,
+     -82.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -82.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -102.0,
+     4.5
+    ],
+    "b": [
+     18.0,
+     -102.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -102.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -104.0,
+     4.5
+    ],
+    "b": [
+     20.0,
+     -104.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -104.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -106.0,
+     4.5
+    ],
+    "b": [
+     22.0,
+     -106.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -106.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D3-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     18.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     20.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     22.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     18.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     18.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     18.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     20.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     20.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     20.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     22.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-S2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     22.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     22.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -78.0,
+     6.5
+    ],
+    "b": [
+     28.0,
+     -78.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -78.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -80.0,
+     6.5
+    ],
+    "b": [
+     30.0,
+     -80.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -80.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -82.0,
+     6.5
+    ],
+    "b": [
+     32.0,
+     -82.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-A",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -82.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -84.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -102.0,
+     4.5
+    ],
+    "b": [
+     28.0,
+     -102.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -102.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -104.0,
+     4.5
+    ],
+    "b": [
+     30.0,
+     -104.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -104.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -106.0,
+     4.5
+    ],
+    "b": [
+     32.0,
+     -106.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-DROP-B",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -106.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -84.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -86.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -86.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -88.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -88.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -90.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N3",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -90.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -92.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N4",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -92.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -94.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-T2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -94.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -96.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N5",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -96.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -98.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-D4-N6",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -98.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -100.0,
+     3.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     28.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     30.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -89.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -89.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P1",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -89.0,
+     6.0
+    ],
+    "b": [
+     32.0,
+     -72.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     28.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     28.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     28.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "R"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     30.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     30.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     30.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "S"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -95.0,
+     3.0
+    ],
+    "b": [
+     32.0,
+     -95.0,
+     6.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  },
+  {
+   "conductor_id": "66-LINE-P2",
+   "voltage_kv": 66,
+   "clearance_m": 2.2,
+   "state": "live",
+   "clearance_status": "要確認",
+   "primitive": {
+    "type": "capsule",
+    "a": [
+     32.0,
+     -95.0,
+     6.0
+    ],
+    "b": [
+     32.0,
+     -112.0,
+     10.0
+    ],
+    "r": 2.22,
+    "phase": "T"
+   }
+  }
+ ],
+ "approved": null,
+ "generated_by": "scripts/make_ar_sample.py（engine/envelope.py の出力をそのまま書き出し。状態 normal・未承認）",
+ "state_name": "normal",
+ "state_note": "通常（新設ベイ D4 は未接続）"
+}

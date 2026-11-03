@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MAAI 現地表示（AR 試作）</title>
+<style>
+  /* 見た目は web/prototype.html と同じ色の約束（充電=赤、停電・接地=緑、停電・未接地=黄、誤り=桃）。屋外で読めるよう文字とボタンは大きめ */
+  :root {
+    --bg:#111418; --panel:#1b2026; --line:#2c343d; --fg:#e6e8eb; --mute:#8b949e;
+    --live:#ff4d4d; --deadg:#39d353; --deadu:#f5c518; --fault:#ff3cf0; --accent:#4ea1ff;
+    --glass:rgba(12,15,19,.80); --glass-line:rgba(255,255,255,.16);
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono",monospace;
+    color-scheme:dark;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.6 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif; }
+  button, select, input, textarea { font:inherit; color:inherit; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  [hidden] { display:none !important; }
+
+  /* ---- 開始画面 ---- */
+  #start { min-height:100%; display:grid; grid-template-rows:auto minmax(240px,44vh) auto; }
+  #start > header { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; background:var(--panel); border-bottom:1px solid var(--line);
+    padding:10px max(16px, env(safe-area-inset-right,0px)) 10px max(16px, env(safe-area-inset-left,0px)); }
+  #start > header b { font-size:17px; letter-spacing:.02em; }
+  #start > header small { color:var(--mute); }
+  #previewWrap { position:relative; min-height:0; border-bottom:1px solid var(--line); }
+  #preview { position:absolute; inset:0; touch-action:none; }
+  #preview canvas { display:block; width:100%; height:100%; }
+  #previewHint { position:absolute; left:10px; bottom:8px; font-size:12px; color:var(--mute); background:rgba(17,20,24,.7); padding:2px 8px; border-radius:4px; pointer-events:none; }
+  #panel { padding:14px max(16px, env(safe-area-inset-right,0px)) 28px max(16px, env(safe-area-inset-left,0px)); display:flex; flex-direction:column; gap:12px; min-width:0; }
+  @media (min-width:900px) {
+    #start { height:100%; grid-template-columns:minmax(0,1fr) 430px; grid-template-rows:auto minmax(0,1fr); }
+    #start > header { grid-column:1 / 3; }
+    #previewWrap { border-bottom:0; }
+    #panel { overflow:auto; border-left:1px solid var(--line); background:var(--panel); }
+  }
+  h2 { margin:6px 0 0; font-size:13px; font-weight:600; color:var(--mute); letter-spacing:.06em; }
+  p { margin:0; }
+  .lead { color:var(--fg); }
+  .note { color:var(--mute); font-size:13px; }
+  .pill { display:inline-flex; align-items:center; gap:8px; align-self:flex-start; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:#151a20; font-size:14px; }
+  .pill::before { content:""; width:9px; height:9px; border-radius:50%; background:var(--mute); }
+  .pill.ok::before { background:var(--deadg); } .pill.warn::before { background:var(--deadu); } .pill.ng::before { background:var(--live); }
+  dl.kv { display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 12px; margin:0; font-size:14px; }
+  dl.kv dt { color:var(--mute); } dl.kv dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .row label { color:var(--mute); }
+  select { background:#151a20; border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-height:44px; }
+  .tape { display:flex; align-items:baseline; gap:10px; }
+  .tape span { color:var(--mute); }
+  .tape b { font-size:28px; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  button { cursor:pointer; border-radius:10px; min-height:44px; padding:8px 14px; border:1px solid var(--line); background:#232a33; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:700; font-size:17px; min-height:52px; }
+  .filebtn { position:relative; display:inline-flex; align-items:center; min-height:40px; padding:6px 12px; border:1px dashed var(--line); border-radius:8px; color:var(--mute); font-size:13px; cursor:pointer; }
+  .filebtn input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  details { border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+  details summary { cursor:pointer; color:var(--fg); }
+  details ol { margin:8px 0 2px; padding-left:1.4em; display:grid; gap:6px; }
+  .warn { background:#2c2208; border:1px solid #6b5212; border-radius:8px; padding:8px 10px; font-size:13px; }
+  .err { background:#3a0a0a; border:1px solid #7a1212; border-radius:8px; padding:8px 10px; font-size:13px; }
+  .tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { padding:5px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  th { color:var(--mute); font-weight:500; }
+  td.num { font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; }
+  textarea { width:100%; min-height:120px; background:#0d1117; border:1px solid var(--line); border-radius:8px; padding:8px; font-family:var(--mono); font-size:12px; }
+
+  /* ---- AR 画面（WebXR の DOM overlay） ---- */
+  #overlay { display:none; position:fixed; inset:0; background:transparent; color:var(--fg); font-size:16px; }
+  #overlay.on { display:block; }
+  #topbar { position:absolute; left:0; right:0; top:0; display:flex; flex-direction:column; gap:6px; pointer-events:none;
+    padding:calc(8px + env(safe-area-inset-top,0px)) max(10px, env(safe-area-inset-right,0px)) 6px max(10px, env(safe-area-inset-left,0px)); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { padding:4px 10px; border-radius:999px; background:var(--glass); border:1px solid var(--glass-line); font-size:14px; white-space:nowrap; }
+  .chip.ok { border-color:rgba(57,211,83,.7); } .chip.warn { border-color:rgba(245,197,24,.8); } .chip.ng { border-color:rgba(255,77,77,.9); }
+  #banner { font-size:12px; color:#ffd9d9; background:rgba(58,10,10,.62); border:1px solid rgba(255,77,77,.35); border-radius:6px; padding:3px 8px; align-self:flex-start; max-width:100%; }
+  #cross { position:absolute; left:50%; top:50%; width:44px; height:44px; transform:translate(-50%,-50%); pointer-events:none; }
+  #cross::before, #cross::after { content:""; position:absolute; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
+  #cross::before { left:50%; top:0; bottom:0; width:2px; transform:translateX(-50%); }
+  #cross::after { top:50%; left:0; right:0; height:2px; transform:translateY(-50%); }
+  #sheet { position:absolute; left:0; right:0; bottom:0; background:var(--glass); border-top:1px solid var(--glass-line); display:flex; flex-direction:column; gap:8px;
+    padding:10px max(12px, env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px, env(safe-area-inset-left,0px)); max-height:62vh; overflow:auto; }
+  #guide { font-size:17px; font-weight:600; line-height:1.45; }
+  #live { font-size:15px; color:#cfe6ff; min-height:1.4em; }
+  #result { font-size:14px; color:var(--fg); }
+  #sheet .row.small button { min-height:42px; padding:6px 12px; background:#232a33cc; }
+  #btnMain { flex:1; min-width:60%; }
+  .targets { display:flex; gap:6px; flex-wrap:wrap; }
+  .targets button { min-height:40px; padding:4px 12px; }
+  .targets button.on { background:var(--accent); color:#06121f; border-color:var(--accent); font-weight:700; }
+  .panel2 { border-top:1px solid var(--glass-line); padding-top:8px; display:grid; gap:8px; }
+  .panel2 label { display:flex; align-items:center; gap:8px; }
+  .panel2 input[type=range] { flex:1; }
+  .checks { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  .checks label { min-height:36px; }
+  #toast { position:absolute; left:50%; transform:translateX(-50%); bottom:calc(46vh); max-width:92vw; background:rgba(12,15,19,.92); border:1px solid var(--glass-line);
+    border-radius:10px; padding:8px 14px; font-size:15px; opacity:0; transition:opacity .25s; pointer-events:none; text-align:center; }
+  #toast.show { opacity:1; }
+  #toast.warn { border-color:rgba(245,197,24,.9); }
+  @media (prefers-reduced-motion: reduce) { #toast { transition:none; } }
+</style>
+</head>
+<body>
+<div id="start">
+  <header><b>MAAI 現地表示</b><small>AR 位置合わせの試作（Android の Chrome）</small></header>
+  <div id="previewWrap">
+    <div id="preview" aria-label="包絡の3Dプレビュー"></div>
+    <div id="previewHint">ドラッグで回転・ピンチ／ホイールで拡大</div>
+  </div>
+  <section id="panel">
+    <div id="support" class="pill">確認しています…</div>
+    <p class="lead">承認済みの包絡（envelope.json）を、現地の基準点に合わせて実寸で重ねます。いまは位置合わせのずれを確かめる試作で、包絡を読むだけです（距離や干渉の計算はしません）。</p>
+    <div id="fatal" class="err" hidden></div>
+
+    <h2>表示するデータ</h2>
+    <dl id="dataInfo" class="kv"><dt>状態</dt><dd>読み込み中…</dd></dl>
+    <div class="row">
+      <label class="filebtn">envelope.json を読み込む<input type="file" id="fileEnv" accept=".json,application/json"></label>
+      <label class="filebtn">layout.json を読み込む<input type="file" id="fileLayout" accept=".json,application/json"></label>
+    </div>
+
+    <h2>基準点（テープを貼る2点）</h2>
+    <div class="row">
+      <label for="refA">A</label><select id="refA"></select>
+      <label for="refB">B の方向</label><select id="refB"></select>
+      <label for="tapeLen">間隔</label><select id="tapeLen"></select>
+    </div>
+    <p class="tape"><span>テープの間隔</span><b id="refDist">—</b></p>
+    <p class="note" id="refNote"></p>
+
+    <button id="btnStart" class="primary" disabled>ARを開始</button>
+
+    <details>
+      <summary>使い方（駐車場・公園などの平らな場所で）</summary>
+      <ol>
+        <li>上で選んだ間隔で、地面にテープを2か所貼る。AからBへの向きが図面の向きになる。</li>
+        <li>「ARを開始」を押し、カメラを地面に向けて、照準の白い輪が出るまでゆっくり動かす。</li>
+        <li>Aのテープの中心に照準を合わせて「Aを記録」。Bへ歩き、同じように「Bを記録」。</li>
+        <li>包絡（赤い半透明）、導体、真下線（地面の破線）が出る。真下線がAとBを結ぶ線に乗っているかを見る。高所の母線は見上げて確かめる。</li>
+        <li>10〜20 m 歩いて戻り、テープに照準を合わせて「ずれを記録」。何回か繰り返す。</li>
+        <li>「記録をコピー」を押し、docs/ar-check.md に貼る。</li>
+      </ol>
+    </details>
+
+    <section id="logBox" hidden>
+      <h2>記録</h2>
+      <div class="tablewrap"><table id="logTable"></table></div>
+      <div class="row" style="margin-top:8px"><button id="btnCopy">記録をコピー</button><span id="copyMsg" class="note"></span></div>
+      <textarea id="copyArea" readonly hidden></textarea>
+    </section>
+
+    <p class="warn">位置合わせを確かめるための試作です。現場の検電・接地・監視の代わりにはなりません。実際の構内では使いません。</p>
+  </section>
+</div>
+
+<!-- WebXR の DOM overlay。AR 中はこの要素だけがカメラ映像の上に出る -->
+<div id="overlay">
+  <div id="topbar">
+    <div class="chips">
+      <span class="chip" id="chipTrack">追跡 —</span>
+      <span class="chip" id="chipFloor">地面 —</span>
+      <span class="chip" id="chipAlign">位置合わせ 未</span>
+    </div>
+    <div id="banner"></div>
+  </div>
+  <div id="cross" aria-hidden="true"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="sheet">
+    <p id="guide">地面にカメラを向けて、ゆっくり左右に動かしてください</p>
+    <p id="live" class="mono"></p>
+    <p id="result" class="mono" hidden></p>
+    <div id="targetsWrap" class="targets" hidden></div>
+    <div class="row"><button id="btnMain" class="primary" disabled>Aを記録</button></div>
+    <div class="row small">
+      <button id="btnRedo">やり直す</button>
+      <button id="btnView">表示</button>
+      <button id="btnLogs">記録 <span id="logCount">0</span></button>
+      <button id="btnEnd">AR を終了</button>
+    </div>
+    <div id="viewPanel" class="panel2" hidden>
+      <div class="checks">
+        <label><input type="checkbox" id="tgEnv" checked> 包絡</label>
+        <label><input type="checkbox" id="tgCond" checked> 導体</label>
+        <label><input type="checkbox" id="tgFoot" checked> 真下線</label>
+        <label><input type="checkbox" id="tgRefs" checked> 基準点</label>
+      </div>
+      <label>包絡の濃さ <input type="range" id="opacity" min="4" max="60" step="2" value="20"> <span id="opacityV" class="mono">20%</span></label>
+      <label>表示する範囲 <input type="range" id="range" min="10" max="150" step="5" value="40"> <span id="rangeV" class="mono">半径 40 m</span></label>
+    </div>
+    <div id="logPanel" class="panel2" hidden>
+      <div class="tablewrap"><table id="logTableXR"></table></div>
+      <div class="row"><button id="btnCopyXR">記録をコピー</button><span id="copyMsgXR" class="note"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // module が動く前の失敗を画面に出す
+  window.__ready = false;
+  window.__fail = function (msg) { var e = document.getElementById('fatal'); if (e) { e.hidden = false; e.textContent = msg; } };
+  addEventListener('error', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + (ev.message || ev.type)); });
+  addEventListener('unhandledrejection', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + ((ev.reason && ev.reason.message) || ev.reason)); });
+</script>
+<script type="module">
+// ------------------------------------------------------------ three.js（同梱を優先し、だめなら CDN）
+const SOURCES = [
+  './vendor/three/three.module.js',
+  'https://unpkg.com/three@0.160.0/build/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js',
+];
+let THREE = null, loadErr = null;
+for (const u of SOURCES) { try { THREE = await import(u); break; } catch (e) { loadErr = e; } }
+if (!THREE) { window.__fail('three.js を読み込めませんでした。' + (loadErr ? '（' + loadErr.message + '）' : '')); throw loadErr || new Error('three.js'); }
+
+const $ = (id) => document.getElementById(id);
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const YAXIS = V3(0, 1, 0);
+const COLORS = { live: 0xff4d4d, dead_ungrounded: 0xf5c518, dead_grounded: 0x39d353, invalid: 0xff3cf0 };
+const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? '—' : v.toFixed(d);
+const sgn = (v, d = 2) => { if (v == null || !isFinite(v)) return '—'; const r = Number(v.toFixed(d)); return (r >= 0 ? '+' : '−') + Math.abs(r).toFixed(d); };
+
+// ------------------------------------------------------------ データ（envelope.json §6.5 と layout.json §6.2 の reference_points）
+// 包絡は engine の出力（scripts/make_ar_sample.py が書き出す）。基準点は合成サイトの layout.json をそのまま読む
+const SAMPLE = { env: './sample/SITE-01.envelope.json', layout: '../data/sites/SITE-01/truth/layout.json', api: '/api/sites/SITE-01' };
+let ENV = null, REFS = [], envLabel = '', layoutLabel = '';
+let ENVS = [];   // 正規化した包絡 {id, kv, clr, state, a:[x,y,z], b:[x,y,z], r}
+
+function normalizeEnvelope(json) {
+  if (!json || !Array.isArray(json.envelopes)) throw new Error('envelopes の配列がありません');
+  const out = [];
+  for (const e of json.envelopes) {
+    const p = e.primitive || {};
+    if (p.type !== 'capsule' || !Array.isArray(p.a) || !Array.isArray(p.b) || !(p.r > 0)) continue;
+    out.push({ id: String(e.conductor_id ?? ''), kv: e.voltage_kv, clr: e.clearance_m, state: e.state || 'live', status: e.clearance_status || '',
+               a: p.a.map(Number), b: p.b.map(Number), r: Number(p.r) });
+  }
+  if (!out.length) throw new Error('カプセルの包絡が1つもありません');
+  return out;
+}
+function normalizeRefs(json) {
+  const list = (json && json.reference_points) || [];
+  const out = list.filter(p => p && p.id != null && isFinite(p.x) && isFinite(p.y))
+                  .map(p => ({ id: String(p.id), x: +p.x, y: +p.y, z: isFinite(p.z) ? +p.z : 0, note: p.note || '' }));
+  if (out.length < 2) throw new Error('reference_points が2つ以上ありません');
+  return out;
+}
+async function fetchJSON(u) { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u + ' (' + r.status + ')'); return r.json(); }
+
+// ------------------------------------------------------------ 3D の土台
+const previewEl = $('preview');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local');
+previewEl.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const BG = new THREE.Color(0x111418);
+scene.background = BG;
+const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 3000);
+
+// anchor = 位置合わせ（水平回転＋平行移動）。model = 図面座標（X=東, Y=北, Z=上）を three の Y 上向きに直す
+const anchor = new THREE.Group(); scene.add(anchor);
+const model = new THREE.Group(); model.rotation.x = -Math.PI / 2; anchor.add(model);
+const layers = { env: new THREE.Group(), cond: new THREE.Group(), foot: new THREE.Group(), refs: new THREE.Group(), labels: new THREE.Group() };
+Object.values(layers).forEach(g => model.add(g));
+const grid = new THREE.GridHelper(400, 80, 0x2c343d, 0x1a2027); scene.add(grid);
+
+// 照準の輪（ヒットテストの位置）と、記録したタップの印（どちらも AR の世界座標）
+const reticleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false });
+const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.09, 40).rotateX(-Math.PI / 2), reticleMat);
+reticle.matrixAutoUpdate = false; reticle.visible = false; reticle.renderOrder = 20; scene.add(reticle);
+const tapMarks = new THREE.Group(); scene.add(tapMarks);
+
+const UNIT_CYL = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true);
+const UNIT_SPH = new THREE.SphereGeometry(1, 24, 14);
+const UNIT_ROD = new THREE.CylinderGeometry(1, 1, 1, 10, 1, false);
+[UNIT_CYL, UNIT_SPH, UNIT_ROD].forEach(g => g.userData.shared = true);
+
+// 包絡は重なりが多い（220kV は半径 5m 超）。半透明を重ねると赤く塗りつぶれるので、
+// ① 一番手前の面の深度だけを先に書き（envDepthMat）、② その面にだけ色を1回塗る（envMat）。包絡の和集合が1枚の膜に見える。
+// 導体・真下線・基準点は①より先に描く（不透明・renderOrder 0）ので、膜の向こうでも透けて見える。
+const view = { opacity: 0.2, range: 40 };
+const envDepthMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+const envMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: view.opacity, depthWrite: false, depthFunc: THREE.LessEqualDepth, side: THREE.DoubleSide });
+const ringMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.64, depthWrite: false });
+const condMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const footMat = new THREE.LineDashedMaterial({ vertexColors: true, dashSize: 0.6, gapSize: 0.4 });
+
+function clearGroup(g) {
+  for (const c of [...g.children]) {
+    g.remove(c);
+    if (c.geometry && !c.geometry.userData.shared) c.geometry.dispose();
+    if (c.material && c.userData.ownMaterial) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); }
+    if (c.children && c.children.length) clearGroup(c);
+  }
+}
+function perpBasis(dir) {
+  const ref = Math.abs(dir.z) < 0.9 ? V3(0, 0, 1) : V3(1, 0, 0);
+  const u = new THREE.Vector3().crossVectors(dir, ref).normalize();
+  const w = new THREE.Vector3().crossVectors(dir, u).normalize();
+  return [u, w];
+}
+function dist2DPointSeg(px, py, a, b) { // 表示範囲を絞るための水平距離（判定には使わない）
+  const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy;
+  let t = L2 > 1e-12 ? ((px - a[0]) * dx + (py - a[1]) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(a[0] + t * dx - px, a[1] + t * dy - py);
+}
+function makeLabel(text, color = '#e6e8eb', border = 'rgba(255,255,255,.25)') {
+  const fs = 40, pad = 12, c = document.createElement('canvas'), ctx = c.getContext('2d');
+  const font = `600 ${fs}px system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif`;
+  ctx.font = font; const w = Math.ceil(ctx.measureText(text).width) + pad * 2, h = fs + pad * 2;
+  c.width = w; c.height = h; ctx.font = font;
+  ctx.fillStyle = 'rgba(12,15,19,.85)'; ctx.strokeStyle = border; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(1.5, 1.5, w - 3, h - 3, 10) : ctx.rect(1.5, 1.5, w - 3, h - 3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.textBaseline = 'middle'; ctx.fillText(text, pad, h / 2 + 1);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, sizeAttenuation: false, transparent: true }));
+  const H = 0.042; s.scale.set(H * w / h, H, 1); s.renderOrder = 30; s.userData.ownMaterial = true;
+  return s;
+}
+
+// ------------------------------------------------------------ 包絡・導体・真下線・基準点を組み立てる（すべて図面座標のまま model に入れる）
+let center = { x: 0, y: 0 };
+let selA = 0, selB = 1, tapeLen = 20;   // tapeLen 0 = 図面どおり（A と B の距離そのまま）
+
+// テープを貼る2点。A は基準点そのもの、B は「A→B の向き」に tapeLen 進んだ点（狭い場所でも試せるように）
+function tapePoints() {
+  const A = REFS[selA], B = REFS[selB];
+  const full = Math.hypot(B.x - A.x, B.y - A.y);
+  const d = tapeLen > 0 && tapeLen < full ? tapeLen : full;
+  const k = full > 0 ? d / full : 0, short = d < full - 1e-9;
+  return {
+    d, full,
+    A: { id: A.id, label: A.id, x: A.x, y: A.y, z: A.z || 0 },
+    B: { id: short ? `${A.id}→${B.id}_${d}m` : B.id, label: short ? `${A.id}→${B.id} の ${d} m 点` : B.id,
+         x: A.x + (B.x - A.x) * k, y: A.y + (B.y - A.y) * k, z: (A.z || 0) + ((B.z || 0) - (A.z || 0)) * k },
+  };
+}
+
+function buildScene() {
+  Object.values(layers).forEach(clearGroup);
+  if (!ENVS.length) return;
+  const all = view.range >= 150;
+  const sel = ENVS.filter(e => all || dist2DPointSeg(center.x, center.y, e.a, e.b) <= view.range);
+  const segs = sel.filter(e => Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1], e.b[2] - e.a[2]) > 1e-6);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), dir = new THREE.Vector3(), col = new THREE.Color();
+
+  if (segs.length) {
+    // 包絡の筒（インスタンス描画で1回にまとめる。深度用と色用の2つ）
+    const cylD = new THREE.InstancedMesh(UNIT_CYL, envDepthMat, segs.length);
+    const cyl = new THREE.InstancedMesh(UNIT_CYL, envMat, segs.length);
+    const rod = new THREE.InstancedMesh(UNIT_ROD, condMat, segs.length);
+    segs.forEach((e, i) => {
+      const A = V3(...e.a), B = V3(...e.b); dir.subVectors(B, A); const L = dir.length(); dir.divideScalar(L);
+      q.setFromUnitVectors(YAXIS, dir); p.addVectors(A, B).multiplyScalar(0.5);
+      col.setHex(COLORS[e.state] ?? COLORS.live);
+      m4.compose(p, q, s.set(e.r, L, e.r)); cylD.setMatrixAt(i, m4); cyl.setMatrixAt(i, m4); cyl.setColorAt(i, col);
+      m4.compose(p, q, s.set(0.06, L, 0.06)); rod.setMatrixAt(i, m4); rod.setColorAt(i, col);
+    });
+    cyl.instanceColor.needsUpdate = true; rod.instanceColor.needsUpdate = true;
+    cylD.renderOrder = 1; cyl.renderOrder = 2;
+    [cylD, cyl, rod].forEach(o => { o.frustumCulled = false; });
+    layers.env.add(cylD, cyl); layers.cond.add(rod);
+
+    // 包絡の輪（形が読めるように 2.5 m ごと）
+    const pos = [], cols = [], N = 28;
+    for (const e of segs) {
+      const A = V3(...e.a), B = V3(...e.b); dir.subVectors(B, A); const L = dir.length(); dir.normalize();
+      const [u, w] = perpBasis(dir); const k = Math.max(2, Math.ceil(L / 2.5) + 1); col.setHex(COLORS[e.state] ?? COLORS.live);
+      for (let j = 0; j < k; j++) {
+        const C = A.clone().lerp(B, j / (k - 1));
+        for (let i = 0; i < N; i++) {
+          for (const t of [i, i + 1]) {
+            const ang = t / N * Math.PI * 2;
+            pos.push(C.x + e.r * (Math.cos(ang) * u.x + Math.sin(ang) * w.x), C.y + e.r * (Math.cos(ang) * u.y + Math.sin(ang) * w.y), C.z + e.r * (Math.cos(ang) * u.z + Math.sin(ang) * w.z));
+            cols.push(col.r, col.g, col.b);
+          }
+        }
+      }
+    }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const rings = new THREE.LineSegments(rg, ringMat); rings.renderOrder = 3; layers.env.add(rings);
+
+    // 真下線（導体を地面へ真下に落とした破線）
+    const fp = [], fc = [];
+    for (const e of segs) {
+      if (Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]) < 0.05) continue;
+      col.setHex(COLORS[e.state] ?? COLORS.live);
+      fp.push(e.a[0], e.a[1], 0.02, e.b[0], e.b[1], 0.02); fc.push(col.r, col.g, col.b, col.r, col.g, col.b);
+    }
+    if (fp.length) {
+      const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fg.setAttribute('color', new THREE.Float32BufferAttribute(fc, 3));
+      const foot = new THREE.LineSegments(fg, footMat); foot.computeLineDistances(); layers.foot.add(foot);
+    }
+  }
+
+  // 端の球（同じ点・同じ半径は1つにまとめる）
+  const ends = new Map();
+  for (const e of sel) for (const P of [e.a, e.b]) {
+    const key = P.map(v => v.toFixed(2)).join(',') + '|' + e.r.toFixed(2) + '|' + e.state;
+    if (!ends.has(key)) ends.set(key, { P, r: e.r, state: e.state });
+  }
+  if (ends.size) {
+    const sphD = new THREE.InstancedMesh(UNIT_SPH, envDepthMat, ends.size);
+    const sph = new THREE.InstancedMesh(UNIT_SPH, envMat, ends.size); let i = 0;
+    for (const { P, r, state } of ends.values()) {
+      m4.compose(V3(...P), q.identity(), s.set(r, r, r)); sphD.setMatrixAt(i, m4); sph.setMatrixAt(i, m4);
+      sph.setColorAt(i, col.setHex(COLORS[state] ?? COLORS.live)); i++;
+    }
+    sph.instanceColor.needsUpdate = true; sphD.renderOrder = 1; sph.renderOrder = 2;
+    sphD.frustumCulled = false; sph.frustumCulled = false;
+    layers.env.add(sphD, sph);
+  }
+
+  // 電圧ごとに、中心に一番近い母線へ「離隔の目安」の札を付ける
+  const byKv = new Map();
+  for (const e of segs) {
+    if (!/BUS/i.test(e.id)) continue;
+    const d = dist2DPointSeg(center.x, center.y, e.a, e.b);
+    if (!byKv.has(e.kv) || d < byKv.get(e.kv).d) byKv.set(e.kv, { d, e });
+  }
+  for (const { e } of byKv.values()) {
+    const dx = e.b[0] - e.a[0], dy = e.b[1] - e.a[1], L2 = dx * dx + dy * dy;
+    let t = L2 > 0 ? ((center.x - e.a[0]) * dx + (center.y - e.a[1]) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    const lab = makeLabel(`${e.kv}kV 母線 高さ${fmt(e.a[2] + t * (e.b[2] - e.a[2]), 1)}m／包絡 半径${fmt(e.r, 2)}m（離隔${e.clr}m・${e.status || '目安'}）`, '#ffd0d0', 'rgba(255,77,77,.6)');
+    lab.position.set(e.a[0] + t * dx, e.a[1] + t * dy, e.a[2] + t * (e.b[2] - e.a[2]) + 0.6); layers.labels.add(lab);
+  }
+  buildRefs();
+}
+
+function addMarker(P, label, hot) {
+  const color = hot ? 0x4ea1ff : 0xc9d1d9;
+  const g = new THREE.Group(); g.position.set(P.x, P.y, P.z || 0);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.26, 0.36, 48), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }));
+  ring.position.z = 0.02; ring.userData.ownMaterial = true; g.add(ring);
+  const cross = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([V3(-0.5, 0, 0.02), V3(0.5, 0, 0.02), V3(0, -0.5, 0.02), V3(0, 0.5, 0.02), V3(0, 0, 0), V3(0, 0, 1.6)]), new THREE.LineBasicMaterial({ color }));
+  cross.userData.ownMaterial = true; g.add(cross);
+  const lab = makeLabel(label, hot ? '#cfe6ff' : '#e6e8eb', hot ? 'rgba(78,161,255,.8)' : 'rgba(255,255,255,.25)');
+  lab.position.set(0, 0, hot ? 2.3 : 1.9); g.add(lab);
+  layers.refs.add(g);
+}
+function buildRefs() {
+  clearGroup(layers.refs);
+  if (REFS.length < 2 || selA === selB) return;
+  const tp = tapePoints(), near = (P, Q) => Math.hypot(P.x - Q.x, P.y - Q.y) < 0.05;
+  REFS.forEach(P => { if (!near(P, tp.A) && !near(P, tp.B)) addMarker(P, P.id, false); });
+  addMarker(tp.A, `A（${tp.A.label}）`, true);
+  addMarker(tp.B, `B（${tp.B.label}）`, true);
+  // A と B を結ぶ線（テープを結ぶ線。真上の母線の真下線と重なるはず）
+  const lg = new THREE.BufferGeometry().setFromPoints([V3(tp.A.x, tp.A.y, 0.03), V3(tp.B.x, tp.B.y, 0.03)]);
+  const line = new THREE.Line(lg, new THREE.LineDashedMaterial({ color: 0x4ea1ff, dashSize: 0.3, gapSize: 0.2 }));
+  line.computeLineDistances(); line.userData.ownMaterial = true; layers.refs.add(line);
+}
+
+// ------------------------------------------------------------ プレビュー（AR でないとき）の視点
+const orbit = { target: V3(0, 3, 0), theta: -2.3, phi: 0.5, radius: 62 };
+const pointers = new Map(); let pinch0 = null, autoSpin = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+function placeCamera() {
+  const t = orbit.target, r = orbit.radius;
+  camera.position.set(t.x + r * Math.cos(orbit.phi) * Math.cos(orbit.theta), t.y + r * Math.sin(orbit.phi), t.z + r * Math.cos(orbit.phi) * Math.sin(orbit.theta));
+  camera.lookAt(t);
+}
+previewEl.addEventListener('pointerdown', e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); previewEl.setPointerCapture(e.pointerId); autoSpin = false; });
+previewEl.addEventListener('pointerup', e => { pointers.delete(e.pointerId); pinch0 = null; });
+previewEl.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); pinch0 = null; });
+previewEl.addEventListener('pointermove', e => {
+  const prev = pointers.get(e.pointerId); if (!prev) return;
+  const cur = { x: e.clientX, y: e.clientY }; pointers.set(e.pointerId, cur);
+  if (pointers.size === 1) {
+    orbit.theta += (cur.x - prev.x) * 0.006; orbit.phi = Math.min(Math.max(orbit.phi + (cur.y - prev.y) * 0.005, 0.06), 1.45);
+  } else if (pointers.size === 2) {
+    const [p1, p2] = [...pointers.values()]; const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    if (pinch0) orbit.radius = Math.min(Math.max(orbit.radius * pinch0 / d, 6), 300); pinch0 = d;
+  }
+});
+previewEl.addEventListener('wheel', e => { e.preventDefault(); autoSpin = false; orbit.radius = Math.min(Math.max(orbit.radius * (1 + Math.sign(e.deltaY) * 0.1), 6), 300); }, { passive: false });
+function resizePreview() {
+  if (renderer.xr.isPresenting) return;
+  const w = Math.max(1, previewEl.clientWidth), h = Math.max(1, previewEl.clientHeight);
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resizePreview);
+new ResizeObserver(resizePreview).observe(previewEl);
+
+// ------------------------------------------------------------ 開始画面の UI
+function refreshSelects() {
+  for (const [el, idx] of [[$('refA'), selA], [$('refB'), selB]]) {
+    el.innerHTML = REFS.map((P, i) => `<option value="${i}">${P.id}</option>`).join('');
+    el.value = String(idx);
+  }
+  updatePair();
+}
+function refreshTapeLen() {
+  const el = $('tapeLen'), A = REFS[selA], B = REFS[selB];
+  if (!A || !B || selA === selB) { el.innerHTML = ''; return; }
+  const full = Math.hypot(B.x - A.x, B.y - A.y);
+  const opts = [{ v: 0, t: `${fmt(full)} m（図面どおり ${B.id}）` }, ...[20, 10, 5].filter(v => v < full - 0.01).map(v => ({ v, t: `${v} m` }))];
+  if (!opts.some(o => o.v === tapeLen)) tapeLen = 0;
+  el.innerHTML = opts.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
+  el.value = String(tapeLen);
+}
+function updatePair() {
+  refreshTapeLen();
+  const ok = REFS[selA] && REFS[selB] && selA !== selB;
+  const tp = ok ? tapePoints() : null;
+  $('refDist').textContent = ok ? fmt(tp.d) + ' m' : '—';
+  const noteA = REFS[selA] && REFS[selA].note ? `（${REFS[selA].note}）` : '';
+  $('refNote').textContent = ok ? `A は ${tp.A.label} の上${noteA}。B は ${tp.B.label}。A→B の向きが図面の向きになる。` : 'A と B には別の基準点を選んでください。';
+  if (ok) center = { x: (tp.A.x + tp.B.x) / 2, y: (tp.A.y + tp.B.y) / 2 };
+  orbit.target.set(center.x, 3, -center.y);
+  $('btnStart').disabled = !(ok && xrSupported && ENVS.length);
+  buildScene();
+}
+$('refA').addEventListener('change', e => { selA = +e.target.value; updatePair(); });
+$('refB').addEventListener('change', e => { selB = +e.target.value; updatePair(); });
+$('tapeLen').addEventListener('change', e => { tapeLen = +e.target.value; updatePair(); });
+
+function renderDataInfo() {
+  const byKv = new Map();
+  for (const e of ENVS) { const k = e.kv; if (!byKv.has(k)) byKv.set(k, { n: 0, clr: e.clr }); byKv.get(k).n++; }
+  const kvText = [...byKv.entries()].sort((a, b) => b[0] - a[0]).map(([kv, v]) => `${kv}kV 離隔${v.clr}m ×${v.n}`).join('、');
+  const approved = ENV && ENV.approved ? `承認済み（${String(ENV.approved.hash || '').slice(0, 18)}…）` : '未承認';
+  const step = !ENV || ENV.step == null ? '停止ステップ未指定（全導体を課電扱い）'
+    : ENV.state_name ? `状態 ${ENV.state_name}${ENV.state_note ? '（' + ENV.state_note + '）' : ''}` : `ステップ ${ENV.step}`;
+  const statuses = [...new Set(ENVS.map(e => e.status).filter(Boolean))];
+  const clrNote = statuses.length ? statuses.join('・') : '目安値';
+  $('dataInfo').innerHTML = [
+    ['包絡', `${envLabel}・${ENVS.length} 本（${kvText}）`],
+    ['状態', `${approved}・${step}`],
+    ['離隔表', `${ENV?.clearance_table_id ?? '—'}（${clrNote}）`],
+    ['保守側', ENV && ENV.treat_ungrounded_as_live ? '未接地の停止区間も包絡を作る' : '—'],
+    ['基準点', `${layoutLabel}・${REFS.length} 個`],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('banner').textContent = `${approved}／${step}／離隔は${clrNote}`;
+}
+function setStatus(text, cls) { const el = $('support'); el.textContent = text; el.className = 'pill ' + (cls || ''); }
+
+function readFile(input, onJson) {
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => { try { onJson(JSON.parse(fr.result), f.name); } catch (e) { window.__fail(f.name + ' を読めませんでした: ' + e.message); } };
+    fr.readAsText(f);
+  });
+}
+readFile($('fileEnv'), (j, name) => { ENVS = normalizeEnvelope(j); ENV = j; envLabel = name; $('fatal').hidden = true; renderDataInfo(); updatePair(); });
+readFile($('fileLayout'), (j, name) => { REFS = normalizeRefs(j); layoutLabel = name; selA = 0; selB = 1; $('fatal').hidden = true; renderDataInfo(); refreshSelects(); });
+
+// ------------------------------------------------------------ AR（WebXR immersive-ar）
+let xrSupported = false, session = null, refSpace = null, hitSource = null, wakeLock = null;
+let phase = 'A', tapA = null, tapB = null, align = null, target = 0;
+let tracking = '—', floorOK = false, lastHit = null, lastUi = 0, t0 = 0;
+const hitBuf = [];
+const viewer = V3(0, 0, 0);
+let walked = 0, walkPrev = null, walkT = 0;
+const logs = [];
+const overlay = $('overlay');
+overlay.addEventListener('beforexrselect', e => e.preventDefault());
+
+async function startAR() {
+  overlay.classList.add('on');
+  try {
+    session = await navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test', 'dom-overlay'], domOverlay: { root: overlay } });
+    session.addEventListener('end', onSessionEnd);
+    await renderer.xr.setSession(session);
+    refSpace = renderer.xr.getReferenceSpace();
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    hitSource = await session.requestHitTestSource({ space: viewerSpace });
+    enterXR();
+    try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (e) { wakeLock = null; }
+  } catch (e) {
+    setStatus('AR を開始できませんでした: ' + e.message, 'ng');
+    if (session) { try { await session.end(); } catch (e2) { /* 終了済み */ } }
+    else overlay.classList.remove('on');
+  }
+}
+function enterXR() {
+  scene.background = null; grid.visible = false; anchor.visible = false;
+  anchor.position.set(0, 0, 0); anchor.quaternion.identity();
+  phase = 'A'; tapA = tapB = align = null; target = 0; hitBuf.length = 0;
+  walked = 0; walkPrev = null; t0 = performance.now(); clearGroup(tapMarks);
+  $('result').hidden = true; $('targetsWrap').hidden = true; $('viewPanel').hidden = true; $('logPanel').hidden = true;
+  renderTargets(); updateXRUI(performance.now());
+}
+function onSessionEnd() {
+  try { wakeLock?.release(); } catch (e) { /* 無視 */ }
+  wakeLock = null; session = null; hitSource = null; refSpace = null;
+  overlay.classList.remove('on');
+  scene.background = BG; grid.visible = true; reticle.visible = false; clearGroup(tapMarks);
+  anchor.visible = true; anchor.position.set(0, 0, 0); anchor.quaternion.identity();
+  renderLogs();
+  setTimeout(resizePreview, 60);   // three.js 側の終了処理（描画サイズの復元）が済んでから合わせ直す
+}
+$('btnStart').addEventListener('click', startAR);
+$('btnEnd').addEventListener('click', () => session && session.end());
+
+function walkTick(time) {
+  if (time - walkT < 250) return; walkT = time;
+  if (!walkPrev) { walkPrev = { x: viewer.x, z: viewer.z }; return; }
+  const d = Math.hypot(viewer.x - walkPrev.x, viewer.z - walkPrev.z);
+  if (d > 0.05) { if (d < 5) walked += d; walkPrev = { x: viewer.x, z: viewer.z }; }
+}
+function xrFrame(time, frame) {
+  const pose = frame.getViewerPose(refSpace);
+  if (pose) { const p = pose.transform.position; viewer.set(p.x, p.y, p.z); tracking = pose.emulatedPosition ? 'limited' : 'ok'; walkTick(time); }
+  else tracking = 'lost';
+  const hits = hitSource ? frame.getHitTestResults(hitSource) : [];
+  const hp = hits.length ? hits[0].getPose(refSpace) : null;
+  if (hp) {
+    reticle.visible = true; reticle.matrix.fromArray(hp.transform.matrix);
+    const m = hp.transform.matrix, pos = hp.transform.position;
+    floorOK = m[5] > 0.85 && (viewer.y - pos.y) > 0.5;   // 上向きの面で、端末より 0.5 m 以上低い＝地面
+    lastHit = V3(pos.x, pos.y, pos.z);
+    if (floorOK) { hitBuf.push({ t: time, p: lastHit }); while (hitBuf.length > 40) hitBuf.shift(); }
+    reticleMat.color.setHex(floorOK ? 0xffffff : 0x8b949e);
+  } else { reticle.visible = false; floorOK = false; lastHit = null; }
+  if (time - lastUi > 120) { lastUi = time; updateXRUI(time); }
+}
+function medianHit(now) {
+  const recent = hitBuf.filter(h => now - h.t < 450).map(h => h.p);
+  if (recent.length < 3) return floorOK && lastHit ? lastHit.clone() : null;
+  const med = k => { const v = recent.map(p => p[k]).sort((a, b) => a - b); return v[v.length >> 1]; };
+  return V3(med('x'), med('y'), med('z'));
+}
+const hdist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+function modelDistAB() { return tapePoints().d; }
+
+// 位置合わせ：A・B の中点どうしを合わせ、A→B の向きを合わせる（縮尺は 1:1 のまま。差は両端に半分ずつ出る）
+function doAlign() {
+  const tp = tapePoints(), A = tp.A, B = tp.B;
+  const mA = V3(A.x, A.z || 0, -A.y), mB = V3(B.x, B.z || 0, -B.y);   // 図面 (x,y,z) → three (x, z, -y)
+  const dM = mB.clone().sub(mA); dM.y = 0;
+  const dT = tapB.clone().sub(tapA); dT.y = 0;
+  const theta = Math.atan2(-dT.z, dT.x) - Math.atan2(-dM.z, dM.x);
+  const q = new THREE.Quaternion().setFromAxisAngle(YAXIS, theta);
+  const midM = mA.clone().add(mB).multiplyScalar(0.5), midT = tapA.clone().add(tapB).multiplyScalar(0.5);
+  anchor.position.copy(midT.clone().sub(midM.applyQuaternion(q)));
+  anchor.quaternion.copy(q); anchor.visible = true;
+  const tapDist = dT.length(), modelDist = dM.length();
+  align = { pair: `A=${A.label}／B=${B.label}`, tapDist, modelDist, diff: tapDist - modelDist, floorDiff: tapB.y - tapA.y, walk0: walked };
+  addLog({ kind: '位置合わせ', ref: align.pair, dz: align.floorDiff, walk: 0,
+           note: `テープ間 ${fmt(tapDist)} m／図面 ${fmt(modelDist)} m（差 ${sgn(align.diff)} m）` });
+  if (Math.abs(align.diff) > 0.5) toast('テープの間隔が図面と 0.5 m 以上違います。基準点の組とテープの位置を確かめてください', 'warn');
+  else toast(`位置合わせ完了：テープ間の差 ${sgn(align.diff)} m`);
+}
+function worldToModel(w) {
+  const l = w.clone().sub(anchor.position).applyQuaternion(anchor.quaternion.clone().invert());
+  return { x: l.x, y: -l.z, z: l.y };
+}
+function measureAt(p) {
+  const m = worldToModel(p), tp = tapePoints(), P = target === 0 ? tp.A : tp.B, AB = target === 0 ? 'A' : 'B';
+  const dx = m.x - P.x, dy = m.y - P.y, dz = m.z - (P.z || 0), h = Math.hypot(dx, dy);
+  const rec = addLog({ kind: 'ずれ', ref: `${AB}（${P.label}）`, h, dx, dy, dz, walk: walked - (align ? align.walk0 : 0), note: '' });
+  toast(`${AB}：水平 ${fmt(h)} m（東 ${sgn(dx)}／北 ${sgn(dy)}）高さ ${sgn(dz)} m`);
+  return rec;
+}
+function markTap(label, p) {
+  const g = new THREE.Group(); g.position.copy(p);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x4ea1ff, side: THREE.DoubleSide });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.16, 40).rotateX(-Math.PI / 2), mat); ring.userData.ownMaterial = true; g.add(ring);
+  const pole = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(0, 0, 0), V3(0, 1.2, 0)]), new THREE.LineBasicMaterial({ color: 0x4ea1ff }));
+  pole.userData.ownMaterial = true; g.add(pole);
+  const lab = makeLabel('記録 ' + label, '#cfe6ff', 'rgba(78,161,255,.8)'); lab.position.set(0, 1.4, 0); g.add(lab);
+  tapMarks.add(g);
+}
+function onMain() {
+  const p = medianHit(performance.now());
+  if (!p) { toast('地面に照準が合っていません。照準の輪が白くなる位置で押してください', 'warn'); return; }
+  if (phase === 'A') { tapA = p; markTap('A', p); phase = 'B'; }
+  else if (phase === 'B') {
+    if (hdist(p, tapA) < 1) { toast('A と同じ場所です。B のテープへ移動してください', 'warn'); return; }
+    tapB = p; markTap('B', p); doAlign(); phase = 'aligned'; target = 0; renderTargets();
+  } else measureAt(p);
+  updateXRUI(performance.now());
+}
+$('btnMain').addEventListener('click', onMain);
+$('btnRedo').addEventListener('click', () => {
+  phase = 'A'; tapA = tapB = align = null; anchor.visible = false; clearGroup(tapMarks);
+  $('result').hidden = true; $('targetsWrap').hidden = true; updateXRUI(performance.now());
+});
+function renderTargets() {
+  const wrap = $('targetsWrap');
+  const tp = REFS.length >= 2 && selA !== selB ? tapePoints() : null;
+  const list = tp ? [tp.A, tp.B] : [];
+  wrap.innerHTML = list.map((P, i) => `<button data-i="${i}" class="${i === target ? 'on' : ''}">${i === 0 ? 'A' : 'B'}（${P.label}）</button>`).join('');
+  wrap.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { target = +b.dataset.i; renderTargets(); updateXRUI(performance.now()); }));
+  wrap.hidden = phase !== 'aligned';
+}
+function chip(el, text, cls) { el.textContent = text; el.className = 'chip ' + (cls || ''); }
+function updateXRUI(now) {
+  chip($('chipTrack'), tracking === 'ok' ? '追跡 良好' : tracking === 'limited' ? '追跡 不安定' : tracking === 'lost' ? '追跡 なし' : '追跡 —',
+       tracking === 'ok' ? 'ok' : tracking === 'limited' ? 'warn' : 'ng');
+  chip($('chipFloor'), floorOK ? '地面 検出' : '地面 探索中', floorOK ? 'ok' : 'warn');
+  chip($('chipAlign'), align ? `合わせ済み 差${sgn(align.diff)}m` : '位置合わせ 未', align ? (Math.abs(align.diff) <= 0.1 ? 'ok' : 'warn') : '');
+  const tp = tapePoints(), btn = $('btnMain');
+  let guide = '', live = '';
+  if (phase === 'A') {
+    guide = floorOK ? `A（${tp.A.label}）のテープの中心に照準を合わせて「Aを記録」` : '地面にカメラを向けて、照準の輪が白くなるまでゆっくり動かしてください';
+    btn.textContent = 'Aを記録';
+  } else if (phase === 'B') {
+    guide = floorOK ? `B（${tp.B.label}）のテープへ移動し、中心に照準を合わせて「Bを記録」` : '地面にカメラを向けてください';
+    if (tapA && lastHit) live = `Aから ${fmt(hdist(tapA, lastHit))} m（図面 ${fmt(modelDistAB())} m）`;
+    btn.textContent = 'Bを記録';
+  } else {
+    const AB = target === 0 ? 'A' : 'B', P = target === 0 ? tp.A : tp.B;
+    guide = `表示中。歩いて戻ったら、${AB}（${P.label}）のテープに照準を合わせて「ずれを記録」`;
+    live = `合わせてから ${fmt(walked - align.walk0, 1)} m 歩行`;
+    btn.textContent = `${AB} のずれを記録`;
+    const r = $('result'); r.hidden = false;
+    r.textContent = `テープ間 ${fmt(align.tapDist)} m／図面 ${fmt(align.modelDist)} m（差 ${sgn(align.diff)} m）・地面の高さの差 ${sgn(align.floorDiff)} m`;
+  }
+  $('guide').textContent = guide; $('live').textContent = live; btn.disabled = !floorOK;
+  $('logCount').textContent = String(logs.length);
+}
+let toastTimer = 0;
+function toast(text, cls) {
+  const t = $('toast'); t.textContent = text; t.className = 'show ' + (cls || '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = ''; }, 3800);
+}
+
+// 表示の切り替え
+$('btnView').addEventListener('click', () => { $('viewPanel').hidden = !$('viewPanel').hidden; $('logPanel').hidden = true; });
+$('btnLogs').addEventListener('click', () => { $('logPanel').hidden = !$('logPanel').hidden; $('viewPanel').hidden = true; renderLogs(); });
+$('tgEnv').addEventListener('change', e => { layers.env.visible = e.target.checked; layers.labels.visible = e.target.checked; });
+$('tgCond').addEventListener('change', e => { layers.cond.visible = e.target.checked; });
+$('tgFoot').addEventListener('change', e => { layers.foot.visible = e.target.checked; });
+$('tgRefs').addEventListener('change', e => { layers.refs.visible = e.target.checked; });
+$('opacity').addEventListener('input', e => { view.opacity = +e.target.value / 100; envMat.opacity = view.opacity; ringMat.opacity = Math.min(1, 0.2 + view.opacity * 2.2); $('opacityV').textContent = e.target.value + '%'; });
+$('range').addEventListener('input', e => { view.range = +e.target.value; $('rangeV').textContent = view.range >= 150 ? '全部' : `半径 ${view.range} m`; });
+$('range').addEventListener('change', () => buildScene());
+
+// ------------------------------------------------------------ 記録（docs/ar-check.md に貼る表）
+function addLog(r) { const rec = { t: (performance.now() - t0) / 1000, ...r }; logs.push(rec); renderLogs(); return rec; }
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function deviceText() {
+  const ua = navigator.userAgent; const a = ua.match(/Android [\d.]+(?:; [^;)]+)?/); const c = ua.match(/Chrome\/(\d+)/);
+  return `${a ? a[0] : (navigator.platform || '不明')}${c ? '／Chrome ' + c[1] : ''}`;
+}
+function toMarkdown() {
+  const head = ['| 経過 | 種別 | 基準点 | 水平のずれ m | 東 m | 北 m | 高さ m | 合わせてからの歩行 m | 備考 |', '|---|---|---|---|---|---|---|---|---|'];
+  const rows = logs.map(r => `| ${mmss(r.t)} | ${r.kind} | ${r.ref} | ${fmt(r.h)} | ${sgn(r.dx)} | ${sgn(r.dy)} | ${sgn(r.dz)} | ${fmt(r.walk, 1)} | ${r.note || ''} |`);
+  return [`端末: ${deviceText()}`, `データ: ${envLabel}（${$('banner').textContent}）`, '', ...head, ...rows].join('\n');
+}
+function renderLogs() {
+  const html = '<tr><th>経過</th><th>種別</th><th>基準点</th><th>水平 m</th><th>東 m</th><th>北 m</th><th>高さ m</th><th>歩行 m</th><th>備考</th></tr>' +
+    logs.map(r => `<tr><td class="num">${mmss(r.t)}</td><td>${r.kind}</td><td>${r.ref}</td><td class="num">${fmt(r.h)}</td><td class="num">${sgn(r.dx)}</td><td class="num">${sgn(r.dy)}</td><td class="num">${sgn(r.dz)}</td><td class="num">${fmt(r.walk, 1)}</td><td>${r.note || ''}</td></tr>`).join('');
+  $('logTable').innerHTML = html; $('logTableXR').innerHTML = html;
+  $('logBox').hidden = logs.length === 0; $('logCount').textContent = String(logs.length);
+}
+async function copyLogs(msgEl) {
+  const text = toMarkdown();
+  try { await navigator.clipboard.writeText(text); msgEl.textContent = 'コピーしました'; }
+  catch (e) { const ta = $('copyArea'); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); msgEl.textContent = 'コピーできないため下に表示しました。長押しで選択してコピーしてください'; }
+}
+$('btnCopy').addEventListener('click', () => copyLogs($('copyMsg')));
+$('btnCopyXR').addEventListener('click', () => copyLogs($('copyMsgXR')));
+
+// ------------------------------------------------------------ 描画ループ
+renderer.setAnimationLoop((time, frame) => {
+  if (frame && renderer.xr.isPresenting) xrFrame(time, frame);
+  else { if (autoSpin) orbit.theta += 0.0015; placeCamera(); }
+  renderer.render(scene, camera);
+});
+
+// ------------------------------------------------------------ 起動
+async function loadLayout() {   // GitHub Pages などではリポジトリの layout.json を、uvicorn で開いたときは API から読む
+  try { return await fetchJSON(SAMPLE.layout); }
+  catch (e) { const site = await fetchJSON(SAMPLE.api); return site.layout; }
+}
+try {
+  const [envJson, layoutJson] = await Promise.all([fetchJSON(SAMPLE.env), loadLayout()]);
+  ENV = envJson; ENVS = normalizeEnvelope(envJson); envLabel = 'サンプル ' + (envJson.site_id || '');
+  REFS = normalizeRefs(layoutJson); layoutLabel = (layoutJson.site_id || '') + ' の layout.json';
+} catch (e) {
+  window.__fail('サンプルを読めませんでした（' + e.message + '）。https:// の URL で開くか、envelope.json と layout.json を読み込んでください。');
+}
+if (!window.isSecureContext) setStatus('https:// の URL で開いてください（AR は安全な接続でだけ動きます）', 'ng');
+else if (!navigator.xr) setStatus('このブラウザは AR（WebXR）に対応していません。Android の Chrome で開いてください。3D の確認だけできます', 'warn');
+else {
+  try { xrSupported = await navigator.xr.isSessionSupported('immersive-ar'); } catch (e) { xrSupported = false; }
+  setStatus(xrSupported ? 'この端末で AR を使えます' : 'この端末・ブラウザでは AR を使えません（Android の Chrome と「Google Play 開発者サービス（AR）」が必要）。3D の確認だけできます', xrSupported ? 'ok' : 'warn');
+}
+if (REFS.length >= 2) refreshSelects();
+renderDataInfo(); resizePreview();
+window.__ready = true;
+
+// 動作確認用（ブラウザのコンソールや自動テストから呼ぶ。画面からは使わない）
+window.__maai = {
+  setPair(a, b, len = 0) { selA = a; selB = b; tapeLen = len; refreshSelects(); },
+  alignWith(ta, tb) { tapA = V3(...ta); tapB = V3(...tb); doAlign(); phase = 'aligned'; return { ...align, pos: anchor.position.toArray(), quat: anchor.quaternion.toArray() }; },
+  modelToWorld(x, y, z) { scene.updateMatrixWorld(true); return model.localToWorld(V3(x, y, z)).toArray(); },
+  worldToModel(p) { return worldToModel(V3(...p)); },
+  measureAt(p, i) { target = i; return measureAt(V3(...p)); },
+  markdown: () => toMarkdown(),
+  counts: () => ({ envelopes: ENVS.length, refs: REFS.length, envChildren: layers.env.children.length }),
+  // AR 画面の配置確認用（実際の AR ではなく、表示だけを再現する）
+  debugOverlay(ph) {
+    overlay.classList.add('on'); phase = ph; tracking = 'ok'; floorOK = true;
+    if (ph !== 'A') { tapA = V3(0, -1.4, 0); lastHit = V3(9.95, -1.4, 0.3); }
+    if (ph === 'aligned') { align = { pair: 'P1–P2', tapDist: 20.03, modelDist: 20, diff: 0.03, floorDiff: 0.02, walk0: 0 }; walked = 14.2; target = 0; }
+    renderTargets(); updateXRUI(performance.now());
+  },
+};
+</script>
+</body>
+</html>
