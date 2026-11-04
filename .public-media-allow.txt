@@ -5,3 +5,8 @@ data/sites/SITE-01/drawings/SITE-01_layout.pdf
 docs/img/step2-tr2-outage.png
 docs/img/3d-site-1104.png
 docs/img/clearance-1104.png
+docs/img/ui-1-ingest.png
+docs/img/ui-2-steps.png
+docs/img/ui-3-clearance.png
+docs/img/ui-3-propose.png
+docs/img/ui-4-approve.png

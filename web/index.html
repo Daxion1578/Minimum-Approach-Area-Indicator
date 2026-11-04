@@ -87,10 +87,10 @@
 
   <section class="step" id="s2">
     <h3>重機配置</h3>
-    <div class="note">3D の地面をクリックするとクレーンのベースがそこへ移る。諸元は 25t 級ラフテレーンの例示値。</div>
-    <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="86" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="69" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="180" step="5" style="width:70px"></div>
-    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="12" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フック垂下 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
-    <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-30" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="40" step="5" style="width:70px"><span class="note">5° 刻みで掃引</span></div>
+    <div class="note">3D の地面をクリックするとクレーンのベースがそこへ移る。諸元は 25t 級ラフテレーンの例示値。向きは x 軸から反時計回り（0°=東、90°=北）。</div>
+    <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="88" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="72" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="0" step="5" style="width:70px"></div>
+    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フック垂下 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
+    <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-50" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="50" step="5" style="width:70px"><span class="note">5° 刻みで掃引</span></div>
     <div class="row"><button class="act" id="btnClear">離隔を判定する</button><button class="sub" id="btnPropose">修正案を出す</button></div>
     <div id="verdictBox"></div>
     <div id="proposeBox"></div>
@@ -106,7 +106,7 @@
   </section>
 </div>
 
-<div id="view"><div id="hud">読み込み中…</div></div>
+<div id="view"><div id="hud">読み込み中…</div><div id="viewBtns" style="position:absolute;right:10px;top:10px;display:flex;gap:6px"><button class="sub" id="vAll">全体</button><button class="sub" id="vTarget">対象へ寄る</button><button class="sub" id="vCrane">クレーンへ寄る</button></div></div>
 
 <div id="right">
   <h4>state.json（画面 → engine）</h4><pre id="jState"></pre>
@@ -260,12 +260,21 @@ $('btnIngest').onclick=async()=>{
   count();
 };
 
+// ---- 視点
+function frameTo(cx,cy,radius,theta){ const steps=20; const t0=controls.target.clone(), r0=controls.radius, th0=controls.theta; let i=0;
+  (function tick(){ i++; const k=i/steps, e=1-Math.pow(1-k,3); controls.target.set(t0.x+(cx-t0.x)*e, t0.y+(cy-t0.y)*e, 0); controls.radius=r0+(radius-r0)*e; if (theta!==undefined) controls.theta=th0+(theta-th0)*e; controls.phi=0.55+(0.45-0.55)*e; if (i<steps) requestAnimationFrame(tick); })(); }
+function centerOf(ids){ const pts=[]; for (const it of site.layout.items){ if (!ids.some(id=>it.id===id||it.id.includes(id))) continue; if (it.at) pts.push(it.at); for (const c of it.capsules||[]) pts.push(c.a,c.b); }
+  if (!pts.length) return null; const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [ (Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2, Math.max(25, Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys))*1.6 ]; }
+$('vAll').onclick=()=>{ const f=site.layout.site?.fence||{x:0,y:0,w:135,h:125}; frameTo((f.x||0)+(f.w||135)/2,(f.y||0)+(f.h||125)/2,190,-0.9); };
+$('vTarget').onclick=()=>{ const ids=lastSteps?lastSteps.targets:[$('targetSel').value]; const c=centerOf(ids); if (c) frameTo(c[0],c[1],c[2],-1.2); };
+$('vCrane').onclick=()=>{ const c=lastCrane||craneFromForm(); frameTo(c.base[0],c.base[1]+6,Math.max(50,c.boom_len_m*3.6),-1.3); };
+
 // ---- 停止ステップ
 $('btnSteps').onclick=async()=>{
   const targets=[$('targetSel').value];
   const r=await fetch(`/api/sites/${site.site_id}/steps`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({targets, state: site.states.normal})});
   lastSteps=await r.json();
-  renderSteps(0);
+  renderSteps(0); $('vTarget').onclick();
 };
 function renderSteps(active){
   const st=lastSteps; if (!st) return;
