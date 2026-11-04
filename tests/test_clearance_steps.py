@@ -82,6 +82,13 @@ def test_steps_do_not_ground_the_new_bay(topo, site, states):
     assert not any(o["id"].startswith("66-D6") for o in r["steps"][2]["ops"])
 
 
+def test_steps_refuse_empty_or_unknown_targets(topo, states):
+    """対象なし・存在しない対象では止める（空の手順を「通った」にしない）。"""
+    for targets in ([], ["NO-SUCH-NODE"]):
+        r = generate(topo, states["normal"], targets)
+        assert r["ok"] is False and r["steps"] == [] and r["problems"], targets
+
+
 def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
     """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。余裕の基準を 0 にすれば同じ配置が「可」になる。"""
     from engine.steps import generate

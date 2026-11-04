@@ -105,6 +105,9 @@ def isolation_boundary(topo: Topology, targets: list[str]) -> dict:
 
 def generate(topo: Topology, normal_state: dict, targets: list[str], note: str = "") -> dict:
     """§6.8 steps.json。targets はノードID（例 ["TR-2"]）。"""
+    if not targets:
+        # 対象なしで「通った」と返すと、何も止めていない計画が承認まで進みうる
+        return {"ok": False, "targets": [], "steps": [], "problems": ["対象が選ばれていない"]}
     for t in targets:
         if t not in topo.nodes:
             return {"ok": False, "targets": targets, "steps": [], "problems": [f"unknown node {t}"]}
