@@ -325,7 +325,7 @@ AR 以外の現地機能、取替数量・レイアウト提案、各社様式�
 - `uvicorn server.app:app` → http://localhost:8000
 - タブ 1: `data/sites/SITE-01/drawings/SITE-01_sld.pdf` を取り込むと、真値との突き合わせで 番号 136/142・隣接 precision 1.0 / recall 0.953、質問 9 が出る。「質問の無いものを確認済にする」で 127/136。
 - タブ 2: 対象 2号変圧器 →「停止ステップを作る」→ 段階 3 で 2 号バンクまわりが緑、断路器と遮断器の間の区間が黄（未接地）、残りは赤。状態の例 `tr2-outage-220-only` で紫（充電部に接地）と警告。
-- タブ 3: 初期値のまま「離隔を判定する」→ 不可（最小 3.00 m／必要 5.20 m）。「修正案を出す」→ 「ブームの起伏角を 65° に上げる」が可で先頭。採用 → 可。
+- タブ 3: 初期値のまま「離隔を判定する」→ 不可（最小 3.00 m／必要 7.00 m）。「修正案を出す」→ 「ブームの起伏角を 65° に上げる」が可で先頭。採用 → 可。
 - タブ 4: 承認 → `data/sites/SITE-01/approved/plan-*/` に `plan.json` `envelope.json` `steps.json` `step-0..3-sld.pdf`。不可のまま承認すると拒否される。
 - Claude 接続（`.env` にキー）: タブ 1 右上が「Claude: <model>」、取込の「意味づけ: Claude」、修正案の「説明: Claude」。`logs/outbound/` に request/response。
 

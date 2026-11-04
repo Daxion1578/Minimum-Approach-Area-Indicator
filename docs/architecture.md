@@ -44,7 +44,7 @@ sequenceDiagram
   participant M as マスキング関門
   participant C as Claude
   U->>E: 重機を配置
-  E-->>U: 不可（最小 3.00m < 必要 5.20m、根拠）
+  E-->>U: 不可（最小 3.00m < 必要 7.00m、根拠）
   U->>E: 修正案を出す
   E->>E: 候補（移動・旋回制限・起伏・追加停止）を作り、一つずつ再判定
   E-->>U: 候補と判定値（可 → 条件付き可 → 不可）

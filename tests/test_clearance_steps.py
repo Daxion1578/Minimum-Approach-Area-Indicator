@@ -35,7 +35,7 @@ def test_crane_near_live_bus_is_ng_and_names_conductor(topo, site, states):
     c = Crane(base=(60.0, by - 20.0), heading_deg=90, boom_len_m=22, boom_elev_deg=25, slew_deg=(-5, 5))
     out = evaluate(env, c)
     assert out["verdict"] == NG
-    assert out["worst"]["required_m"] == 5.2 and "R2" in out["reasons"][0]
+    assert out["worst"]["required_m"] == 7.0 and "R2" in out["reasons"][0]
     assert out["worst"]["conductor_id"].startswith("220-")
 
 
@@ -90,19 +90,20 @@ def test_steps_refuse_empty_or_unknown_targets(topo, states):
 
 
 def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
-    """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。余裕の基準を 0 にすれば同じ配置が「可」になる。"""
+    """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。
+    台本の「起伏角 65°」は既定の余裕基準（0.5m）では可、基準を 1.0m に上げると同じ配置が条件付き可になる。"""
+    from engine.clearance import load_rules
     from engine.steps import generate
     st = generate(topo, states["normal"], ["TR-2"])
     final = st["steps"][-1]["state"]
     env = envelopes(topo, site.layout, energize(topo, final), ClearanceTable.load())
-    c = Crane(base=(88.0, 72.0), heading_deg=0, boom_len_m=14, boom_elev_deg=55, slew_deg=(-50, 50), hook_drop_m=2)  # 画面の初期値で起伏 55°
+    c = Crane(base=(88.0, 72.0), heading_deg=0, boom_len_m=14, boom_elev_deg=65, slew_deg=(-50, 50), hook_drop_m=2)
     out = evaluate(env, c)
-    assert out["verdict"] == CONDITIONAL
-    assert 0 <= out["worst"]["margin_m"] < 0.5
-    assert out["conditions"] and out["reasons"][0].startswith("R6")
-    from engine.clearance import load_rules
-    relaxed = evaluate(env, c, {**load_rules(), "margin_m": 0.0})
-    assert relaxed["verdict"] == OK and relaxed["conditions"] == []
+    assert out["verdict"] == OK and out["conditions"] == []
+    m = out["worst"]["margin_m"]
+    assert 0.5 <= m < 1.0
+    strict = evaluate(env, c, {**load_rules(), "margin_m": 1.0})
+    assert strict["verdict"] == CONDITIONAL and strict["conditions"] and strict["reasons"][0].startswith("R6")
 
 
 def test_every_step_is_valid_for_every_transformer_and_breaker(topo, states):
