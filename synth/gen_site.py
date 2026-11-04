@@ -64,8 +64,8 @@ P = {
         "line_gantry": {"y": 121.0, "z": LINE_GANTRY_220["beam"], "column": LINE_GANTRY_220["column"]}, "gw_z": LINE_GANTRY_220["column"],
         "tower": {"y": 142.0, "z": TOWER_220["attach_z"], "height": TOWER_220["height"]},   # 構外の引留鉄塔
         "cb_z": EQUIP[220]["cb_terminal_z"],
-        "line_bay": {"la": 117.5, "ls": 114.0, "cb": 109.0, "ct": 105.5},   # 線路ベイの y（北→南）。母線側断路器は母線直下
-        "tr_bay": {"cb": 86.0, "ct": 82.5, "ls": 79.0, "la": 75.0},        # 変圧器ベイの y（北→南）。母線側断路器は母線直下
+        "line_bay": {"la": 117.5, "ls": 114.0, "cb": 108.0},   # 線路ベイの y（北→南）。CT は遮断器のブッシング根元。母線側断路器は母線直下
+        "tr_bay": {"cb": 87.0, "ls": 80.0, "la": 76.0},        # 変圧器ベイの y（北→南）。CT は遮断器のブッシング根元。母線側断路器は母線直下
         "tr_y": 69.0, "tr_z": TRANSFORMER["hv"]["top_z"],   # 変圧器タンク中心 y・一次ブッシング端子高さ
         "lines": [("E1", "東線1L", 40.0, "A"), ("E2", "東線2L", 96.0, "C")],   # (符号, 名前, x, 区間)
         "banks": [(1, 48.0, "A"), (2, 76.0, "B"), (3, 104.0, "C")],           # (番号, x, 区間)。線路ベイから 8m 東（パンタ型断路器の柱が重ならないように）
@@ -188,7 +188,7 @@ class Site:
         self.layout["structures"].append({"id": sid, "kind": "gantry", "name": name, "primitives": prims})
 
     def apparatus(self, sid, kind, kv, x, y, name=None):
-        """計器用変流器・避雷器など、結線上は区間の一部で、図面と 3D に形だけ出す機器（3 相）。"""
+        """避雷器など、結線上は区間の一部で、図面と 3D に形だけ出す機器（3 相）。CT は遮断器に内蔵（ブッシング形）。"""
         e = EQUIP[kv][kind]; sp = EQUIP[kv]["phase_sp"]
         h = e["column"] + e["porcelain"] + e.get("head_h", 0.0)
         prims = [{"type": "capsule", "a": r3((x + PHASE_IDX[ph] * sp, y, 0.0)), "b": r3((x + PHASE_IDX[ph] * sp, y, h)), "r": e.get("head_d", e.get("d", 0.3)) / 2, "phase": ph} for ph in PHASES]
@@ -248,7 +248,6 @@ class Site:
             self.chain([ln, f"{ls}.b", f"{ls}.a", n1, f"{cb}.a", f"{cb}.b", n2, f"{bls}.a", f"{bls}.b", buses[sec]])
             self.es(f"{ln}-ES", ln, kv, name=f"{cname} 線路接地", at=(x - 1.0, lb["ls"] + 2.5, 1.5), number=f"{code}{cid}-{idx}100E")
             self.es(f"{n1}-ES", n1, kv, name=f"{cname} 線路側区間 接地", at=(x + 1.0, (lb["ls"] + lb["cb"]) / 2, 1.5), number=f"{code}{cid}-{idx}101E")
-            self.apparatus(f"{pre}-CT", "ct", kv, x, lb["ct"], f"{cname} 変流器")
             self.apparatus(f"{pre}-LA", "la", kv, x, lb["la"], f"{cname} 避雷器")
             tw = cfg["tower"]; cz = cfg["cb_z"]
             for ph in PHASES:
@@ -273,7 +272,6 @@ class Site:
             self.chain([buses[sec], f"{bls}.a", f"{bls}.b", n1, f"{cb}.a", f"{cb}.b", n2, f"{ls}.a", f"{ls}.b", hv])
             self.es(f"{n2}-ES", n2, kv, name=f"{n}号変圧器 一次 遮断器-断路器間 接地", at=(x + 1.0, (tb["cb"] + tb["ls"]) / 2, 1.5), number=f"{code}T-{n}101E")
             self.es(f"{hv}-ES", hv, kv, name=f"{n}号変圧器 一次 接地", at=(x - 1.0, tb["ls"] - 2.5, 1.5), number=f"{code}T-{n}100E")
-            self.apparatus(f"{pre}-CT", "ct", kv, x, tb["ct"], f"{n}号変圧器 一次 変流器")
             self.apparatus(f"{pre}-LA", "la", kv, x, tb["la"], f"{n}号変圧器 一次 避雷器")
             cz = cfg["cb_z"]
             for ph in PHASES:

@@ -32,10 +32,10 @@ EQUIP = {
             "frame": 1.0,          # 架台の高さ
             "tank_d": 1.1, "tank_len": 3.6,     # タンク直径・長さ（電流方向）
             "bushing_pitch": 2.6, "bushing_h": 3.1, "bushing_d": 0.45,   # ブッシングの間隔・高さ・直径
+            "ct_housing": {"d": 0.95, "h": 0.6},   # ブッシング根元の変流器（ブッシング形 CT）。別置きの CT は無い
             "base": 1.2,
             "cabinet": (0.9, 1.2, 1.4),   # 操作箱 w, d, h（タンクの端）
         },
-        "ct": {"column": 1.8, "porcelain": 2.6, "head_d": 0.9, "head_h": 0.8, "post_d": 0.3, "base": 0.9},
         "la": {"column": 1.0, "porcelain": 2.3, "d": 0.25, "base": 0.6},
         "terminal_z": 5.2,        # 断路器・CT の端子高さ（column + insulator + head）
         "cb_terminal_z": 5.2,     # 遮断器の端子高さ（frame + tank_d + bushing_h）
@@ -43,8 +43,8 @@ EQUIP = {
     66: {    # 72.5kV 級
         "phase_sp": 1.5,
         "ds": {"type": "double_break", "column": 2.0, "insulator": 0.8, "head": 0.35, "span": 1.3, "frame": 1.8, "frame_w": 0.4, "ins_d": 0.2, "base": 0.5},
-        "cb": {"type": "dead_tank", "frame": 0.8, "tank_d": 0.7, "tank_len": 2.2, "bushing_pitch": 1.5, "bushing_h": 1.7, "bushing_d": 0.3, "base": 0.8, "cabinet": (0.7, 1.0, 1.2)},
-        "ct": {"column": 1.2, "porcelain": 1.4, "head_d": 0.6, "head_h": 0.5, "post_d": 0.22, "base": 0.6},
+        "cb": {"type": "dead_tank", "frame": 0.8, "tank_d": 0.7, "tank_len": 2.2, "bushing_pitch": 1.5, "bushing_h": 1.7, "bushing_d": 0.3,
+               "ct_housing": {"d": 0.6, "h": 0.4}, "base": 0.8, "cabinet": (0.7, 1.0, 1.2)},
         "la": {"column": 0.8, "porcelain": 0.9, "d": 0.18, "base": 0.4},
         "terminal_z": 3.2, "cb_terminal_z": 3.2,
     },

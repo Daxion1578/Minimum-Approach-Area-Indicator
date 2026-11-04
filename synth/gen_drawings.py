@@ -557,8 +557,8 @@ class LayoutDrawing(Plan):
             self.rect_m(cx - e["base"] / 2, y - e["tank_len"] / 2 - 0.2, cx + e["base"] / 2, y + e["tank_len"] / 2 + 0.2, LW["dim"])   # 架台
             self.rect_m(cx - e["tank_d"] / 2, y - e["tank_len"] / 2, cx + e["tank_d"] / 2, y + e["tank_len"] / 2, LW["thin"])         # タンク
             for d in (-e["bushing_pitch"] / 2, e["bushing_pitch"] / 2):
+                self.sh.circle(self.X(cx), self.Y(y + d), e["ct_housing"]["d"] / 2 * self.s, LW["dim"])   # ブッシング形 CT
                 self.sh.circle(self.X(cx), self.Y(y + d), e["bushing_d"] / 2 * self.s, LW["thin"])
-                self.sh.circle(self.X(cx), self.Y(y + d), e["bushing_d"] / 2 * self.s * 0.5, LW["dim"])
         cw, cd, _ = e["cabinet"]
         self.rect_m(x + sp + e["tank_d"] / 2, y - cd / 2, x + sp + e["tank_d"] / 2 + cw, y + cd / 2, LW["thin"])   # 操作箱（端のタンクの横）
         if label:
@@ -771,9 +771,12 @@ class LayoutDrawing(Plan):
                 zt = e["frame"]; r = e["tank_d"] / 2
                 rect(y, zt, e["tank_len"] - e["tank_d"], e["tank_d"])                         # タンク胴
                 sh.circle(Xs(y - e["tank_len"] / 2 + r), Zs(zt + r), r * s, LW["thin"]); sh.circle(Xs(y + e["tank_len"] / 2 - r), Zs(zt + r), r * s, LW["thin"])   # 鏡板
+                ct = e["ct_housing"]
                 for d in (-e["bushing_pitch"] / 2, e["bushing_pitch"] / 2):
-                    rect(y + d, zt + e["tank_d"], e["bushing_d"] + 0.3, 0.3)                  # ターレット
-                    self.porcelain(Xs(y + d), Zs(zt + e["tank_d"] + 0.3), e["bushing_d"] * s, (e["bushing_h"] - 0.3) * s)
+                    rect(y + d, zt + e["tank_d"], ct["d"], ct["h"])                            # ブッシング根元の CT ケース
+                    self.porcelain(Xs(y + d), Zs(zt + e["tank_d"] + ct["h"]), e["bushing_d"] * s, (e["bushing_h"] - ct["h"]) * s)
+                if s >= 4:
+                    sh.text(Xs(y + e["bushing_pitch"] / 2) + ct["d"] / 2 * s + 0.5, Zs(zt + e["tank_d"] + ct["h"] / 2), "CT", 1.5, anchor="w")
                     sh.line(Xs(y + d), Zs(zt + e["tank_d"] + e["bushing_h"]), Xs(y + d), Zs(zt + e["tank_d"] + e["bushing_h"] + 0.2), LW["thin"])
                 cw, cd, ch = e["cabinet"]
                 rect(y + e["tank_len"] / 2 + cd / 2 + 0.1, 0.25, cd, ch, LW["dim"], dash=[1, 0.8])   # 操作箱（端）
