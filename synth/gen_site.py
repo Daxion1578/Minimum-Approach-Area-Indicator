@@ -37,8 +37,9 @@ P = {
     "name": "合成変電所 SITE-01（220/66kV, 1・1/2母線, 変圧器2台）",
     "220": {
         "kv": 220,
-        "bay_pitch": 18.0,          # ダイヤ（ベイ）間隔
-        "phase_sp": 4.0,            # 相間隔
+        "bay_pitch": 16.0,          # ダイヤ（ベイ）間隔（仮定値。220kV の一般的な標準スパン）
+        "phase_sp": 4.0,            # 相間隔（仮定値。220kV の一般的な標準離隔）
+        "code": "20",               # 開閉器番号の電圧記号（合成の規則）
         "busA": {"y": 0.0, "z": 10.5},    # A母線（上段）
         "busB": {"y": -36.0, "z": 6.5},   # B母線（下段）
         "eq_z": 5.0,                # 機器端子高さ
@@ -46,7 +47,7 @@ P = {
         "gw_y": (8.0, -44.0),
         "line_z": 20.0,             # 引込線の引止め高さ
         "line_y": (8.0, -44.0),
-        "tr_dx": 9.0,               # 変圧器端子の x オフセット
+        "tr_y": -58.0,              # 変圧器列の y（220kV 構内と 66kV 構内の間の帯）
         "tr_z": 3.0,                # 変圧器ブッシング端子高さ
         "x0": 0.0,
         "bays": [
@@ -56,11 +57,13 @@ P = {
             ("D3", ("line", "W1", "西線1L"), ("line", "W2", "西線2L")),
             ("D4", None, None),  # 新設 GIS ベイ（母線は延長済み、機器未接続）
         ],
+        "line_side": {"N": "N", "S": "S"},   # 引出方向: 北側回路は北へ、南側回路は南へ
     },
     "66": {
         "kv": 66,
-        "bay_pitch": 10.0,
-        "phase_sp": 2.0,
+        "bay_pitch": 7.0,           # 仮定値。66kV の一般的な標準スパン
+        "phase_sp": 1.5,            # 仮定値。66kV の一般的な標準離隔
+        "code": "6",
         "busA": {"y": -80.0, "z": 6.5},
         "busB": {"y": -104.0, "z": 4.5},
         "eq_z": 3.0,
@@ -68,15 +71,17 @@ P = {
         "gw_y": (-72.0, -112.0),
         "line_z": 10.0,
         "line_y": (-72.0, -112.0),
-        "tr_dx": 5.0,
+        "tr_y": -58.0,
         "tr_z": 2.0,
         "x0": 0.0,
         "bays": [
-            ("D1", ("line", "N1", "北線1L"), ("tr", 1, "1号変圧器 二次")),
-            ("D2", ("line", "N2", "北線2L"), ("tr", 2, "2号変圧器 二次")),
+            # 66kV は変圧器側（北）に変圧器二次、引出線は南へ
+            ("D1", ("tr", 1, "1号変圧器 二次"), ("line", "N1", "北線1L")),
+            ("D2", ("tr", 2, "2号変圧器 二次"), ("line", "N2", "北線2L")),
             ("D3", ("line", "S1", "南線1L"), ("line", "S2", "南線2L")),
             ("D4", ("line", "P1", "港線1L"), ("line", "P2", "港線2L")),
         ],
+        "line_side": {"N": "S", "S": "S"},   # 北側回路の引出線も南の引留鉄構へ出す（北は変圧器帯）
     },
 }
 
@@ -122,15 +127,15 @@ class Site:
         self.topo["nodes"].append(d)
         return nid
 
-    def switch(self, sid, kind, kv, normal, name=None, bay=None, at=None):
-        self.node(sid, kind, kv, name, bay)
+    def switch(self, sid, kind, kv, normal, name=None, bay=None, at=None, number=None):
+        self.node(sid, kind, kv, name, bay, **({"number": number} if number else {}))
         self.normal_switches[sid] = normal
         if at is not None:
             self.item(sid, at=at)
         return sid
 
-    def es(self, eid, attached_to, kv, name=None, at=None):
-        self.node(eid, "earthing", kv, name, attached_to=attached_to)
+    def es(self, eid, attached_to, kv, name=None, at=None, number=None):
+        self.node(eid, "earthing", kv, name, attached_to=attached_to, **({"number": number} if number else {}))
         self.normal_switches[eid] = "open"
         if at is not None:
             self.item(eid, at=at)
@@ -166,8 +171,20 @@ class Site:
         })
 
     # ---- 1・1/2 母線のダイヤ（ベイ）を1つ生成 ----
-    def diameter(self, vl, bay, x_bay, c1, c2, cfg, bus_a, bus_b):
+    def diameter(self, vl, bay, x_bay, c1, c2, cfg, bus_a, bus_b, idx=1):
         kv, sp, eqz = cfg["kv"], cfg["phase_sp"], cfg["eq_z"]
+        # 開閉器番号（合成の規則）: 電圧記号 + 系統記号 - 系列 + 番号 + 末尾。接地は末尾 E
+        #   系統記号: 線路は回線符号（E1…）、変圧器は T、ダイヤ中央は M。系列は 1 から数えたベイ番号
+        #   遮断器は末尾 0。断路器は 母線側 1・回路側 3・線路/機器断路器 0
+        code = cfg["code"]
+        sys1 = (c1[1] if c1 and c1[0] == "line" else "T") if c1 else "X"
+        sys2 = (c2[1] if c2 and c2[0] == "line" else "T") if c2 else "X"
+        num = {
+            "CB1": f"{code}{sys1}-{idx}10", "LSA": f"{code}{sys1}-{idx}101", "LS1B": f"{code}{sys1}-{idx}103",
+            "CB2": f"{code}M-{idx}20", "LS2A": f"{code}M-{idx}201", "LS2B": f"{code}M-{idx}203",
+            "CB3": f"{code}{sys2}-{idx}30", "LS3A": f"{code}{sys2}-{idx}303", "LSB": f"{code}{sys2}-{idx}301",
+        }
+        self._num = num
         yA, yB = cfg["busA"]["y"], cfg["busB"]["y"]
         margin = sp + 2.0
         pitch = (abs(yA - yB) - 2 * margin) / 8.0
@@ -188,7 +205,7 @@ class Site:
         for sid, kind, y in (("LSA", "disconnector", y_LSA), ("CB1", "breaker", y_CB1), ("LS1B", "disconnector", y_LS1B),
                              ("LS2A", "disconnector", y_LS2A), ("CB2", "breaker", y_CB2), ("LS2B", "disconnector", y_LS2B),
                              ("LS3A", "disconnector", y_LS3A), ("CB3", "breaker", y_CB3), ("LSB", "disconnector", y_LSB)):
-            S[sid] = self.switch(f"{pre}-{sid}", kind, kv, nrm, bay=bay, at=pos(y))
+            S[sid] = self.switch(f"{pre}-{sid}", kind, kv, nrm, bay=bay, at=pos(y), number=num[sid])
 
         # 母線 → ドロッパー（辺にカプセル） → LSA.a
         drop_a = self.edge(bus_a, f"{S['LSA']}.a", eid=f"{pre}-DROP-A")
@@ -207,8 +224,10 @@ class Site:
         # 接地開閉器（引出点と、遮断器両側の区間。点検用）
         segs = {"N1": (y_LSA, y_CB1), "N2": (y_CB1, y_LS1B), "T1": (y_LS1B, y_LS2A), "N3": (y_LS2A, y_CB2),
                 "N4": (y_CB2, y_LS2B), "T2": (y_LS2B, y_LS3A), "N5": (y_LS3A, y_CB3), "N6": (y_CB3, y_LSB)}
+        es_num = {"N1": num["LSA"], "N2": num["LS1B"], "T1": num["LS1B"], "N3": num["LS2A"],
+                  "N4": num["LS2B"], "T2": num["LS3A"], "N5": num["LS3A"], "N6": num["LSB"]}
         for k, (y0, y1) in segs.items():
-            self.es(f"{N[k]}-ES", N[k], kv, at=(x_bay + 1.0, (y0 + y1) / 2, 1.5))
+            self.es(f"{N[k]}-ES", N[k], kv, at=(x_bay + 1.0, (y0 + y1) / 2, 1.5), number=es_num[k] + "E")
 
         if new_bay:
             return  # 新設ベイ: 母線は延長済み、機器導体は未設置
@@ -223,46 +242,64 @@ class Site:
             for k, (y0, y1) in segs.items():
                 self.capsules(N[k], ph, [(x, y0, eqz), (x, y1, eqz)])
 
-        self._circuit(vl, bay, x_bay, c1, N["T1"], (y_LS1B + y_LS2A) / 2, "N", cfg)
-        self._circuit(vl, bay, x_bay, c2, N["T2"], (y_LS2B + y_LS3A) / 2, "S", cfg)
+        self._circuit(vl, bay, x_bay, c1, N["T1"], (y_LS1B + y_LS2A) / 2, "N", cfg, f"{code}{sys1}-{idx}100")
+        self._circuit(vl, bay, x_bay, c2, N["T2"], (y_LS2B + y_LS3A) / 2, "S", cfg, f"{code}{sys2}-{idx}300")
 
-    def _circuit(self, vl, bay, x_bay, c, tap, y_tap, side, cfg):
+    def _circuit(self, vl, bay, x_bay, c, tap, y_tap, side, cfg, number):
         kind, cid, cname = c
         kv, sp, eqz = cfg["kv"], cfg["phase_sp"], cfg["eq_z"]
+        z_up = cfg["line_z"] - 4.0
         if kind == "line":
             ln = f"{vl}-LINE-{cid}"
             self.node(ln, "source", kv, name=cname, bay=bay)
             self.sources.append(ln)
-            ls = self.switch(f"{ln}-LS", "disconnector", kv, "closed", name=f"{cname} 線路断路器", bay=bay, at=(x_bay, y_tap, eqz))
+            ls = self.switch(f"{ln}-LS", "disconnector", kv, "closed", name=f"{cname} 線路断路器", bay=bay,
+                             at=(x_bay, y_tap, eqz), number=number)
             self.edge(tap, f"{ls}.a")
             self.edge(f"{ls}.b", ln)
-            self.es(f"{ln}-ES", ln, kv, name=f"{cname} 線路接地", at=(x_bay - 1.0, y_tap, 1.5))
-            y_end = cfg["line_y"][0] if side == "N" else cfg["line_y"][1]
+            self.es(f"{ln}-ES", ln, kv, name=f"{cname} 線路接地", at=(x_bay - 1.0, y_tap, 1.5), number=number + "E")
+            out = cfg["line_side"][side]
+            y_end = cfg["line_y"][0] if out == "N" else cfg["line_y"][1]
             for ph in PHASES:
                 x = x_bay + PHASE_IDX[ph] * sp
-                self.capsules(ln, ph, [(x, y_tap, eqz), (x, y_tap, cfg["line_z"] - 4.0), (x, y_end, cfg["line_z"])])
+                if out == side:
+                    pts = [(x, y_tap, eqz), (x, y_tap, z_up), (x, y_end, cfg["line_z"])]
+                else:
+                    # 引出方向が回路側と逆: 機器列の上を跨いで反対側の引留鉄構へ（上段の渡り線）
+                    pts = [(x, y_tap, eqz), (x, y_tap, z_up + 2.0), (x, y_end, cfg["line_z"])]
+                self.capsules(ln, ph, pts)
         elif kind == "tr":
             side_name = "HV" if vl == "220" else "LV"
             term = self.node(f"{vl}-TR-{cid}-{side_name}", "terminal", kv, name=cname, bay=bay)
-            ls = self.switch(f"{vl}-TR-{cid}-LS", "disconnector", kv, "closed", name=f"{cname} 断路器", bay=bay, at=(x_bay + 2.0, y_tap, eqz))
+            ls = self.switch(f"{vl}-TR-{cid}-LS", "disconnector", kv, "closed", name=f"{cname} 断路器", bay=bay,
+                             at=(x_bay, y_tap, eqz), number=number)
             self.edge(tap, f"{ls}.a")
             self.edge(f"{ls}.b", term)
-            self.es(f"{vl}-TR-{cid}-ES", term, kv, name=f"{cname} 接地", at=(x_bay + 3.0, y_tap, 1.5))
+            self.es(f"{vl}-TR-{cid}-ES", term, kv, name=f"{cname} 接地", at=(x_bay - 1.0, y_tap, 1.5), number=number + "E")
+            # 変圧器は構内間の帯（tr_y）。回路側の引留鉄構を経て変圧器ブッシングへ降りる
+            y_g = cfg["line_y"][1] if side == "S" else cfg["line_y"][0]
+            y_tr = cfg["tr_y"] + (2.0 if vl == "220" else -2.0)   # 一次は変圧器の北側、二次は南側のブッシング
+            x_tr = x_bay if vl == "220" else P["220"]["x0"] + (cid - 1) * P["220"]["bay_pitch"]
             for ph in PHASES:
                 x = x_bay + PHASE_IDX[ph] * sp
-                self.capsules(term, ph, [(x, y_tap, eqz), (x + cfg["tr_dx"], y_tap, eqz), (x + cfg["tr_dx"], y_tap, cfg["tr_z"])])
+                xt = x_tr + PHASE_IDX[ph] * sp
+                pts = [(x, y_tap, eqz), (x, y_tap, z_up), (x, y_g, cfg["line_z"])]
+                if abs(xt - x) > 0.01:
+                    pts.append((xt, y_g + (-3.0 if side == "S" else 3.0), cfg["line_z"]))
+                pts.append((xt, y_tr, cfg["tr_z"]))
+                self.capsules(term, ph, pts)
             d = self._tr.setdefault(cid, {})
             d[side_name.lower()] = term
-            d.setdefault("at", (x_bay + cfg["tr_dx"], y_tap, 0.0))
+            d.setdefault("at", (x_tr, cfg["tr_y"], 0.0))
 
     # ---- 構内（電圧階級）を1つ生成 ----
     def yard(self, vl):
         cfg = P[vl]
         kv = cfg["kv"]
-        bus_a = self.node(f"{vl}-BUS-A", "bus", kv, name=f"{vl}kV A母線")
-        bus_b = self.node(f"{vl}-BUS-B", "bus", kv, name=f"{vl}kV B母線")
-        self.es(f"{bus_a}-ES", bus_a, kv, name=f"{vl}kV A母線接地")
-        self.es(f"{bus_b}-ES", bus_b, kv, name=f"{vl}kV B母線接地")
+        bus_a = self.node(f"{vl}-BUS-A", "bus", kv, name=f"{vl}kV 1号母線")
+        bus_b = self.node(f"{vl}-BUS-B", "bus", kv, name=f"{vl}kV 2号母線")
+        self.es(f"{bus_a}-ES", bus_a, kv, name=f"{vl}kV 1号母線接地", number=f"{cfg['code']}A-10E")
+        self.es(f"{bus_b}-ES", bus_b, kv, name=f"{vl}kV 2号母線接地", number=f"{cfg['code']}B-10E")
 
         n_bays = len(cfg["bays"])
         x_min = cfg["x0"] - cfg["bay_pitch"] / 2.0
@@ -275,7 +312,7 @@ class Site:
                 self.capsules(b, ph, [(x_min, y, z), (x_max, y, z)], r=BUS_R)
 
         for i, (bay, c1, c2) in enumerate(cfg["bays"]):
-            self.diameter(vl, bay, cfg["x0"] + i * cfg["bay_pitch"], c1, c2, cfg, bus_a, bus_b)
+            self.diameter(vl, bay, cfg["x0"] + i * cfg["bay_pitch"], c1, c2, cfg, bus_a, bus_b, idx=i + 1)
 
         for i, y in enumerate(cfg["gw_y"]):
             tag = "N" if i == 0 else "S"
@@ -286,7 +323,7 @@ class Site:
     def transformers(self):
         for n, d in sorted(self._tr.items()):
             tid = f"TR-{n}"
-            self.node(tid, "transformer", name=f"{n}号変圧器 220/66kV",
+            self.node(tid, "transformer", name=f"{n}号変圧器 220/66kV", number=f"{n}BK",
                       windings={"hv": {"voltage_kv": P["220"]["kv"]}, "lv": {"voltage_kv": P["66"]["kv"]}})
             self.edge(d["hv"], f"{tid}.hv", conductor="enclosed")
             self.edge(d["lv"], f"{tid}.lv", conductor="enclosed")

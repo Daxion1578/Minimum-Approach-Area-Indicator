@@ -47,6 +47,7 @@
           "enum": ["source", "bus", "breaker", "disconnector", "earthing", "transformer", "terminal", "load"]
         },
         "name": { "type": "string" },
+        "number": { "type": "string", "description": "図面に書かれる開閉器番号・機器番号（合成の規則）。id とは別。" },
         "bay": { "type": "string" },
         "voltage_kv": { "$ref": "#/$defs/voltageKv" },
         "windings": {
