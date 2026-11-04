@@ -54,9 +54,12 @@
 
   <section class="step on" id="s0">
     <h3>構内モデル</h3>
-    <div class="note">今はサンプル（合成変電所）を読み込む。図面（ベクター PDF / DXF）の投げ込みは縦切り3。</div>
     <div class="row"><label class="k">サイト</label><select id="siteSel"></select></div>
     <table id="siteSummary"></table>
+    <h4>単線結線図（ベクター PDF）を取り込む</h4>
+    <div class="note">導体と開閉器記号を機械的に拾い、開閉器番号で結ぶ。種別の確認と質問文は Claude（呼べなければ規則）。接続は人が確認するまで「未確認」。</div>
+    <div class="row"><input type="file" id="ingestFile" accept="application/pdf"><button class="sub" id="btnIngest">取り込む</button><span class="note" id="agentState"></span></div>
+    <div id="ingestBox"></div>
     <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止条件へ →</button></div>
   </section>
 
@@ -232,6 +235,31 @@ async function loadSite(id){
   buildSite(site); buildSwitchList(); update(); drawCrane(null);
 }
 
+// ---- 図面取込
+fetch('/api/agent').then(r=>r.json()).then(a=>{ $('agentState').textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 未接続（.env にキー無し）→ 規則で代替'; });
+$('btnIngest').onclick=async()=>{
+  const f=$('ingestFile').files[0]; if (!f){ $('ingestBox').innerHTML='<div class="warn">PDF を選んでから。合成変電所の図面は data/sites/SITE-01/drawings/SITE-01_sld.pdf</div>'; return; }
+  $('ingestBox').innerHTML='<div class="note">導体を拾って、番号で結んでいる…</div>';
+  const fd=new FormData(); fd.append('file', f);
+  const r=await fetch('/api/ingest',{method:'POST',body:fd});
+  if (!r.ok){ $('ingestBox').innerHTML=`<div class="warn">取込に失敗 ${r.status}</div>`; return; }
+  const j=await r.json(); const c=j.candidate, a=j.annotation, ev=j.eval;
+  const kindJa={breaker:'遮断器',disconnector:'断路器',earthing:'接地'};
+  const kindOf=Object.fromEntries((a.labels||[]).map(l=>[l.number,l.kind]));
+  const sw=[...c.switches].sort((x,y)=>x.number.localeCompare(y.number));
+  let html=`<div class="bay"><div><b>${a.summary||''}</b></div><div class="note">意味づけ: ${a.source==='claude'?'Claude':'規則（Claude 未使用）'}。導体 ${c.stats.main_segments} 本 → ネット ${c.nets.length}、開閉器 ${c.switches.length}、変圧器 ${c.transformers.length}</div></div>`;
+  if (ev && !ev.error) html+=`<div class="bay"><h4>合成変電所の真値との突き合わせ</h4><table><tr><th>開閉器番号の再現</th><td>${ev.numbers.found} / ${ev.numbers.drawn}</td></tr><tr><th>種別</th><td>${ev.kinds.ok} / ${ev.kinds.of}</td></tr><tr><th>隣接の一致 precision / recall</th><td>${ev.adjacency.precision} / ${ev.adjacency.recall}</td></tr><tr><th>変圧器</th><td>${ev.transformers.found} / ${ev.transformers.truth}</td></tr></table>${ev.numbers.missing.length?`<div class="note">見つからず: ${ev.numbers.missing.join(', ')}</div>`:''}</div>`;
+  const qs=(a.questions||[]);
+  html+=`<div class="bay"><h4>人に確かめてほしいこと（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
+  html+=`<details class="bay" open><summary>開閉器 ${sw.length}（未確認 → チェックで確認済）</summary><div id="ingestSw">`+sw.map(s=>{ const k=kindOf[s.number]||s.kind_guess; const bad=qs.some(q=>q.startsWith(s.number+' ')); return `<label class="sw"><input type="checkbox" data-n="${s.number}"><span class="id">${s.number}</span><span class="note">${kindJa[k]||k}　${(s.nets||[]).join(' ↔ ')||'—'}${bad?' <b style="color:var(--deadu)">要確認</b>':''}</span></label>`; }).join('')+`</div><div class="row"><button class="sub" id="btnConfirmAll">質問の無いものを確認済にする</button><span class="note" id="ingestCount"></span></div></details>`;
+  html+=`<details class="bay"><summary>topology 下書き（§6.1。確認後に truth へ）</summary><pre style="max-height:200px;overflow:auto">${JSON.stringify({nodes:j.topology.nodes.length, edges:j.topology.edges.length, sample:j.topology.nodes.slice(0,6)},null,1)}</pre></details>`;
+  $('ingestBox').innerHTML=html;
+  const count=()=>{ const all=[...$('ingestSw').querySelectorAll('input')]; $('ingestCount').textContent=`確認済 ${all.filter(i=>i.checked).length} / ${all.length}`; };
+  $('ingestSw').querySelectorAll('input').forEach(i=>i.onchange=count);
+  $('btnConfirmAll').onclick=()=>{ $('ingestSw').querySelectorAll('input').forEach(i=>{ if(!qs.some(q=>q.startsWith(i.dataset.n+' '))) i.checked=true; }); count(); };
+  count();
+};
+
 // ---- 停止ステップ
 $('btnSteps').onclick=async()=>{
   const targets=[$('targetSel').value];
@@ -282,6 +310,13 @@ $('btnPropose').onclick=async()=>{
   $('proposeBox').innerHTML=`<h4>修正案（engine が再判定済み。採用は人が決める）</h4>`+j.candidates.map((c,i)=>{ const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
     return `<div class="bay"><div><b style="color:${col}">${c.verdict_ja}</b>　${c.title}</div><div class="note">最小 ${c.min_distance_m?.toFixed(2)} m／余裕 ${c.margin_m?.toFixed(2)} m${c.conditions?.length?'　条件: '+c.conditions[0]:''}</div>${c.steps?`<div class="note">追加停止: ${c.steps.map(s=>s.title+' '+s.ops.map(o=>o.number||o.id).join(' ')).join(' → ')}</div>`:''}<div class="row"><button class="sub" data-i="${i}">採用</button></div></div>`; }).join('');
   $('proposeBox').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{ const c=j.candidates[+b.dataset.i]; craneToForm(c.crane); if (c.state){ state=structuredClone(c.state); buildSwitchList(); } evaluateClearance(); });
+  // 説明は後から差し込む（Claude。呼べなければ定型文）。判定値は上の engine の値のまま
+  try {
+    const ex=await (await fetch(`/api/sites/${site.site_id}/explain`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({proposal:j, clearance:lastClearance})})).json();
+    const byTitle=Object.fromEntries((ex.items||[]).map(it=>[it.title,it.explain]));
+    $('proposeBox').querySelectorAll('.bay').forEach((el,i)=>{ const t=j.candidates[i]?.title; if (byTitle[t]) el.insertAdjacentHTML('beforeend',`<div class="note" style="border-left:2px solid var(--accent);padding-left:6px;margin-top:4px">${byTitle[t]}</div>`); });
+    $('proposeBox').insertAdjacentHTML('beforeend',`<div class="note">${ex.intro||''}　順位: ${ex.ranking_note||''}（説明: ${ex.source==='claude'?'Claude':'定型文'}）</div>`);
+  } catch(e){}
 };
 
 // ---- 承認

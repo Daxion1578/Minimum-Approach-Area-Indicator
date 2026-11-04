@@ -337,6 +337,8 @@ class Site:
         es_num = {"N1": num["LSA"], "N2": num["LS1B"], "T1": num["LS1B"], "N3": num["LS2A"],
                   "N4": num["LS2B"], "T2": num["LS3A"], "N5": num["LS3A"], "N6": num["LSB"]}
         for k, (y0, y1) in segs.items():
+            if k in ("T1", "T2"):
+                continue   # 引出点の接地は回路側（線路接地・変圧器接地）が受け持つ
             self.es(f"{N[k]}-ES", N[k], kv, at=(x_bay + 1.0, (y0 + y1) / 2, 1.5), number=es_num[k] + "E")
 
         if new_bay:

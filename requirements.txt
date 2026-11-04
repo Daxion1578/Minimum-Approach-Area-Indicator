@@ -7,3 +7,6 @@ trimesh>=4.0
 jsonschema>=4.21
 python-dotenv>=1.0
 pytest>=8.0
+pdfplumber>=0.11
+reportlab>=4.0
+python-multipart>=0.0.9

@@ -525,13 +525,6 @@
    "number": "6T-1103E"
   },
   {
-   "id": "66-D1-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D1-T1",
-   "number": "6T-1103E"
-  },
-  {
    "id": "66-D1-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -544,13 +537,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D1-N4",
    "number": "6M-1203E"
-  },
-  {
-   "id": "66-D1-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D1-T2",
-   "number": "6S1-1303E"
   },
   {
    "id": "66-D1-N5-ES",
@@ -740,13 +726,6 @@
    "number": "6T-2103E"
   },
   {
-   "id": "66-D2-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D2-T1",
-   "number": "6T-2103E"
-  },
-  {
    "id": "66-D2-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -759,13 +738,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D2-N4",
    "number": "6M-2203E"
-  },
-  {
-   "id": "66-D2-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D2-T2",
-   "number": "6S2-2303E"
   },
   {
    "id": "66-D2-N5-ES",
@@ -955,13 +927,6 @@
    "number": "6T-3103E"
   },
   {
-   "id": "66-D3-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D3-T1",
-   "number": "6T-3103E"
-  },
-  {
    "id": "66-D3-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -974,13 +939,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D3-N4",
    "number": "6M-3203E"
-  },
-  {
-   "id": "66-D3-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D3-T2",
-   "number": "6P1-3303E"
   },
   {
    "id": "66-D3-N5-ES",
@@ -1170,13 +1128,6 @@
    "number": "6SC-4103E"
   },
   {
-   "id": "66-D4-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D4-T1",
-   "number": "6SC-4103E"
-  },
-  {
    "id": "66-D4-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -1189,13 +1140,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D4-N4",
    "number": "6M-4203E"
-  },
-  {
-   "id": "66-D4-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D4-T2",
-   "number": "6P2-4303E"
   },
   {
    "id": "66-D4-N5-ES",
@@ -1385,13 +1329,6 @@
    "number": "6SR-5103E"
   },
   {
-   "id": "66-D5-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D5-T1",
-   "number": "6SR-5103E"
-  },
-  {
    "id": "66-D5-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -1404,13 +1341,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D5-N4",
    "number": "6M-5203E"
-  },
-  {
-   "id": "66-D5-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D5-T2",
-   "number": "6H1-5303E"
   },
   {
    "id": "66-D5-N5-ES",
@@ -1600,13 +1530,6 @@
    "number": "6X-6103E"
   },
   {
-   "id": "66-D6-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D6-T1",
-   "number": "6X-6103E"
-  },
-  {
    "id": "66-D6-N3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
@@ -1619,13 +1542,6 @@
    "voltage_kv": 66,
    "attached_to": "66-D6-N4",
    "number": "6M-6203E"
-  },
-  {
-   "id": "66-D6-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 66,
-   "attached_to": "66-D6-T2",
-   "number": "6X-6303E"
   },
   {
    "id": "66-D6-N5-ES",

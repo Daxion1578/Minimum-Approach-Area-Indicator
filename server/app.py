@@ -12,6 +12,9 @@ API（すべて契約 contracts/ の形でやり取りする）:
   POST /api/sites/{site_id}/propose    body: {"state", "crane"} → 修正案の候補（決定論。各候補は再判定済み）
   POST /api/sites/{site_id}/approve    body: {"state","crane","clearance","steps","approver"} → approved/ に書き出し、承認ハッシュ
   GET  /api/sites/{site_id}/approved/{name}/{file}   書き出した JSON / PDF
+  POST /api/sites/{site_id}/explain    body: {"proposal", "clearance"} → 修正案の説明（Claude。呼べなければ定型文）
+  POST /api/ingest                     multipart file=単線結線図 PDF（ベクター）→ 候補グラフ・topology 下書き・意味づけ（Claude）・精度（真値があるとき）
+  GET  /api/agent                      Claude を呼べる状態か（キーの有無・オフライン設定）
 画面: GET / → web/index.html、/web/* → 静的ファイル（three.js 同梱）。
 """
 from __future__ import annotations
@@ -20,7 +23,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -35,6 +38,10 @@ from engine.envelope import ClearanceTable, envelopes
 from engine.propose import propose
 from engine.steps import generate
 from engine.topology import Topology, TopologyError
+from agent import client as agent_client
+from agent.explain import explain as explain_proposal
+from agent.structure import annotate
+from ingest.pdf_sld import extract, to_topology
 
 ROOT = Path(__file__).resolve().parents[1]
 SITES = ROOT / "data" / "sites"
@@ -176,6 +183,46 @@ def get_approved(site_id: str, name: str, file: str):
     if not p.exists() or ".." in name or ".." in file:
         raise HTTPException(404, "not found")
     return FileResponse(p)
+
+
+class ExplainRequest(BaseModel):
+    proposal: dict
+    clearance: dict
+
+
+@app.post("/api/sites/{site_id}/explain")
+def post_explain(site_id: str, req: ExplainRequest):
+    return explain_proposal(req.proposal, req.clearance)
+
+
+@app.get("/api/agent")
+def get_agent():
+    return {"available": agent_client.available(), "models": {k: agent_client.model_for(k) for k in ("structure", "propose")}}
+
+
+@app.post("/api/ingest")
+async def post_ingest(file: UploadFile):
+    """単線結線図 PDF → 候補グラフ → topology 下書き。合成変電所の図面なら真値と突き合わせた精度も返す。"""
+    import tempfile
+    data = await file.read()
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        f.write(data); tmp = Path(f.name)
+    try:
+        cand = extract(tmp)
+        topo = to_topology(cand)
+        notes = annotate(cand)
+        ev = None
+        truth = SITES / "SITE-01" / "truth" / "topology.json"
+        if truth.exists():
+            try:
+                from scripts.run_eval import evaluate as run_eval
+                ev = run_eval(tmp, truth)
+            except Exception as e:   # 真値と違う図面なら比較できない。それは誤りではない
+                ev = {"error": str(e)}
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"candidate": {k: cand[k] for k in ("nets", "switches", "transformers", "lines", "buses", "loads", "questions", "stats", "page_size_mm")},
+            "topology": topo, "annotation": notes, "eval": ev}
 
 
 @app.get("/api/equipment")

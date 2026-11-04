@@ -208,7 +208,7 @@ class SLD:
             self.sh.line(x - 0.9, y + 1.6, x + 0.9, y + 3.4, w); self.sh.line(x - 0.9, y + 3.4, x + 0.9, y + 1.6, w)
         self.sh.text(x + 2.6, y - 0.8, self.num(nid), 2.2)
 
-    def ds(self, x, y, kv, nid, earth=False, panto=False, horizontal=False, label=True):
+    def ds(self, x, y, kv, nid, earth=False, panto=False, horizontal=False, label=True, es_id=None, earth_side=-1):
         w = LW[kv]
         if self.symbols == "circle":
             self.sh.circle(x, y, 1.8, w); self.sh.line(x - 1.3, y - 1.3, x + 1.3, y + 1.3, w); self.sh.line(x - 1.3, y + 1.3, x + 1.3, y - 1.3, w)
@@ -223,8 +223,12 @@ class SLD:
             if panto:
                 self.sh.line(x - 1.2, y + 3.2, x + 1.2, y + 3.2, w)
         if earth:
-            self.ground(x + 4.0, y, kv)
-            self.sh.line(x, y - 2.5, x + 4.0, y - 2.5, LW["aux"])
+            # 接地の枝は、記号の外側（線路・機器側）の導体から出す。earth_side=-1 は下側、+1 は上側
+            yb = y + earth_side * 4.0
+            self.sh.line(x, yb, x + 4.0, yb, LW["aux"]); self.sh.dot(x, yb, 0.5)
+            self.ground(x + 4.0, yb + 2.5, kv)
+            if es_id:
+                self.sh.text(x + 6.5, yb + (1.0 if earth_side > 0 else -3.5), self.num(es_id), 1.8)
         if label:
             self.sh.text(x + 2.6, y - 0.8 + (3.0 if horizontal else 0.0), self.num(nid), 2.2)
 
@@ -301,7 +305,7 @@ class SLD:
             self.ds(xp, ys["BLS"], kv, f"{pre}-BLS", panto=True); self.pos_mark(xp + 2.6, ys["BLS"] - 3.5, f"{pre}-BLS")
             self.cb(xp, ys["CB"], kv, f"{pre}-CB"); self.pos_mark(xp + 2.6, ys["CB"] - 3.5, f"{pre}-CB")
             self.ds(xp, ys["LS"], kv, f"{pre}-LS", panto=True); self.pos_mark(xp + 2.6, ys["LS"] - 3.5, f"{pre}-LS")
-            self.es_mark(xp, (ys["BLS"] + ys["CB"]) / 2 + 2, kv, f"{pre}-N1-ES"); self.pos_mark(xp - 9.5, (ys["BLS"] + ys["CB"]) / 2 - 1.5, f"{pre}-N1-ES")
+            self.es_mark(xp, (ys["CB"] + ys["LS"]) / 2 - 2, kv, f"{pre}-N1-ES"); self.pos_mark(xp - 9.5, (ys["CB"] + ys["LS"]) / 2 - 5.5, f"{pre}-N1-ES")
             self.es_mark(xp, ys["LS"] + 5.0, kv, f"220-LINE-{cid}-ES"); self.pos_mark(xp - 9.5, ys["LS"] + 2.0, f"220-LINE-{cid}-ES")
             self.arrow(xp, ys["top"], True, kv); self.line_label(xp, ys["top"], True, cname, kv)
             sh.text(xp, ys["top"] + 1.0, f"L{i + 1}", 2.2, anchor="s") if False else None
@@ -330,11 +334,15 @@ class SLD:
         x_right = x_left + pitch * (n - 1) + 12
         for yb, lab, bid in ((y_bus1, "1号母線", "66-BUS-A"), (y_bus2, "2号母線", "66-BUS-B")):
             self.seg(x_left - 24, yb, x_right, yb, bid, w * 1.6)
+            xm = x_right - 1.5   # 母線接地（右端）
+            sh.line(xm, yb, xm, yb - 4.0, LW["aux"]); sh.dot(xm, yb)
+            sh.line(xm, yb - 4.0, xm + 1.2, yb - 6.2, LW["aux"]); self.ground(xm + 1.2, yb - 4.0, kv)
+            sh.text(xm + 2.0, yb - 3.5, self.num(f"{bid}-ES"), 1.8); self.pos_mark(xm + 2.0, yb - 6.5, f"{bid}-ES")
             sh.text(x_left - 24, yb + 1.2, f"{kv}kV {lab}", 2.5)
             sh.text(x_left - 24, yb - 3.0, "HAℓ 410×1", 2.0)
         keys = ["LSA", "CB1", "LS1B", "T1", "LS2A", "CB2", "LS2B", "T2", "LS3A", "CB3", "LSB"]
-        step = (y_bus1 - y_bus2) / 10.0
-        ys = {k: y_bus1 - step * (i + 0.6) for i, k in enumerate(keys)}
+        step = (y_bus1 - y_bus2) / 11.2
+        ys = {k: y_bus1 - step * (i + 0.6) for i, k in enumerate(keys)}   # 11 要素を母線の間に収める
         ends = {}
         for i, (bay, c1, c2) in enumerate(cfg["bays"]):
             x = x_left + i * pitch
@@ -367,17 +375,17 @@ class SLD:
                 self.seg(x, yk, xo, yk, f"{pre}-{k}", w); sh.dot(x, yk)
                 if kind == "line":
                     ln = f"66-LINE-{cid}"
-                    self.ds(xo, yk, kv, f"{ln}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"{ln}-LS"); self.pos_mark(xo + 6.5, yk - 8.0, f"{ln}-ES")
+                    self.ds(xo, yk, kv, f"{ln}-LS", earth=True, es_id=f"{ln}-ES"); self.pos_mark(xo + 2.6, yk - 3.5, f"{ln}-LS"); self.pos_mark(xo + 6.5, yk - 8.0, f"{ln}-ES")
                     yend = y_bus2 - 18.0
                     self.seg(xo, yk, xo, yend, ln, w); self.arrow(xo, yend, False, kv); self.line_label(xo, yend, False, cname, kv)
                 elif kind == "tr":
-                    self.ds(xo, yk, kv, f"66-TR-{cid}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"66-TR-{cid}-LS"); self.pos_mark(xo + 6.5, yk - 8.0, f"66-TR-{cid}-ES")
+                    self.ds(xo, yk, kv, f"66-TR-{cid}-LS", earth=True, es_id=f"66-TR-{cid}-ES", earth_side=+1); self.pos_mark(xo + 2.6, yk - 3.5, f"66-TR-{cid}-LS"); self.pos_mark(xo + 6.5, yk + 3.0, f"66-TR-{cid}-ES")
                     yend = y_bus1 + 12.0
                     self.seg(xo, yk, xo, yend, f"66-TR-{cid}-LV", w)
                     ends[cid] = (xo, yend)
                 else:
                     lid = f"66-{cid[:2]}-{cid[2:]}"
-                    self.ds(xo, yk, kv, f"{lid}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"{lid}-LS")
+                    self.ds(xo, yk, kv, f"{lid}-LS", earth=True, es_id=f"{lid}-ES", earth_side=+1); self.pos_mark(xo + 2.6, yk - 3.5, f"{lid}-LS")
                     yend = y_bus1 + 14.0
                     self.seg(xo, yk, xo, yend, lid, w)
                     (self.capacitor if cid.startswith("SC") else self.reactor)(xo, yend + 3.0, cname)
