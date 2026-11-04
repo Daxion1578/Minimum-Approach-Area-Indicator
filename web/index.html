@@ -316,7 +316,7 @@ $('btnPropose').onclick=async()=>{
   const r=await fetch(`/api/sites/${site.site_id}/propose`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane, treat_ungrounded_as_live:$('conservative').checked})});
   const j=await r.json();
   if (!j.candidates.length){ $('proposeBox').innerHTML=`<div class="note">${j.note||'候補なし'}</div>`; return; }
-  $('proposeBox').innerHTML=`<h4>修正案（engine が再判定済み。採用は人が決める）</h4>`+j.candidates.map((c,i)=>{ const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
+  $('proposeBox').innerHTML=`<h4>修正案（どの案も計算で判定し直してある。採用は人が決める）</h4>`+j.candidates.map((c,i)=>{ const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
     return `<div class="bay"><div><b style="color:${col}">${c.verdict_ja}</b>　${c.title}</div><div class="note">最小 ${c.min_distance_m?.toFixed(2)} m／余裕 ${c.margin_m?.toFixed(2)} m${c.conditions?.length?'　条件: '+c.conditions[0]:''}</div>${c.steps?`<div class="note">追加停止: ${c.steps.map(s=>s.title+' '+s.ops.map(o=>o.number||o.id).join(' ')).join(' → ')}</div>`:''}<div class="row"><button class="sub" data-i="${i}">採用</button></div></div>`; }).join('');
   $('proposeBox').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{ const c=j.candidates[+b.dataset.i]; craneToForm(c.crane); if (c.state){ state=structuredClone(c.state); buildSwitchList(); } evaluateClearance(); });
   // 説明は後から差し込む（Claude。呼べなければ定型文）。判定値は上の engine の値のまま
