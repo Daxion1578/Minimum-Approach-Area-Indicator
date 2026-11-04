@@ -35,7 +35,7 @@ import json
 import pathlib
 import sys
 
-from synth.equipment import EQUIP, GANTRY, LOADS, TRANSFORMER
+from synth.equipment import EQUIP, GANTRY, LINE_GANTRY_220, LOADS, TOWER_220, TRANSFORMER
 
 SITE_ID = "SITE-01"
 GENERATED_BY = "synth/gen_site.py"
@@ -61,12 +61,14 @@ P = {
         "bus": {"y": 96.0, "z": 10.5, "x0": 22.0, "x1": 114.0},
         "sections": [("A", 54.0), ("B", 82.0)],     # セクション LS の x（A|B, B|C）
         "eq_z": EQUIP[220]["terminal_z"],   # 機器端子高さ（synth/equipment.py）
-        "line_gantry": {"y": 121.0, "z": 20.0}, "gw_z": 25.0,
-        "line_bay": {"la": 117.5, "ls": 114.0, "cb": 109.0, "ct": 105.5, "bls": 102.0},   # 線路ベイの y（北→南）
-        "tr_bay": {"bls": 90.0, "cb": 84.5, "ct": 81.0, "ls": 77.5, "la": 74.0},        # 変圧器ベイの y（北→南）
+        "line_gantry": {"y": 121.0, "z": LINE_GANTRY_220["beam"], "column": LINE_GANTRY_220["column"]}, "gw_z": LINE_GANTRY_220["column"],
+        "tower": {"y": 142.0, "z": TOWER_220["attach_z"], "height": TOWER_220["height"]},   # 構外の引留鉄塔
+        "cb_z": EQUIP[220]["cb_terminal_z"],
+        "line_bay": {"la": 117.5, "ls": 114.0, "cb": 109.0, "ct": 105.5},   # 線路ベイの y（北→南）。母線側断路器は母線直下
+        "tr_bay": {"cb": 86.0, "ct": 82.5, "ls": 79.0, "la": 75.0},        # 変圧器ベイの y（北→南）。母線側断路器は母線直下
         "tr_y": 69.0, "tr_z": TRANSFORMER["hv"]["top_z"],   # 変圧器タンク中心 y・一次ブッシング端子高さ
         "lines": [("E1", "東線1L", 40.0, "A"), ("E2", "東線2L", 96.0, "C")],   # (符号, 名前, x, 区間)
-        "banks": [(1, 40.0, "A"), (2, 68.0, "B"), (3, 96.0, "C")],            # (番号, x, 区間)
+        "banks": [(1, 48.0, "A"), (2, 76.0, "B"), (3, 104.0, "C")],           # (番号, x, 区間)。線路ベイから 8m 東（パンタ型断路器の柱が重ならないように）
     },
     "66": {
         "kv": 66, "code": "6",
@@ -76,7 +78,7 @@ P = {
         "north_gantry": {"y": 50.0, "z": 10.0},     # 変圧器二次・調相の引留
         "line_gantry": {"y": 4.0, "z": 10.0},       # 送電線の引留（南）
         "load_y": 54.0,                             # 調相設備の据付 y
-        "x0": 33.0,
+        "x0": 34.0,
         "bays": [
             # (ダイヤID, 北側回路, 南側回路)。回路は ("line", 符号, 名前) / ("tr", 番号, 名前) / ("load", 符号, 名前)
             ("D1", ("tr", 1, "1号変圧器 二次"), ("line", "S1", "南線1L")),
@@ -174,14 +176,15 @@ class Site:
             "primitives": [{"type": "capsule", "a": a, "b": b, "r": r} for a, b in zip(pts, pts[1:])],
         })
 
-    def gantry(self, sid, x0, x1, y, z, name=None, spacing=8.0):
-        """引留鉄構（柱と梁）。柱は spacing ごとに立てる。"""
+    def gantry(self, sid, x0, x1, y, z, name=None, spacing=8.0, beam_z=None):
+        """引留鉄構（柱と梁）。柱は spacing ごとに立てる。梁は beam_z（既定は柱の頂部）。"""
         n = max(1, int(round((x1 - x0) / spacing)))
         prims = []
         for i in range(n + 1):
             x = x0 + (x1 - x0) * i / n
             prims.append({"type": "capsule", "a": r3((x, y, 0.0)), "b": r3((x, y, z)), "r": GANTRY["col_w"] / 2})
-        prims.append({"type": "capsule", "a": r3((x0, y, z)), "b": r3((x1, y, z)), "r": GANTRY["beam_h"] / 2})
+        bz = z if beam_z is None else beam_z
+        prims.append({"type": "capsule", "a": r3((x0, y, bz)), "b": r3((x1, y, bz)), "r": GANTRY["beam_h"] / 2})
         self.layout["structures"].append({"id": sid, "kind": "gantry", "name": name, "primitives": prims})
 
     def apparatus(self, sid, kind, kv, x, y, name=None):
@@ -224,7 +227,11 @@ class Site:
         # 引留鉄構・架空地線
         g = cfg["line_gantry"]
         self.structure("220-GW-N", "ground_wire", [(cfg["bus"]["x0"] - 6, g["y"], cfg["gw_z"]), (cfg["bus"]["x1"] + 6, g["y"], cfg["gw_z"])], name="220kV 架空地線（北）")
-        self.gantry("220-GANTRY-LINE", cfg["bus"]["x0"] - 6, cfg["bus"]["x1"] + 6, g["y"], g["z"], "220kV 引留鉄構（北）")
+        self.gantry("220-GANTRY-LINE", cfg["bus"]["x0"] - 6, cfg["bus"]["x1"] + 6, g["y"], g["column"], "220kV 引留鉄構（北）", beam_z=g["z"])
+        for (cid, cname, x, sec) in cfg["lines"]:
+            tw = cfg["tower"]
+            self.layout["structures"].append({"id": f"220-TOWER-{cid}", "kind": "other", "name": f"{cname} 引留鉄塔（構外）",
+                                              "primitives": [{"type": "capsule", "a": r3((x, tw["y"], 0.0)), "b": r3((x, tw["y"], tw["height"])), "r": 1.0}]})
         self.gantry("220-GANTRY-BUS", cfg["bus"]["x0"], cfg["bus"]["x1"], by, bz + 1.5, "220kV 母線鉄構", spacing=23.0)
         # 線路ベイ（母線の北側）
         lb = cfg["line_bay"]
@@ -235,7 +242,7 @@ class Site:
             pre = f"220-L{idx}"
             ls = self.switch(f"{pre}-LS", "disconnector", kv, "closed", name=f"{cname} 線路断路器", bay=f"L{idx}", at=(x, lb["ls"], cfg["eq_z"]), number=f"{code}{cid}-{idx}100")
             cb = self.switch(f"{pre}-CB", "breaker", kv, "closed", name=f"{cname} 遮断器", bay=f"L{idx}", at=(x, lb["cb"], cfg["eq_z"]), number=f"{code}{cid}-{idx}10")
-            bls = self.switch(f"{pre}-BLS", "disconnector", kv, "closed", name=f"{cname} 母線側断路器", bay=f"L{idx}", at=(x, lb["bls"], cfg["eq_z"]), number=f"{code}{cid}-{idx}101")
+            bls = self.switch(f"{pre}-BLS", "disconnector", kv, "closed", name=f"{cname} 母線側断路器（パンタ型）", bay=f"L{idx}", at=(x, by, cfg["eq_z"]), number=f"{code}{cid}-{idx}101")
             n1 = self.node(f"{pre}-N1", "terminal", kv, name=f"{cname} 線路側区間", bay=f"L{idx}")
             n2 = self.node(f"{pre}-N2", "terminal", kv, name=f"{cname} 母線側区間", bay=f"L{idx}")
             self.chain([ln, f"{ls}.b", f"{ls}.a", n1, f"{cb}.a", f"{cb}.b", n2, f"{bls}.a", f"{bls}.b", buses[sec]])
@@ -243,18 +250,21 @@ class Site:
             self.es(f"{n1}-ES", n1, kv, name=f"{cname} 線路側区間 接地", at=(x + 1.0, (lb["ls"] + lb["cb"]) / 2, 1.5), number=f"{code}{cid}-{idx}101E")
             self.apparatus(f"{pre}-CT", "ct", kv, x, lb["ct"], f"{cname} 変流器")
             self.apparatus(f"{pre}-LA", "la", kv, x, lb["la"], f"{cname} 避雷器")
+            tw = cfg["tower"]; cz = cfg["cb_z"]
             for ph in PHASES:
                 px = x + PHASE_IDX[ph] * sp
-                self.capsules(ln, ph, [(px, lb["ls"] + 1.0, cfg["eq_z"]), (px, lb["ls"] + 1.0, g["z"] - 4.0), (px, g["y"], g["z"])])
-                self.capsules(n1, ph, [(px, lb["ls"], cfg["eq_z"]), (px, lb["cb"], cfg["eq_z"])])
-                self.capsules(n2, ph, [(px, lb["cb"], cfg["eq_z"]), (px, lb["bls"], cfg["eq_z"])])
-                # 母線側断路器 → 母線（立上り）は母線区間の導体として持つ
-                self.capsules(buses[sec], ph, [(px, lb["bls"], cfg["eq_z"]), (px, by - PHASE_IDX[ph] * sp, cfg["eq_z"]), (px, by - PHASE_IDX[ph] * sp, bz)])
+                yp = by - PHASE_IDX[ph] * sp       # この相の母線の y ＝ パンタ型断路器の柱の位置
+                # 線路: 構外鉄塔 → 引留鉄構の腕 → 垂れ下がって線路断路器へ
+                self.capsules(ln, ph, [(px, lb["ls"] + 1.0, cfg["eq_z"]), (px, g["y"], g["z"]), (px, tw["y"], tw["z"])])
+                self.capsules(n1, ph, [(px, lb["ls"], cfg["eq_z"]), (px, lb["cb"] + 2.0, cz)])
+                self.capsules(n2, ph, [(px, lb["cb"] - 2.0, cz), (px, yp + 0.6, cfg["eq_z"])])
+                # パンタ型断路器の柱頭 → 母線（真上）。母線区間の導体として持つ
+                self.capsules(buses[sec], ph, [(px, yp, cfg["eq_z"]), (px, yp, bz)])
         # 変圧器ベイ（母線の南側）
         tb = cfg["tr_bay"]
         for (n, x, sec) in cfg["banks"]:
             pre = f"220-T{n}"
-            bls = self.switch(f"{pre}-BLS", "disconnector", kv, "closed", name=f"{n}号変圧器 一次 母線側断路器", bay=f"T{n}", at=(x, tb["bls"], cfg["eq_z"]), number=f"{code}T-{n}101")
+            bls = self.switch(f"{pre}-BLS", "disconnector", kv, "closed", name=f"{n}号変圧器 一次 母線側断路器（パンタ型）", bay=f"T{n}", at=(x, by, cfg["eq_z"]), number=f"{code}T-{n}101")
             cb = self.switch(f"{pre}-CB", "breaker", kv, "closed", name=f"{n}号変圧器 一次 遮断器", bay=f"T{n}", at=(x, tb["cb"], cfg["eq_z"]), number=f"{code}T-{n}10")
             ls = self.switch(f"{pre}-LS", "disconnector", kv, "closed", name=f"{n}号変圧器 一次 機器側断路器", bay=f"T{n}", at=(x, tb["ls"], cfg["eq_z"]), number=f"{code}T-{n}100")
             n1 = self.node(f"{pre}-N1", "terminal", kv, name=f"{n}号変圧器 一次 母線側区間", bay=f"T{n}")
@@ -265,11 +275,13 @@ class Site:
             self.es(f"{hv}-ES", hv, kv, name=f"{n}号変圧器 一次 接地", at=(x - 1.0, tb["ls"] - 2.5, 1.5), number=f"{code}T-{n}100E")
             self.apparatus(f"{pre}-CT", "ct", kv, x, tb["ct"], f"{n}号変圧器 一次 変流器")
             self.apparatus(f"{pre}-LA", "la", kv, x, tb["la"], f"{n}号変圧器 一次 避雷器")
+            cz = cfg["cb_z"]
             for ph in PHASES:
                 px = x + PHASE_IDX[ph] * sp
-                self.capsules(buses[sec], ph, [(px, by - PHASE_IDX[ph] * sp, bz), (px, by - PHASE_IDX[ph] * sp, cfg["eq_z"]), (px, tb["bls"], cfg["eq_z"])])
-                self.capsules(n1, ph, [(px, tb["bls"], cfg["eq_z"]), (px, tb["cb"], cfg["eq_z"])])
-                self.capsules(n2, ph, [(px, tb["cb"], cfg["eq_z"]), (px, tb["ls"], cfg["eq_z"])])
+                yp = by - PHASE_IDX[ph] * sp
+                self.capsules(buses[sec], ph, [(px, yp, bz), (px, yp, cfg["eq_z"])])
+                self.capsules(n1, ph, [(px, yp - 0.6, cfg["eq_z"]), (px, tb["cb"] + 2.0, cz)])
+                self.capsules(n2, ph, [(px, tb["cb"] - 2.0, cz), (px, tb["ls"], cfg["eq_z"])])
                 bx = x + PHASE_IDX[ph] * TRANSFORMER["hv_pitch"]
                 self.capsules(hv, ph, [(px, tb["ls"], cfg["eq_z"]), (px, tb["la"], cfg["eq_z"]), (bx, cfg["tr_y"] + TRANSFORMER["hv"]["y"], cfg["tr_z"])])
             d = self._tr.setdefault(n, {})

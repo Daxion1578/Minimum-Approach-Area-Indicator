@@ -91,7 +91,7 @@
    "id": "220-L1-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "name": "東線1L 母線側断路器",
+   "name": "東線1L 母線側断路器（パンタ型）",
    "bay": "L1",
    "number": "20E1-1101"
   },
@@ -152,7 +152,7 @@
    "id": "220-L2-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "name": "東線2L 母線側断路器",
+   "name": "東線2L 母線側断路器（パンタ型）",
    "bay": "L2",
    "number": "20E2-2101"
   },
@@ -190,7 +190,7 @@
    "id": "220-T1-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "name": "1号変圧器 一次 母線側断路器",
+   "name": "1号変圧器 一次 母線側断路器（パンタ型）",
    "bay": "T1",
    "number": "20T-1101"
   },
@@ -251,7 +251,7 @@
    "id": "220-T2-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "name": "2号変圧器 一次 母線側断路器",
+   "name": "2号変圧器 一次 母線側断路器（パンタ型）",
    "bay": "T2",
    "number": "20T-2101"
   },
@@ -312,7 +312,7 @@
    "id": "220-T3-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "name": "3号変圧器 一次 母線側断路器",
+   "name": "3号変圧器 一次 母線側断路器（パンタ型）",
    "bay": "T3",
    "number": "20T-3101"
   },

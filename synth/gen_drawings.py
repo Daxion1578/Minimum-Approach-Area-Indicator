@@ -28,7 +28,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
-from synth.equipment import EQUIP, LOADS, TRANSFORMER
+import math as _m
+from synth.equipment import EQUIP, LOADS, TOWER_220, TRANSFORMER
 from synth.gen_site import P, PHASE_IDX, PHASES, SITE_ID
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -518,23 +519,33 @@ class LayoutDrawing(Plan):
             self.sh.dim(xd, self.Y(ya), xd, self.Y(yb), f"{int(abs(ya - yb) * 1000):,}", off=0)
 
     # ---- 機器の外形（平面）。寸法は synth/equipment.py ----
-    def ds_plan(self, x, y, kv, along="y", label=""):
-        e = EQUIP[kv]["ds"]; sp = EQUIP[kv]["phase_sp"]
+    def ds_plan(self, x, y, kv, along="y", label="", panto=False):
+        e = EQUIP[kv]["ds_panto"] if panto else EQUIP[kv]["ds"]; sp = EQUIP[kv]["phase_sp"]
         for ph in PHASES:
+            if panto:
+                # 母線の真下: 相ごとに (x+idx·sp, y−idx·sp)。柱・回転碍管・畳んだパンタ（母線方向に短い）
+                cx, cy = x + PHASE_IDX[ph] * sp, y - PHASE_IDX[ph] * sp
+                self.rect_m(cx - e["base"] / 2, cy - e["base"] / 2, cx + e["base"] / 2, cy + e["base"] / 2, LW["thin"])
+                self.sh.circle(self.X(cx), self.Y(cy), e["ins_d"] / 2 * self.s, LW["thin"])
+                self.rect_m(cx - e["arm_w"] / 2, cy - 0.25, cx + e["arm_w"] / 2, cy + 0.25, LW["thin"])
+                continue
             cx, cy = (x + PHASE_IDX[ph] * sp, y) if along == "y" else (x, y - PHASE_IDX[ph] * sp)
             fl, fw = e["frame"], e["frame_w"]
+            posts = (-e["span"] / 2, 0.0, e["span"] / 2) if e["type"] == "double_break" else (-e["span"] / 2, e["span"] / 2)
             if along == "y":
                 self.rect_m(cx - fw / 2, cy - fl / 2, cx + fw / 2, cy + fl / 2, LW["thin"])
-                for d in (-e["span"] / 2, 0.0, e["span"] / 2):
+                for d in posts:
                     self.sh.circle(self.X(cx), self.Y(cy + d), e["ins_d"] / 2 * self.s, LW["thin"])
                 self.line_m(cx, cy - e["span"] / 2, cx, cy + e["span"] / 2, LW["dim"])
             else:
                 self.rect_m(cx - fl / 2, cy - fw / 2, cx + fl / 2, cy + fw / 2, LW["thin"])
-                for d in (-e["span"] / 2, 0.0, e["span"] / 2):
+                for d in posts:
                     self.sh.circle(self.X(cx + d), self.Y(cy), e["ins_d"] / 2 * self.s, LW["thin"])
                 self.line_m(cx - e["span"] / 2, cy, cx + e["span"] / 2, cy, LW["dim"])
         if label:
-            if along == "y":
+            if panto:
+                self.text_m(x + sp + 1.0, y - sp, label, 1.6, anchor="w")
+            elif along == "y":
                 self.text_m(x + sp + e["frame_w"], y, label, 1.6, anchor="w")
             else:
                 self.text_m(x, y + sp + 1.0, label, 1.6, anchor="s")
@@ -545,7 +556,12 @@ class LayoutDrawing(Plan):
             cx = x + PHASE_IDX[ph] * sp
             self.rect_m(cx - e["base"] / 2, y - e["base"] / 2, cx + e["base"] / 2, y + e["base"] / 2, LW["thin"])
             self.sh.circle(self.X(cx), self.Y(y), e["post_d"] / 2 * self.s, LW["thin"])
-            self.rect_m(cx - e["chamber_d"] / 2, y - e["chamber_len"] / 2, cx + e["chamber_d"] / 2, y + e["chamber_len"] / 2, LW["thin"])
+            if e["type"] == "v":
+                reach = e["chamber_len"] * _m.sin(_m.radians(e["v_angle"]))
+                for d in (-reach, reach):   # V 形: 2 本の遮断部を y 方向に広げて描く
+                    self.rect_m(cx - e["chamber_d"] / 2, min(y, y + d), cx + e["chamber_d"] / 2, max(y, y + d), LW["thin"])
+            else:
+                self.rect_m(cx - e["chamber_d"] / 2, y - e["chamber_len"] / 2, cx + e["chamber_d"] / 2, y + e["chamber_len"] / 2, LW["thin"])
         cw, cd, _ = e["cabinet"]
         self.rect_m(x + sp + 0.6, y - cd / 2, x + sp + 0.6 + cw, y + cd / 2, LW["thin"])   # 操作箱
         self.line_m(x - sp, y, x + sp + 0.6, y, LW["dim"])   # 連結ロッド
@@ -592,6 +608,12 @@ class LayoutDrawing(Plan):
             self.line_m(c["a"][0] - w, c["a"][1] - w, c["a"][0] + w, c["a"][1] + w, LW["dim"]); self.line_m(c["a"][0] - w, c["a"][1] + w, c["a"][0] + w, c["a"][1] - w, LW["dim"])
         self.text_m(max(a[0], b[0]) + 2, a[1], st.get("name") or "鉄構", 1.8, anchor="w")
 
+    def tower_plan(self, st):
+        a = st["primitives"][0]["a"]; w = TOWER_220["base_w"] / 2
+        self.rect_m(a[0] - w, a[1] - w, a[0] + w, a[1] + w, LW["thin"])
+        self.line_m(a[0] - w, a[1] - w, a[0] + w, a[1] + w, LW["dim"]); self.line_m(a[0] - w, a[1] + w, a[0] + w, a[1] - w, LW["dim"])
+        self.text_m(a[0] + w + 1, a[1], st.get("name", ""), 1.8, anchor="w")
+
     def equipment_plan(self, topo):
         nodes = {n["id"]: n for n in topo["nodes"]}
         c2, c6 = P["220"], P["66"]
@@ -612,6 +634,8 @@ class LayoutDrawing(Plan):
                 self.gantry_plan(st)
             elif st["kind"] in ("instrument", "arrester"):
                 self.apparatus_plan(st)
+            elif st["id"].startswith("220-TOWER"):
+                self.tower_plan(st)
         # 機器（items）
         for it in self.layout["items"]:
             nid = it["id"]; node = nodes.get(nid)
@@ -622,7 +646,7 @@ class LayoutDrawing(Plan):
             if kind == "breaker":
                 self.cb_plan(x, y, kv, num)
             elif kind == "disconnector":
-                self.ds_plan(x, y, kv, along="x" if nid.startswith("220-SEC") else "y", label=num)
+                self.ds_plan(x, y, kv, along="x" if nid.startswith("220-SEC") else "y", label=num, panto=nid.endswith("-BLS"))
             elif kind == "earthing":
                 self.sh.circle(self.X(x), self.Y(y), 0.5 * self.s)
                 self.line_m(x, y, x, y + 0.8, LW["thin"])
@@ -660,10 +684,29 @@ class LayoutDrawing(Plan):
         for st in self.layout["structures"]:
             if st["kind"] == "gantry":
                 beam = st["primitives"][-1]; a, b = beam["a"], beam["b"]
+                col_top = st["primitives"][0]["b"][2]
                 if min(a[0], b[0]) - 0.1 <= x_cut <= max(a[0], b[0]) + 0.1 and y_from <= a[1] <= y_to:
-                    self.lattice(Xs(a[1]), Zs(0), 2 * st["primitives"][0]["r"] * s, a[2] * s)
-                    sh.line(Xs(a[1]) - 2.0 * s, Zs(a[2]), Xs(a[1]) + 2.0 * s, Zs(a[2]), LW["thin"])
-                    sh.rect(Xs(a[1] + 2.0), Zs(a[2]) - 1.0 * s, 4.0 * s, 1.0 * s, LW["dim"])
+                    # 切断面に柱があれば実線、無ければ背景の柱として薄く描く
+                    near = min(abs(c["a"][0] - x_cut) for c in st["primitives"][:-1])
+                    self.lattice(Xs(a[1]), Zs(0), 2 * st["primitives"][0]["r"] * s, col_top * s, gray=0.0 if near < 1.0 else 0.55)
+                    # 梁（腕）: 柱の高さより低ければ腕として柱から張り出す
+                    arm = 2.0 if abs(col_top - a[2]) < 0.1 else 2.5
+                    sh.rect(Xs(a[1] + arm), Zs(a[2]) - 1.0 * s, 2 * arm * s, 1.0 * s, LW["thin"])
+                    for d in (-arm * 0.6, arm * 0.6):
+                        sh.line(Xs(a[1] + d), Zs(a[2]) - 1.0 * s, Xs(a[1]), Zs(a[2]) - 3.0 * s, LW["dim"])   # 腕の斜材
+            elif st["id"].startswith("220-TOWER"):
+                a = st["primitives"][0]["a"]; h = st["primitives"][0]["b"][2]
+                if abs(a[0] - x_cut) < 0.6 and y_from <= a[1] <= y_to:
+                    bw, tw = TOWER_220["base_w"] / 2, TOWER_220["top_w"] / 2
+                    sh.poly([(Xs(a[1] + bw), Zs(0)), (Xs(a[1] + tw), Zs(h)), (Xs(a[1] - tw), Zs(h)), (Xs(a[1] - bw), Zs(0))], LW["thin"], close=True)
+                    n = int(h / 4)
+                    for i in range(1, n):
+                        z = h * i / n; w = bw + (tw - bw) * i / n
+                        sh.line(Xs(a[1] - w), Zs(z), Xs(a[1] + w), Zs(z), LW["dim"])
+                    for z in (TOWER_220["attach_z"], TOWER_220["attach_z"] - 4.0):
+                        w = bw + (tw - bw) * z / h
+                        sh.line(Xs(a[1] + w), Zs(z), Xs(a[1] + w + 2.5), Zs(z), LW["thin"])   # 腕金
+                    sh.text(Xs(a[1]), Zs(h) + 1.5, st.get("name", ""), 1.8, anchor="s")
             elif st["kind"] == "ground_wire":
                 a = st["primitives"][0]["a"]; b = st["primitives"][0]["b"]
                 if min(a[0], b[0]) <= x_cut <= max(a[0], b[0]) and y_from <= a[1] <= y_to:
@@ -694,16 +737,34 @@ class LayoutDrawing(Plan):
             if node is None or "at" not in it or abs(it["at"][0] - x_cut) > 0.6 or not (y_from <= it["at"][1] <= y_to):
                 continue
             x, y, z = it["at"]; kind = node["kind"]; kv = node.get("voltage_kv", 220)
-            if kind == "disconnector":
+            if kind == "disconnector" and it["id"].endswith("-BLS") and kv == 220:
+                # パンタ型: 相ごとに母線の真下。切断面には 3 相とも見える（y が相ごとに違う）
+                e = EQUIP[kv]["ds_panto"]; sp = EQUIP[kv]["phase_sp"]
+                bus_z = P["220"]["bus"]["z"]
+                for ph in PHASES:
+                    yp = y - PHASE_IDX[ph] * sp
+                    rect(yp, 0.0, e["base"] + 0.4, 0.3); rect(yp, 0.3, e["base"] * 0.5, e["column"] - 0.3)
+                    self.porcelain(Xs(yp), Zs(e["column"]), e["ins_d"] * s, e["insulator"] * s)
+                    top = e["column"] + e["insulator"]
+                    rect(yp, top, e["arm_w"], e["head"])
+                    # パンタ（閉）: 菱形の格子で母線へ
+                    zt = top + e["head"]; w = e["arm_w"] / 2
+                    sh.poly([(Xs(yp - w), Zs(zt)), (Xs(yp + w * 0.3), Zs((zt + bus_z) / 2)), (Xs(yp - w * 0.2), Zs(bus_z - 0.3)), (Xs(yp - w * 0.9), Zs((zt + bus_z) / 2))], LW["dim"], close=True)
+                    sh.poly([(Xs(yp + w), Zs(zt)), (Xs(yp - w * 0.3), Zs((zt + bus_z) / 2)), (Xs(yp + w * 0.2), Zs(bus_z - 0.3)), (Xs(yp + w * 0.9), Zs((zt + bus_z) / 2))], LW["dim"], close=True)
+                sh.text(Xs(y), Zs(bus_z) + 2.5, node.get("number", "") + "（パンタ型）", 1.6, anchor="s")
+            elif kind == "disconnector":
                 e = EQUIP[kv]["ds"]
                 rect(y, 0.0, e["frame"] + 0.4, 0.3)
                 for d in (-e["frame"] / 2, e["frame"] / 2):
                     rect(y + d, 0.3, 0.3, e["column"] - 0.3)
                 rect(y, e["column"] - 0.25, e["frame"], 0.25)
-                for d in (-e["span"] / 2, 0.0, e["span"] / 2):
+                posts = (-e["span"] / 2, 0.0, e["span"] / 2) if e["type"] == "double_break" else (-e["span"] / 2, e["span"] / 2)
+                for d in posts:
                     self.porcelain(Xs(y + d), Zs(e["column"]), e["ins_d"] * s, e["insulator"] * s)
                 top = e["column"] + e["insulator"]
                 rect(y, top, e["span"] + 0.4, e["head"] * 0.5)            # ブレード（閉）
+                if e["type"] == "vertical_break":
+                    sh.line(Xs(y + e["span"] / 2), Zs(top + e["head"] * 0.5), Xs(y + e["span"] / 2 + 0.3), Zs(top + e["head"] * 0.5 + 0.4), LW["thin"])   # ヒンジ側
                 if s >= 4 or kv == 220:
                     sh.text(Xs(y), Zs(top + e["head"]) + 1.0, node.get("number", ""), 1.6, anchor="s")
             elif kind == "breaker":
@@ -711,13 +772,27 @@ class LayoutDrawing(Plan):
                 rect(y, 0.0, e["base"] + 0.4, 0.3); rect(y, 0.3, e["base"] * 0.6, e["column"] - 0.3)
                 self.porcelain(Xs(y), Zs(e["column"]), e["post_d"] * s, e["post"] * s)
                 zc = e["column"] + e["post"]
-                rect(y, zc, e["chamber_len"], e["chamber_d"])               # 遮断部（水平）
-                for d in (-e["chamber_len"] / 2, e["chamber_len"] / 2):
-                    sh.line(Xs(y + d), Zs(zc + e["chamber_d"] / 2), Xs(y + d), Zs(zc + e["chamber_d"] / 2 + 0.3), LW["thin"])
+                if e["type"] == "v":
+                    # V 形: 支持碍管の頂部から 2 本の遮断部が斜め上へ
+                    ang = _m.radians(e["v_angle"]); L = e["chamber_len"]; d = e["chamber_d"]
+                    for sgn in (-1, 1):
+                        c = sh.c; c.saveState(); c.translate(Xs(y) * MM, Zs(zc) * MM); c.rotate(sgn * e["v_angle"]) if False else None
+                        c.restoreState()
+                        dy, dz = sgn * L * _m.sin(ang), L * _m.cos(ang)
+                        # 遮断部を細長い四角形（4 点）で描く
+                        nx, nz = -dz / L * d / 2, dy / L * d / 2   # 法線
+                        pts = [(Xs(y + nx), Zs(zc + nz)), (Xs(y + dy + nx), Zs(zc + dz + nz)), (Xs(y + dy - nx), Zs(zc + dz - nz)), (Xs(y - nx), Zs(zc - nz))]
+                        sh.poly(pts, LW["thin"], close=True)
+                        sh.line(Xs(y + dy), Zs(zc + dz), Xs(y + dy), Zs(zc + dz + 0.3), LW["thin"])
+                    rect(y, zc - 0.3, 0.9, 0.3)
+                else:
+                    rect(y, zc, e["chamber_len"], e["chamber_d"])               # 遮断部（水平）
+                    for d in (-e["chamber_len"] / 2, e["chamber_len"] / 2):
+                        sh.line(Xs(y + d), Zs(zc + e["chamber_d"] / 2), Xs(y + d), Zs(zc + e["chamber_d"] / 2 + 0.3), LW["thin"])
                 cw, cd, ch = e["cabinet"]
                 rect(y, 0.3, cd, ch, LW["dim"], dash=[1, 0.8])              # 操作箱（手前）
                 if s >= 4 or kv == 220:
-                    sh.text(Xs(y), Zs(zc + e["chamber_d"]) + 1.5, node.get("number", ""), 1.6, anchor="s")
+                    sh.text(Xs(y), Zs(zc + (e["chamber_len"] if e["type"] == "v" else e["chamber_d"])) + 1.5, node.get("number", ""), 1.6, anchor="s")
             elif kind == "transformer":
                 tx, ty, tz = T["tank"]; fx, fy = T["found"]; bx, by = T["bund"]
                 rect(y, 0.0, fy, 0.4, LW["dim"]); rect(y, 0.4, ty, tz, LW["frame"])
@@ -736,7 +811,7 @@ class LayoutDrawing(Plan):
                 sh.text(Xs(y), Zs(sz + 0.3) + 1.0, node.get("name", ""), 1.6, anchor="s")
         # 高さ寸法（右端）
         xd = Xs(y_from - 1.5)
-        zs = sorted({c6["eq_z"], c6["busB"]["z"], c2["eq_z"], c6["busA"]["z"], c6["line_gantry"]["z"], c2["bus"]["z"], T["hv"]["top_z"], c6["gw_z"], c2["line_gantry"]["z"], c2["gw_z"]})
+        zs = sorted({c6["eq_z"], c6["busB"]["z"], c2["eq_z"], c2["cb_z"], c6["busA"]["z"], c6["line_gantry"]["z"], c2["bus"]["z"], T["hv"]["top_z"], c6["gw_z"], c2["line_gantry"]["z"], c2["line_gantry"]["column"], TOWER_220["attach_z"], TOWER_220["height"]})
         zs = [z for z in zs if z_top is None or z <= z_top]
         for z in zs:
             sh.line(xd - 2, Zs(z), xd + 2, Zs(z), LW["dim"])
@@ -762,12 +837,13 @@ class LayoutDrawing(Plan):
             yy = y0 + h * i / n
             sh.line(x - w * 0.8, yy, x + w * 0.8, yy, LW["dim"])
 
-    def lattice(self, x, y0, w, h):
-        self.sh.rect(x - w / 2, y0, w, h, LW["thin"])
+    def lattice(self, x, y0, w, h, gray=0.0):
+        sh = self.sh
+        sh.poly([(x - w / 2, y0), (x + w / 2, y0), (x + w / 2, y0 + h), (x - w / 2, y0 + h)], LW["thin"], gray=gray, close=True)
         n = max(1, int(h / 4.0))
         for i in range(n):
             ya = y0 + i * h / n; yb = y0 + (i + 1) * h / n
-            self.sh.line(x - w / 2, ya, x + w / 2, yb, LW["dim"]); self.sh.line(x - w / 2, yb, x + w / 2, ya, LW["dim"])
+            sh.line(x - w / 2, ya, x + w / 2, yb, LW["dim"], gray=gray); sh.line(x - w / 2, yb, x + w / 2, ya, LW["dim"], gray=gray)
 
 
 # --------------------------------------------------------------------------
@@ -804,14 +880,19 @@ def main():
     sh.line(ld.X(x_cut), ld.Y(SITE["fence"][3]) + 20, ld.X(x_cut), ld.Y(SITE["fence"][1]) - 20, LW["frame"], dash=[6, 2])
     sh.text(ld.X(x_cut) + 1.5, ld.Y(SITE["fence"][3]) + 20, "A", 4.0); sh.text(ld.X(x_cut) + 1.5, ld.Y(SITE["fence"][1]) - 24, "A", 4.0)
     f = SITE["fence"]
-    ld.section(topo, ox=455.0, oy=330.0, s=s, x_cut=x_cut, y_from=f[1], y_to=f[3],
-               title="断面図　A－A（X1 通り。1BK と線路ベイを母線に垂直に切る。左が北）　1/400")
-    # B-B: 66kV ダイヤ（x2 通り）の詳細断面 1/200
-    x_cut2 = P["66"]["x0"] + P["66"]["bay_pitch"]
-    sh.line(ld.X(x_cut2), ld.Y(P["66"]["north_gantry"]["y"]) + 12, ld.X(x_cut2), ld.Y(f[1]) - 20, LW["frame"], dash=[6, 2])
-    sh.text(ld.X(x_cut2) + 1.5, ld.Y(P["66"]["north_gantry"]["y"]) + 12, "B", 4.0); sh.text(ld.X(x_cut2) + 1.5, ld.Y(f[1]) - 24, "B", 4.0)
-    ld.section(topo, ox=455.0, oy=120.0, s=5.0, x_cut=x_cut2, y_from=f[1], y_to=P["66"]["north_gantry"]["y"] + 8,
-               title="断面図　B－B（x2 通り。66kV ダイヤ D2 を母線に垂直に切る。左が北）　1/200", z_top=P["66"]["gw_z"])
+    ld.section(topo, ox=455.0, oy=430.0, s=s, x_cut=x_cut, y_from=f[1], y_to=f[3] + 22,
+               title="断面図　A－A（X1 通り。1BK のベイを母線に垂直に切る。左が北）　1/400")
+    # B-B: 220kV 線路ベイ（引留鉄塔 → 引留鉄構 → 線路断路器 → 遮断器 → パンタ型断路器 → 母線）1/200
+    x_l1 = P["220"]["lines"][0][2]
+    sh.line(ld.X(x_l1), ld.Y(f[3]) + 14, ld.X(x_l1), ld.Y(P["220"]["bus"]["y"]) - 16, LW["frame"], dash=[6, 2])
+    sh.text(ld.X(x_l1) - 5.0, ld.Y(f[3]) + 14, "B", 4.0); sh.text(ld.X(x_l1) - 5.0, ld.Y(P["220"]["bus"]["y"]) - 20, "B", 4.0)
+    ld.section(topo, ox=455.0, oy=250.0, s=5.0, x_cut=x_l1, y_from=P["220"]["bus"]["y"] - 8, y_to=P["220"]["tower"]["y"] + 4,
+               title="断面図　B－B（東線1L ベイ。引留鉄塔から母線まで。左が北）　1/200")
+    # C-C: 66kV ダイヤ（X1 通りの D3）1/200
+    sh.line(ld.X(x_cut), ld.Y(P["66"]["north_gantry"]["y"]) + 12, ld.X(x_cut), ld.Y(f[1]) - 20, LW["frame"], dash=[6, 2])
+    sh.text(ld.X(x_cut) + 1.5, ld.Y(P["66"]["north_gantry"]["y"]) + 12, "C", 4.0); sh.text(ld.X(x_cut) + 1.5, ld.Y(f[1]) - 24, "C", 4.0)
+    ld.section(topo, ox=455.0, oy=70.0, s=5.0, x_cut=x_cut, y_from=f[1], y_to=P["66"]["north_gantry"]["y"] + 8,
+               title="断面図　C－C（X1 通り。66kV ダイヤ D3 を母線に垂直に切る。左が北）　1/200", z_top=P["66"]["gw_z"])
     sh.save()
     print(f"wrote {out}: {SITE_ID}_sld.pdf, {SITE_ID}_plan.pdf, {SITE_ID}_layout.pdf")
 

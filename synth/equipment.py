@@ -12,31 +12,46 @@ from __future__ import annotations
 EQUIP = {
     220: {   # 245kV 級
         "phase_sp": 4.0,
-        "ds": {   # 二点切（水平二点切）断路器: 3 本の碍管、中央が回転して両側で開く
+        "ds": {   # 線路側・機器側: 垂直一点切断路器。2 本の碍管、片側のブレードが上に開く
+            "type": "vertical_break",
             "column": 2.5,        # 支持架台（鋼）高さ
             "insulator": 2.3,     # 碍管高さ（A）
             "head": 0.35,         # 端子・ブレードの高さ（B-A）
-            "span": 2.9,          # 両端碍管の中心間（C）
+            "span": 2.9,          # 碍管の中心間（C）
             "frame": 3.4,         # 架台の長さ（D）
             "frame_w": 0.6, "ins_d": 0.3, "base": 0.8,
         },
-        "cb": {   # 碍子形（ライブタンク）遮断器: 碍管の上に水平の遮断部
+        "ds_panto": {   # 母線側: パンタグラフ形断路器。母線の真下に 1 相ずつ置き、パンタが上へ伸びて母線に接する
+            "type": "pantograph",
+            "column": 2.5, "insulator": 2.3, "head": 0.4,
+            "arm_w": 1.0,         # パンタの幅（折り畳み時）
+            "frame": 1.2, "frame_w": 1.2, "ins_d": 0.3, "base": 1.0,
+        },
+        "cb": {   # 碍子形（ライブタンク）V 形遮断器: 支持碍管の上から遮断部が 2 本、V 字に開く
+            "type": "v",
             "column": 2.6, "post": 2.3, "chamber_len": 2.4, "chamber_d": 0.4, "post_d": 0.35, "base": 1.0,
+            "v_angle": 60,        # 遮断部の傾き（鉛直からの角度、度）
             "cabinet": (1.0, 1.4, 1.6),   # 操作箱 w, d, h
         },
         "ct": {"column": 1.8, "porcelain": 2.6, "head_d": 0.9, "head_h": 0.8, "post_d": 0.3, "base": 0.9},
         "la": {"column": 1.0, "porcelain": 2.3, "d": 0.25, "base": 0.6},
-        "terminal_z": 5.2,        # 機器端子の高さ（column + insulator + head）
+        "terminal_z": 5.2,        # 断路器・CT の端子高さ（column + insulator + head）
+        "cb_terminal_z": 6.1,     # V 形遮断器の端子高さ（column + post + chamber_len·cos(v_angle)）
     },
     66: {    # 72.5kV 級
         "phase_sp": 1.5,
-        "ds": {"column": 2.0, "insulator": 0.8, "head": 0.35, "span": 1.3, "frame": 1.8, "frame_w": 0.4, "ins_d": 0.2, "base": 0.5},
-        "cb": {"column": 1.6, "post": 1.2, "chamber_len": 1.2, "chamber_d": 0.28, "post_d": 0.25, "base": 0.6, "cabinet": (0.7, 1.0, 1.2)},
+        "ds": {"type": "double_break", "column": 2.0, "insulator": 0.8, "head": 0.35, "span": 1.3, "frame": 1.8, "frame_w": 0.4, "ins_d": 0.2, "base": 0.5},
+        "cb": {"type": "horizontal", "column": 1.6, "post": 1.2, "chamber_len": 1.2, "chamber_d": 0.28, "post_d": 0.25, "base": 0.6, "cabinet": (0.7, 1.0, 1.2)},
         "ct": {"column": 1.2, "porcelain": 1.4, "head_d": 0.6, "head_h": 0.5, "post_d": 0.22, "base": 0.6},
         "la": {"column": 0.8, "porcelain": 0.9, "d": 0.18, "base": 0.4},
-        "terminal_z": 3.2,
+        "terminal_z": 3.2, "cb_terminal_z": 3.2,
     },
 }
+
+# 引留鉄構: 柱の高さと、電線を留める腕（梁）の高さ。頂部は架空地線
+LINE_GANTRY_220 = {"column": 20.0, "beam": 14.0}
+# 構外の引留鉄塔（断面図に形だけ出す）
+TOWER_220 = {"height": 30.0, "attach_z": 26.0, "base_w": 6.0, "top_w": 1.5}
 
 # 変圧器（220/66kV・三相、タンク中心が原点。HV は北側、LV は南側）
 TRANSFORMER = {
