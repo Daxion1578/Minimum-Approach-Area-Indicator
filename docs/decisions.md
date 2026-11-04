@@ -4,6 +4,8 @@
 
 ## 2026-11-04
 
+- **main が二つに枝分かれしていたので、GitHub 側（縦切り 1〜3 の流れ）を正にした。** 手元には三画面に作り替える別の流れ（31 コミット）があったが、提出物の線引き・台本・README が GitHub 側に揃っていた。手元の流れは消さずにローカルの `local-screen1` ブランチに残した。今後は作業の前に `git fetch` で GitHub との差を見る。
+
 - **Claude の既定モデルを claude-sonnet-5-5 に、出力上限を 16000 に。** 旧既定の claude-sonnet-4-5 は 404 で、取込が丸ごと落ちていた。Sonnet 5.5 は思考に出力枠を使うので 4000 では JSON が途中で切れる。切れた返事（stop_reason が end_turn 以外）と API エラーは使わず規則に戻す。
 - **テストは常にオフライン（conftest の autouse）。** 編集のたびにフックでテストが走るので、キーがあると API を無駄に使う。サブエージェントは task-keeper を Haiku・low、safety-reviewer を Sonnet・medium に固定。
 
