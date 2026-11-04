@@ -177,7 +177,7 @@ function paint(energ, env, showEnv){
   clearGroup(envGroup);
   if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, COL[e.state] ?? 0xff4d4d, e.state==='dead_ungrounded'?0.05:0.09)); }
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
-  hud.innerHTML = `課電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>包絡 ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、要確認）`;
+  hud.innerHTML = `課電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
 }
 
 // ------------------------------------------------------------ クレーンの描画
