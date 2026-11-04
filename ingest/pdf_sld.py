@@ -12,6 +12,7 @@ Claude の役割（agent/structure.py）: 候補グラフの意味づけ（記�
 """
 from __future__ import annotations
 
+import io
 import json
 import math
 import re
@@ -64,7 +65,8 @@ def _point_on_segment(p, a, b, tol):
 
 def extract(pdf_path: str | Path, main_width: float = 0.85, bus_width: float = 1.4, min_len: float = 5.0) -> dict:
     """PDF 1 ページから候補グラフを作る。座標は mm（左下原点）。"""
-    pdf = pdfplumber.open(str(pdf_path))
+    # バイト列から開く。ファイルを掴んだままにしない（Windows では掴んだままだと消せない）
+    pdf = pdfplumber.open(io.BytesIO(Path(pdf_path).read_bytes()))
     pg = pdf.pages[0]
     H = pg.height
 

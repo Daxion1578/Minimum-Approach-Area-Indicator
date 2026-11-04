@@ -1,5 +1,6 @@
 """サーバ API を通しで（停止ステップ → 離隔 → 修正案 → 承認）。書き出しは一時ディレクトリに。"""
 import json
+import shutil
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +13,8 @@ def client(tmp_path, monkeypatch):
     # 承認の書き出し先を一時ディレクトリへ（truth は本物を読む）
     real = appmod.SITES
     tmp = tmp_path / "sites"; (tmp / "SITE-01").mkdir(parents=True)
-    (tmp / "SITE-01" / "truth").symlink_to(real / "SITE-01" / "truth")
+    # シンボリックリンクは Windows で特権が要るので、truth は複製する
+    shutil.copytree(real / "SITE-01" / "truth", tmp / "SITE-01" / "truth")
     monkeypatch.setattr(appmod, "SITES", tmp)
     appmod.load_site.cache_clear()
     return TestClient(appmod.app)
