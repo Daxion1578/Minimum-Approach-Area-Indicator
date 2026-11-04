@@ -166,7 +166,8 @@ def post_approve(site_id: str, req: ApproveRequest):
         files += write_step_drawings(site, req.steps, req.state, out_dir)
     except Exception as e:  # 図面が出せなくても承認は成立させる（理由は返す）
         payload["drawing_error"] = str(e)
-    return {"name": name, "approval_hash": h, "files": files, "dir": str(out_dir.relative_to(ROOT)), "drawing_error": payload.get("drawing_error")}
+    rel = str(out_dir.relative_to(ROOT)) if ROOT in out_dir.parents else str(out_dir)
+    return {"name": name, "approval_hash": h, "files": files, "dir": rel, "drawing_error": payload.get("drawing_error")}
 
 
 @app.get("/api/sites/{site_id}/approved/{name}/{file}")
