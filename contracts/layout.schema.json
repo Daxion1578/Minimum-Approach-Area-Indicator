@@ -44,7 +44,7 @@
         "required": ["id", "kind", "primitives"],
         "properties": {
           "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["ground_wire", "gantry", "fence", "other"] },
+          "kind": { "type": "string", "enum": ["ground_wire", "gantry", "instrument", "arrester", "fence", "other"] },
           "name": { "type": "string" },
           "primitives": { "type": "array", "items": { "$ref": "#/$defs/capsule" } }
         }
