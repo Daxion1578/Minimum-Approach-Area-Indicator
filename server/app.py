@@ -7,6 +7,11 @@ API（すべて契約 contracts/ の形でやり取りする）:
   GET  /api/sites/{site_id}            topology / layout / states（状態の例）
   POST /api/sites/{site_id}/energize   body: {"state": state.json, "treat_ungrounded_as_live": true}
                                        → {"energization": §6.4, "envelope": §6.5（承認前）}
+  POST /api/sites/{site_id}/steps      body: {"targets": ["TR-2"], "state": 通常状態} → 停止ステップ §6.8（段階ごとの state つき）
+  POST /api/sites/{site_id}/clearance  body: {"state", "crane", "treat_ungrounded_as_live"} → {"energization","envelope","clearance" §6.7}
+  POST /api/sites/{site_id}/propose    body: {"state", "crane"} → 修正案の候補（決定論。各候補は再判定済み）
+  POST /api/sites/{site_id}/approve    body: {"state","crane","clearance","steps","approver"} → approved/ に書き出し、承認ハッシュ
+  GET  /api/sites/{site_id}/approved/{name}/{file}   書き出した JSON / PDF
 画面: GET / → web/index.html、/web/* → 静的ファイル（three.js 同梱）。
 """
 from __future__ import annotations
@@ -20,8 +25,15 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import hashlib
+import time
+
+from engine.clearance import evaluate
+from engine.crane import Crane
 from engine.energize import energize
 from engine.envelope import ClearanceTable, envelopes
+from engine.propose import propose
+from engine.steps import generate
 from engine.topology import Topology, TopologyError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +61,33 @@ class EnergizeRequest(BaseModel):
     treat_ungrounded_as_live: bool = True
 
 
+class StepsRequest(BaseModel):
+    targets: list[str]
+    state: dict | None = None
+
+
+class ClearanceRequest(BaseModel):
+    state: dict
+    crane: dict
+    treat_ungrounded_as_live: bool = True
+
+
+class ApproveRequest(BaseModel):
+    state: dict
+    crane: dict | None = None
+    clearance: dict | None = None
+    steps: dict | None = None
+    approver: str = "APPROVER-01"
+    note: str = ""
+
+
+def _topo(site: dict) -> Topology:
+    try:
+        return Topology.from_dict(site["topology"])
+    except TopologyError as e:
+        raise HTTPException(500, f"topology error: {e}") from e
+
+
 @app.get("/api/sites")
 def list_sites():
     return [{"site_id": p.name, "name": _read(p / "truth" / "topology.json").get("name", p.name)}
@@ -70,6 +109,72 @@ def post_energize(site_id: str, req: EnergizeRequest):
     res = energize(topo, req.state)
     env = envelopes(topo, site["layout"], res, ClearanceTable.load(), req.treat_ungrounded_as_live)
     return {"energization": res.to_dict(), "envelope": env}
+
+
+@app.post("/api/sites/{site_id}/steps")
+def post_steps(site_id: str, req: StepsRequest):
+    site = load_site(site_id)
+    base = req.state or site["states"].get("normal") or next(iter(site["states"].values()), {})
+    return generate(_topo(site), base, req.targets)
+
+
+@app.post("/api/sites/{site_id}/clearance")
+def post_clearance(site_id: str, req: ClearanceRequest):
+    site = load_site(site_id)
+    topo = _topo(site)
+    res = energize(topo, req.state)
+    env = envelopes(topo, site["layout"], res, ClearanceTable.load(), req.treat_ungrounded_as_live)
+    out = evaluate(env, Crane.from_dict(req.crane))
+    return {"energization": res.to_dict(), "envelope": env, "clearance": out}
+
+
+@app.post("/api/sites/{site_id}/propose")
+def post_propose(site_id: str, req: ClearanceRequest):
+    site = load_site(site_id)
+    return propose(_topo(site), site["layout"], req.state, Crane.from_dict(req.crane), conservative=req.treat_ungrounded_as_live)
+
+
+@app.post("/api/sites/{site_id}/approve")
+def post_approve(site_id: str, req: ApproveRequest):
+    """承認: 判定が可／条件付き可であることをもう一度確かめてから書き出す。暦日は入れない（相対時刻だけ）。"""
+    site = load_site(site_id)
+    topo = _topo(site)
+    res = energize(topo, req.state)
+    if res.errors:
+        raise HTTPException(400, "課電判定に誤りがある状態は承認できない: " + "; ".join(e["message"] for e in res.errors))
+    env = envelopes(topo, site["layout"], res, ClearanceTable.load(), True)
+    verdict = None
+    if req.crane:
+        out = evaluate(env, Crane.from_dict(req.crane))
+        verdict = out["verdict"]
+        if verdict == "ng":
+            raise HTTPException(400, "離隔が不可の計画は承認できない: " + out["reasons"][0])
+    name = f"plan-{int(time.monotonic() * 1000) % 100000000:08d}"
+    out_dir = SITES / site_id / "approved" / name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"schema_version": "0.1", "site_id": site_id, "approver": req.approver, "note": req.note, "verdict": verdict,
+               "state": req.state, "crane": req.crane, "clearance": req.clearance, "steps": req.steps,
+               "envelope_count": len(env["envelopes"])}
+    body = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    h = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+    payload["approval_hash"] = h
+    (out_dir / "plan.json").write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    (out_dir / "envelope.json").write_text(json.dumps(env, ensure_ascii=False, indent=1), encoding="utf-8")
+    files = ["plan.json", "envelope.json"]
+    try:
+        from synth.step_drawings import write_step_drawings
+        files += write_step_drawings(site, req.steps, req.state, out_dir)
+    except Exception as e:  # 図面が出せなくても承認は成立させる（理由は返す）
+        payload["drawing_error"] = str(e)
+    return {"name": name, "approval_hash": h, "files": files, "dir": str(out_dir.relative_to(ROOT)), "drawing_error": payload.get("drawing_error")}
+
+
+@app.get("/api/sites/{site_id}/approved/{name}/{file}")
+def get_approved(site_id: str, name: str, file: str):
+    p = SITES / site_id / "approved" / name / file
+    if not p.exists() or ".." in name or ".." in file:
+        raise HTTPException(404, "not found")
+    return FileResponse(p)
 
 
 @app.get("/")

@@ -75,10 +75,15 @@ class Sheet:
         self.c.rect(35 * MM, 10 * MM, (self.w - 45) * MM, (self.h - 20) * MM)   # 輪郭: 左 35、他 10
         self.title_block(name, number, scale_text)
 
-    def line(self, x1, y1, x2, y2, w=LW["thin"], dash=None, gray=0.0):
+    def line(self, x1, y1, x2, y2, w=LW["thin"], dash=None, gray=0.0, rgb=None):
         c = self.c
-        c.setLineWidth(w); c.setStrokeGray(gray); c.setDash(dash or [])
-        c.line(x1 * MM, y1 * MM, x2 * MM, y2 * MM); c.setDash([])
+        c.setLineWidth(w)
+        if rgb:
+            c.setStrokeColorRGB(*rgb)
+        else:
+            c.setStrokeGray(gray)
+        c.setDash(dash or [])
+        c.line(x1 * MM, y1 * MM, x2 * MM, y2 * MM); c.setDash([]); c.setStrokeGray(0)
 
     def poly(self, pts, w=LW["thin"], dash=None, gray=0.0, close=False):
         pts = list(pts) + ([pts[0]] if close else [])
@@ -154,10 +159,38 @@ class Sheet:
 # --------------------------------------------------------------------------
 # 単線結線図
 # --------------------------------------------------------------------------
+STATE_RGB = {"live": (0.85, 0.1, 0.1), "dead_grounded": (0.1, 0.55, 0.2), "dead_ungrounded": (0.85, 0.55, 0.0), "invalid": (0.75, 0.0, 0.75)}
+STATE_DASH = {"live": None, "dead_grounded": [3.0, 1.5], "dead_ungrounded": [1.2, 1.2], "invalid": [0.6, 0.6]}
+STATE_JA = {"live": "充電", "dead_grounded": "停電・接地", "dead_ungrounded": "停電・未接地", "invalid": "充電部に接地（誤り）"}
+
+
 class SLD:
-    def __init__(self, sh: Sheet, topo: dict, symbols: str):
+    def __init__(self, sh: Sheet, topo: dict, symbols: str, states: dict | None = None, switches: dict | None = None):
+        """states: ノード/辺 ID → 課電状態（ステップ図のとき）。switches: 開閉器 ID → open/closed。"""
         self.sh, self.symbols = sh, symbols
         self.nodes = {n["id"]: n for n in topo["nodes"]}
+        self.states = states or {}
+        self.switches = switches or {}
+
+    def st(self, nid):
+        return self.states.get(nid) or self.states.get(nid + ".a") or self.states.get(nid + ".hv")
+
+    def seg(self, x1, y1, x2, y2, nid, w):
+        """導体の線分を、状態があれば色と線種つきで描く。"""
+        st = self.st(nid) if self.states else None
+        self.sh.line(x1, y1, x2, y2, w, dash=STATE_DASH.get(st), rgb=STATE_RGB.get(st))
+
+    def pos_mark(self, x, y, nid):
+        """ステップ図では開閉器の開閉を文字で示す（開は赤、接地の閉は緑）。"""
+        if not self.switches or nid not in self.switches:
+            return
+        pos = self.switches[nid]
+        kind = self.nodes.get(nid, {}).get("kind")
+        if kind == "earthing":
+            if pos == "closed":
+                self.sh.text(x, y, "閉", 2.2, anchor="w"); self.sh.c.setFillGray(0)
+        elif pos == "open":
+            self.sh.text(x, y, "開", 2.2, anchor="w")
 
     def num(self, nid):
         return self.nodes[nid].get("number", "") if nid in self.nodes else ""
@@ -243,29 +276,33 @@ class SLD:
         secs = ["A", "B", "C"]
         for i, sec in enumerate(secs):
             x0, x1 = X(xs[i]) + (3.0 if i else 0), X(xs[i + 1]) - (3.0 if i < 2 else 0)
-            sh.line(x0, y_bus, x1, y_bus, w * 1.6)
+            self.seg(x0, y_bus, x1, y_bus, f"220-BUS-{sec}", w * 1.6)
             sh.text((x0 + x1) / 2, y_bus + 1.5, f"{sec}区間", 2.2, anchor="s")
             self.es_mark((x0 + x1) / 2 + 8, y_bus, kv, f"220-BUS-{sec}-ES", side=1) if False else None
         sh.text(X(xs[0]), y_bus + 5.0, "220kV 母線（単母線・3 区間）", 2.5)
         sh.text(X(xs[0]), y_bus - 4.0, "PAℓ 150φ×6", 2.0)
         for i, (sec, x) in enumerate(cfg["sections"]):
             self.ds(X(x), y_bus, kv, f"220-SEC-{secs[i]}{secs[i + 1]}", horizontal=True, panto=True)
+            self.pos_mark(X(x) + 2.6, y_bus - 3.5, f"220-SEC-{secs[i]}{secs[i + 1]}")
         # 母線接地（各区間）
         for i, sec in enumerate(secs):
             xm = (X(xs[i]) + X(xs[i + 1])) / 2 + 10
             sh.line(xm, y_bus, xm, y_bus - 4.0, LW["aux"]); sh.dot(xm, y_bus)
             sh.line(xm, y_bus - 4.0, xm + 1.2, y_bus - 6.2, LW["aux"]); self.ground(xm + 1.2, y_bus - 4.0, kv)
-            sh.text(xm + 2.0, y_bus - 3.5, self.num(f"220-BUS-{sec}-ES"), 1.8)
+            sh.text(xm + 2.0, y_bus - 3.5, self.num(f"220-BUS-{sec}-ES"), 1.8); self.pos_mark(xm + 2.0, y_bus - 6.5, f"220-BUS-{sec}-ES")
         # 線路ベイ（上へ）
         for i, (cid, cname, x, sec) in enumerate(cfg["lines"]):
             xp = X(x); pre = f"220-L{i + 1}"
             ys = {"BLS": y_bus + 8, "CB": y_bus + 18, "LS": y_bus + 28, "top": y_bus + 42}
-            sh.line(xp, y_bus, xp, ys["top"], w); sh.dot(xp, y_bus)
-            self.ds(xp, ys["BLS"], kv, f"{pre}-BLS", panto=True)
-            self.cb(xp, ys["CB"], kv, f"{pre}-CB")
-            self.ds(xp, ys["LS"], kv, f"{pre}-LS", panto=True)
-            self.es_mark(xp, (ys["BLS"] + ys["CB"]) / 2 + 2, kv, f"{pre}-N1-ES")
-            self.es_mark(xp, ys["LS"] + 5.0, kv, f"220-LINE-{cid}-ES")
+            self.seg(xp, y_bus, xp, ys["BLS"], f"220-BUS-{sec}", w); sh.dot(xp, y_bus)
+            self.seg(xp, ys["BLS"], xp, ys["CB"], f"{pre}-N2", w)
+            self.seg(xp, ys["CB"], xp, ys["LS"], f"{pre}-N1", w)
+            self.seg(xp, ys["LS"], xp, ys["top"], f"220-LINE-{cid}", w)
+            self.ds(xp, ys["BLS"], kv, f"{pre}-BLS", panto=True); self.pos_mark(xp + 2.6, ys["BLS"] - 3.5, f"{pre}-BLS")
+            self.cb(xp, ys["CB"], kv, f"{pre}-CB"); self.pos_mark(xp + 2.6, ys["CB"] - 3.5, f"{pre}-CB")
+            self.ds(xp, ys["LS"], kv, f"{pre}-LS", panto=True); self.pos_mark(xp + 2.6, ys["LS"] - 3.5, f"{pre}-LS")
+            self.es_mark(xp, (ys["BLS"] + ys["CB"]) / 2 + 2, kv, f"{pre}-N1-ES"); self.pos_mark(xp - 9.5, (ys["BLS"] + ys["CB"]) / 2 - 1.5, f"{pre}-N1-ES")
+            self.es_mark(xp, ys["LS"] + 5.0, kv, f"220-LINE-{cid}-ES"); self.pos_mark(xp - 9.5, ys["LS"] + 2.0, f"220-LINE-{cid}-ES")
             self.arrow(xp, ys["top"], True, kv); self.line_label(xp, ys["top"], True, cname, kv)
             sh.text(xp, ys["top"] + 1.0, f"L{i + 1}", 2.2, anchor="s") if False else None
         # 変圧器ベイ（下へ）
@@ -273,12 +310,15 @@ class SLD:
         for (n, x, sec) in cfg["banks"]:
             xp = X(x); pre = f"220-T{n}"
             ys = {"BLS": y_bus - 8, "CB": y_bus - 18, "LS": y_bus - 28, "tr": y_bus - 42}
-            sh.line(xp, y_bus, xp, ys["tr"] + 5.5, w); sh.dot(xp, y_bus)
-            self.ds(xp, ys["BLS"], kv, f"{pre}-BLS", panto=True)
-            self.cb(xp, ys["CB"], kv, f"{pre}-CB")
-            self.ds(xp, ys["LS"], kv, f"{pre}-LS", panto=True)
-            self.es_mark(xp, (ys["CB"] + ys["LS"]) / 2 + 2, kv, f"{pre}-N2-ES")
-            self.es_mark(xp, ys["LS"] - 5.0, kv, f"220-TR-{n}-HV-ES")
+            self.seg(xp, y_bus, xp, ys["BLS"], f"220-BUS-{sec}", w); sh.dot(xp, y_bus)
+            self.seg(xp, ys["BLS"], xp, ys["CB"], f"{pre}-N1", w)
+            self.seg(xp, ys["CB"], xp, ys["LS"], f"{pre}-N2", w)
+            self.seg(xp, ys["LS"], xp, ys["tr"] + 5.5, f"220-TR-{n}-HV", w)
+            self.ds(xp, ys["BLS"], kv, f"{pre}-BLS", panto=True); self.pos_mark(xp + 2.6, ys["BLS"] - 3.5, f"{pre}-BLS")
+            self.cb(xp, ys["CB"], kv, f"{pre}-CB"); self.pos_mark(xp + 2.6, ys["CB"] - 3.5, f"{pre}-CB")
+            self.ds(xp, ys["LS"], kv, f"{pre}-LS", panto=True); self.pos_mark(xp + 2.6, ys["LS"] - 3.5, f"{pre}-LS")
+            self.es_mark(xp, (ys["CB"] + ys["LS"]) / 2 + 2, kv, f"{pre}-N2-ES"); self.pos_mark(xp - 9.5, (ys["CB"] + ys["LS"]) / 2 - 1.5, f"{pre}-N2-ES")
+            self.es_mark(xp, ys["LS"] - 5.0, kv, f"220-TR-{n}-HV-ES"); self.pos_mark(xp - 9.5, ys["LS"] - 8.0, f"220-TR-{n}-HV-ES")
             self.transformer(xp, ys["tr"], f"TR-{n}", "220/66kV 三相")
             ends[n] = (xp, ys["tr"] - 5.5)
         return ends
@@ -288,8 +328,8 @@ class SLD:
         cfg = P["66"]; kv = cfg["kv"]; w = LW[kv]; sh = self.sh
         n = len(cfg["bays"])
         x_right = x_left + pitch * (n - 1) + 12
-        for yb, lab in ((y_bus1, "1号母線"), (y_bus2, "2号母線")):
-            sh.line(x_left - 24, yb, x_right, yb, w * 1.6)
+        for yb, lab, bid in ((y_bus1, "1号母線", "66-BUS-A"), (y_bus2, "2号母線", "66-BUS-B")):
+            self.seg(x_left - 24, yb, x_right, yb, bid, w * 1.6)
             sh.text(x_left - 24, yb + 1.2, f"{kv}kV {lab}", 2.5)
             sh.text(x_left - 24, yb - 3.0, "HAℓ 410×1", 2.0)
         keys = ["LSA", "CB1", "LS1B", "T1", "LS2A", "CB2", "LS2B", "T2", "LS3A", "CB3", "LSB"]
@@ -301,45 +341,59 @@ class SLD:
             pre = f"66-{bay}"
             new_bay = (c1 is None and c2 is None)
             sh.text(x, y_bus1 + 5.0, f"{kv}kV {bay}", 2.5, anchor="s")
-            sh.line(x, y_bus1, x, y_bus2, w, dash=[2, 1.5] if new_bay else None)
-            if not new_bay:
+            if new_bay:
+                sh.line(x, y_bus1, x, y_bus2, w, dash=[2, 1.5])
+            else:
+                segs = [("66-BUS-A", y_bus1, ys["LSA"]), (f"{pre}-N1", ys["LSA"], ys["CB1"]), (f"{pre}-N2", ys["CB1"], ys["LS1B"]),
+                        (f"{pre}-T1", ys["LS1B"], ys["LS2A"]), (f"{pre}-N3", ys["LS2A"], ys["CB2"]), (f"{pre}-N4", ys["CB2"], ys["LS2B"]),
+                        (f"{pre}-T2", ys["LS2B"], ys["LS3A"]), (f"{pre}-N5", ys["LS3A"], ys["CB3"]), (f"{pre}-N6", ys["CB3"], ys["LSB"]),
+                        ("66-BUS-B", ys["LSB"], y_bus2)]
+                for sid, ya, yb in segs:
+                    self.seg(x, ya, x, yb, sid, w)
                 sh.dot(x, y_bus1); sh.dot(x, y_bus2)
             for k in ("LSA", "LS1B", "LS2A", "LS2B", "LS3A", "LSB"):
-                self.ds(x, ys[k], kv, f"{pre}-{k}")
+                self.ds(x, ys[k], kv, f"{pre}-{k}"); self.pos_mark(x + 2.6, ys[k] - 3.5, f"{pre}-{k}")
             for k in ("CB1", "CB2", "CB3"):
-                self.cb(x, ys[k], kv, f"{pre}-{k}")
+                self.cb(x, ys[k], kv, f"{pre}-{k}"); self.pos_mark(x + 2.6, ys[k] - 3.5, f"{pre}-{k}")
             if new_bay:
                 sh.text(x + 3.0, ys["T1"], "（新設予定）", 2.2, anchor="w"); sh.text(x + 3.0, ys["T2"], "（新設予定）", 2.2, anchor="w")
                 continue
             for k, yk in (("N1", (ys["LSA"] + ys["CB1"]) / 2), ("N2", (ys["CB1"] + ys["LS1B"]) / 2), ("N3", (ys["LS2A"] + ys["CB2"]) / 2),
                           ("N4", (ys["CB2"] + ys["LS2B"]) / 2), ("N5", (ys["LS3A"] + ys["CB3"]) / 2), ("N6", (ys["CB3"] + ys["LSB"]) / 2)):
-                self.es_mark(x, yk, kv, f"{pre}-{k}-ES")
+                self.es_mark(x, yk, kv, f"{pre}-{k}-ES"); self.pos_mark(x - 9.5, yk - 1.5, f"{pre}-{k}-ES")
             for k, c, up in (("T1", c1, True), ("T2", c2, False)):
                 yk = ys[k]; kind, cid, cname = c
                 xo = x + pitch / 2.0
-                sh.line(x, yk, xo, yk, w); sh.dot(x, yk)
+                self.seg(x, yk, xo, yk, f"{pre}-{k}", w); sh.dot(x, yk)
                 if kind == "line":
                     ln = f"66-LINE-{cid}"
-                    self.ds(xo, yk, kv, f"{ln}-LS", earth=True)
+                    self.ds(xo, yk, kv, f"{ln}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"{ln}-LS"); self.pos_mark(xo + 6.5, yk - 8.0, f"{ln}-ES")
                     yend = y_bus2 - 18.0
-                    sh.line(xo, yk, xo, yend, w); self.arrow(xo, yend, False, kv); self.line_label(xo, yend, False, cname, kv)
+                    self.seg(xo, yk, xo, yend, ln, w); self.arrow(xo, yend, False, kv); self.line_label(xo, yend, False, cname, kv)
                 elif kind == "tr":
-                    self.ds(xo, yk, kv, f"66-TR-{cid}-LS", earth=True)
+                    self.ds(xo, yk, kv, f"66-TR-{cid}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"66-TR-{cid}-LS"); self.pos_mark(xo + 6.5, yk - 8.0, f"66-TR-{cid}-ES")
                     yend = y_bus1 + 12.0
-                    sh.line(xo, yk, xo, yend, w)
+                    self.seg(xo, yk, xo, yend, f"66-TR-{cid}-LV", w)
                     ends[cid] = (xo, yend)
                 else:
                     lid = f"66-{cid[:2]}-{cid[2:]}"
-                    self.ds(xo, yk, kv, f"{lid}-LS", earth=True)
+                    self.ds(xo, yk, kv, f"{lid}-LS", earth=True); self.pos_mark(xo + 2.6, yk - 3.5, f"{lid}-LS")
                     yend = y_bus1 + 14.0
-                    sh.line(xo, yk, xo, yend, w)
+                    self.seg(xo, yk, xo, yend, lid, w)
                     (self.capacitor if cid.startswith("SC") else self.reactor)(xo, yend + 3.0, cname)
         return ends
 
-    def draw(self):
+    def draw(self, title="単線結線図（主回路）", subtitle=None):
         sh = self.sh
-        sh.text(40, sh.h - 16, "記号は JIS C 0617 による。開閉器番号は記号の右、母線・線路は導体種別を併記。接地開閉器は区間ごとに記す。", 2.2)
-        sh.text(40, sh.h - 22, "単線結線図（主回路）", 4.0)
+        sh.text(40, sh.h - 16, subtitle or "記号は JIS C 0617 による。開閉器番号は記号の右、母線・線路は導体種別を併記。接地開閉器は区間ごとに記す。", 2.2)
+        sh.text(40, sh.h - 22, title, 4.0)
+        if self.states:
+            # 凡例（色と線種。モノクロ印刷でも線種で読める）
+            x0, y0 = 40, sh.h - 30
+            for i, (k, ja) in enumerate(STATE_JA.items()):
+                sh.line(x0 + i * 48, y0, x0 + i * 48 + 10, y0, 1.2, dash=STATE_DASH[k], rgb=STATE_RGB[k])
+                sh.text(x0 + i * 48 + 12, y0 - 0.8, ja, 2.2)
+            sh.text(x0, y0 - 4.5, "「開」「閉」は開閉器の操作後の位置。線種: 実線=充電、破線=停電・接地、点線=停電・未接地", 2.2)
         # 220kV（右上）: 構内 x 22〜114m を紙 x 215〜395mm に
         cfg = P["220"]
         x0, x1 = cfg["bus"]["x0"], cfg["bus"]["x1"]
@@ -351,7 +405,8 @@ class SLD:
         for n in sorted(tr_ends):
             (xa, ya), (xb, yb) = tr_ends[n], lv_ends[n]
             ym = 150.0 + (n - 1) * 5.0
-            sh.line(xa, ya, xa, ym, LW[66]); sh.line(xa, ym, xb, ym, LW[66]); sh.line(xb, ym, xb, yb, LW[66])
+            lv = f"66-TR-{n}-LV"
+            self.seg(xa, ya, xa, ym, lv, LW[66]); self.seg(xa, ym, xb, ym, lv, LW[66]); self.seg(xb, ym, xb, yb, lv, LW[66])
         # 主要機器の概要欄（左上）
         x0b, y0b = 42, 232
         sh.rect(x0b, y0b, 150, 30, LW["thin"])
