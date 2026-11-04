@@ -1,0 +1,6 @@
+{
+  "margin_m": 0.5,
+  "slew_step_deg": 5.0,
+  "conditions_when_marginal": ["監視員を置き、旋回の限界を見張る（R6）", "旋回角の限界を車体と地面に印で示す（R6）"],
+  "note": "margin_m は目安値（要確認）。離隔そのものは data/tables/clearance.csv"
+}
