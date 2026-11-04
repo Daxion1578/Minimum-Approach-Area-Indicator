@@ -62,6 +62,11 @@
 
   <section class="step" id="s1">
     <h3>停止条件</h3>
+    <h4>取り替える機器を選ぶ → 停止ステップを作る</h4>
+    <div class="row"><label class="k">対象</label><select id="targetSel"></select></div>
+    <div class="row"><button class="act" id="btnSteps">停止ステップを作る</button><span class="note">CB 開放 → DS 開放（両側）→ ES 投入。判定は engine</span></div>
+    <div id="stepsBox"></div>
+    <h4>状態の例（手で開閉を変えることもできる）</h4>
     <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
     <div class="row"><label>未接地の停止区間も課電扱い（保守側）</label><input type="checkbox" id="conservative" checked></div>
     <div class="row"><label>包絡を表示</label><input type="checkbox" id="showEnv" checked></div>
@@ -73,18 +78,28 @@
     </div>
     <div id="energSummary" class="note"></div>
     <div id="errors"></div>
-    <h4>開閉器（チェック＝閉）</h4>
-    <div id="switchList"></div>
+    <details class="bay"><summary>開閉器（チェック＝閉）</summary><div id="switchList"></div></details>
+    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s2')">重機配置へ →</button></div>
   </section>
 
   <section class="step" id="s2">
     <h3>重機配置</h3>
-    <div class="soon">縦切り2（11/4）。クレーンを置くと包絡との最短距離と干渉が出る。</div>
+    <div class="note">3D の地面をクリックするとクレーンのベースがそこへ移る。諸元は 25t 級ラフテレーンの例示値。</div>
+    <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="86" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="69" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="180" step="5" style="width:70px"></div>
+    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="12" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フック垂下 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
+    <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-30" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="40" step="5" style="width:70px"><span class="note">5° 刻みで掃引</span></div>
+    <div class="row"><button class="act" id="btnClear">離隔を判定する</button><button class="sub" id="btnPropose">修正案を出す</button></div>
+    <div id="verdictBox"></div>
+    <div id="proposeBox"></div>
+    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s3')">計画確定へ →</button></div>
   </section>
 
   <section class="step" id="s3">
     <h3>計画確定</h3>
-    <div class="soon">縦切り4（11/6）。承認すると停止ステップ表と envelope.json / glb を書き出す。</div>
+    <div id="planSummary" class="note">停止条件と重機配置を済ませてから。</div>
+    <div class="row"><label class="k">承認者（符号）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
+    <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に engine がもう一度判定する。不可は承認できない</span></div>
+    <div id="approveBox"></div>
   </section>
 </div>
 
@@ -123,7 +138,7 @@ const controls=new MiniOrbit(camera, renderer.domElement);
 scene.add(new THREE.GridHelper(300,30,0x2c343d,0x1f262e).rotateX(Math.PI/2));
 scene.add(new THREE.AmbientLight(0xffffff,0.9));
 const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0xf5c518, invalid:0xff3cf0};
-const siteGroup=new THREE.Group(), envGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup);
+const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup);
 const condLines={}, switchMeshes={};
 function resize(){ const w=view.clientWidth,h=view.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 addEventListener('resize',resize); resize();
@@ -176,8 +191,38 @@ function paint(energ, env, showEnv){
   hud.innerHTML = `課電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>包絡 ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、要確認）`;
 }
 
+// ------------------------------------------------------------ クレーンの描画
+function drawCrane(out){
+  clearGroup(craneGroup);
+  if (!out) return;
+  const worst=out.worst;
+  for (const cc of out.crane_capsules){
+    const isWorst = worst && cc.part===worst.crane_part && cc.slew_deg===worst.slew_deg;
+    const col = cc.part==='carrier' ? 0xe3b320 : isWorst ? 0xffffff : 0xe3b320;
+    if (cc.part==='carrier'){ const m=capsuleMesh(cc.a,cc.b,cc.r,0xe3b320,0.5); craneGroup.add(m); continue; }
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...cc.a), new THREE.Vector3(...cc.b)]);
+    craneGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:col, transparent:true, opacity:isWorst?1:0.35})));
+    if (isWorst || cc.part==='load') craneGroup.add(capsuleMesh(cc.a,cc.b,cc.r, isWorst?0xffffff:0xe3b320, isWorst?0.35:0.12));
+  }
+  if (worst){
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...worst.p_crane), new THREE.Vector3(...worst.p_conductor)]);
+    const col = out.verdict==='ng'?0xff4d4d: out.verdict==='conditional'?0xf5c518:0x39d353;
+    craneGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:col})));
+    craneGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.4,8,8), new THREE.MeshBasicMaterial({color:col})).translateX(worst.p_conductor[0]).translateY(worst.p_conductor[1]).translateZ(worst.p_conductor[2]));
+  }
+}
+// 地面クリックでベースを置く（ドラッグと区別する）
+const ray=new THREE.Raycaster(), plane=new THREE.Plane(new THREE.Vector3(0,0,1),0); let downAt=null;
+renderer.domElement.addEventListener('pointerdown', e=>{ downAt=[e.clientX,e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e=>{
+  if (!downAt || Math.hypot(e.clientX-downAt[0], e.clientY-downAt[1])>4 || e.button!==0) return;
+  if (!document.getElementById('s2').classList.contains('on')) return;
+  const r=renderer.domElement.getBoundingClientRect(); const nd=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(nd, camera); const hit=new THREE.Vector3(); if (ray.ray.intersectPlane(plane, hit)){ $('cx').value=hit.x.toFixed(1); $('cy').value=hit.y.toFixed(1); evaluateClearance(); }
+});
+
 // ------------------------------------------------------------ データと操作
-let site=null, state=null;
+let site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null;
 const $=id=>document.getElementById(id);
 window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.step===s)); document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s)); };
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.step));
@@ -193,10 +238,73 @@ async function loadSite(id){
   const t=site.topology, by=k=>t.nodes.filter(n=>n.kind===k).length;
   $('siteSummary').innerHTML=[['名前',t.name],['ノード',t.nodes.length],['辺',t.edges.length],['電源',by('source')],['遮断器／断路器',`${by('breaker')}／${by('disconnector')}`],['接地開閉器',by('earthing')],['変圧器',by('transformer')]].map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('');
   $('stateSel').innerHTML=Object.entries(site.states).map(([k,v])=>`<option value="${k}">${k} — ${v.note||''}</option>`).join('');
-  $('stateSel').onchange=()=>{ state=structuredClone(site.states[$('stateSel').value]); buildSwitchList(); update(); };
-  state=structuredClone(Object.values(site.states)[0]);
-  buildSite(site); buildSwitchList(); update();
+  $('stateSel').onchange=()=>{ state=structuredClone(site.states[$('stateSel').value]); lastSteps=null; $('stepsBox').innerHTML=''; buildSwitchList(); update(); };
+  state=structuredClone(site.states.normal || Object.values(site.states)[0]);
+  const kindJa={transformer:'変圧器',breaker:'遮断器',disconnector:'断路器',bus:'母線',load:'調相設備'};
+  $('targetSel').innerHTML=['transformer','breaker','disconnector','bus','load'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}" ${n.id==='TR-2'?'selected':''}>${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
+  buildSite(site); buildSwitchList(); update(); drawCrane(null);
 }
+
+// ---- 停止ステップ
+$('btnSteps').onclick=async()=>{
+  const targets=[$('targetSel').value];
+  const r=await fetch(`/api/sites/${site.site_id}/steps`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({targets, state: site.states.normal})});
+  lastSteps=await r.json();
+  renderSteps(0);
+};
+function renderSteps(active){
+  const st=lastSteps; if (!st) return;
+  const name=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.number?n.number+' ':'')+(n.name||id):id; };
+  let html=`<div class="note">対象: ${st.targets.map(name).join('、')} → ${st.ok?'<b style="color:var(--deadg)">接地まで通った</b>':'<b style="color:var(--live)">問題あり</b> '+st.problems.join('; ')}</div>`;
+  html+=`<div class="row">`+[0,1,2,3].map(n=>`<button class="${n===active?'act':'sub'}" data-n="${n}">段階 ${n}</button>`).join('')+`</div>`;
+  for (const s of st.steps){
+    html+=`<details class="bay" ${s.n===active?'open':''}><summary>段階 ${s.n}　${s.title}（${s.ops.length}）</summary>`+s.ops.map(o=>`<div class="sw"><span class="id">${o.number||o.id}</span><span class="note">${o.name}　→ ${o.to==='open'?'開放':'投入'}</span></div>`).join('')+`</details>`;
+  }
+  $('stepsBox').innerHTML=html;
+  $('stepsBox').querySelectorAll('button[data-n]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.n; state=structuredClone(n===0? site.states.normal : st.steps[n-1].state); buildSwitchList(); update(); renderSteps(n); });
+  if (active===0) state=structuredClone(site.states.normal); else state=structuredClone(st.steps[active-1].state);
+  buildSwitchList(); update();
+  $('planSummary').innerHTML=`対象 ${st.targets.map(name).join('、')}、段階 ${st.steps.length}（最終段階の状態で承認する）`;
+}
+
+// ---- 離隔
+function craneFromForm(){ return {base:[+$('cx').value,+$('cy').value], heading_deg:+$('chead').value, boom_len_m:+$('clen').value, boom_elev_deg:+$('celev').value, slew_deg:[+$('cslo').value,+$('cshi').value], hook_drop_m:+$('chook').value, load:{w:2.0,d:2.0,h:2.5}}; }
+function craneToForm(c){ $('cx').value=c.base[0]; $('cy').value=c.base[1]; $('chead').value=c.heading_deg; $('clen').value=c.boom_len_m; $('celev').value=c.boom_elev_deg; $('cslo').value=c.slew_deg[0]; $('cshi').value=c.slew_deg[1]; $('chook').value=c.hook_drop_m; }
+async function evaluateClearance(){
+  lastCrane=craneFromForm();
+  const r=await fetch(`/api/sites/${site.site_id}/clearance`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane, treat_ungrounded_as_live:$('conservative').checked})});
+  const j=await r.json(); lastClearance=j.clearance;
+  paint(j.energization, j.envelope, $('showEnv').checked); drawCrane(j.clearance);
+  const c=j.clearance; const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
+  let html=`<div class="bay" style="border-color:${col}"><div style="font-size:20px;font-weight:700;color:${col}">${c.verdict_ja}</div>`;
+  if (c.worst) html+=`<div style="font-size:16px">最小離隔 <b>${c.worst.distance_m.toFixed(2)} m</b> ／ 必要 ${c.worst.required_m.toFixed(2)} m ／ 余裕 ${c.worst.margin_m.toFixed(2)} m</div><div class="note">最寄り: ${c.worst.conductor_id}（${c.worst.phase} 相 ${c.worst.voltage_kv}kV）、${c.worst.crane_part}${c.worst.slew_deg!==null?`、旋回 ${c.worst.slew_deg>0?'+':''}${c.worst.slew_deg.toFixed(0)}°`:''}</div>`;
+  html+=c.reasons.map(x=>`<div class="note">根拠: ${x}</div>`).join('');
+  if (c.conditions.length) html+=`<div style="margin-top:4px">条件:</div>`+c.conditions.map(x=>`<div class="note">・${x}</div>`).join('');
+  html+=`<table style="margin-top:6px"><tr><th>導体</th><th>相</th><th>距離</th><th>必要</th><th>余裕</th></tr>`+c.hits.slice(0,5).map(h=>`<tr><td>${h.conductor_id}</td><td>${h.phase||''}</td><td>${h.distance_m.toFixed(2)}</td><td>${h.required_m.toFixed(2)}</td><td style="color:${h.margin_m<0?'var(--live)':h.margin_m<0.5?'var(--deadu)':'inherit'}">${h.margin_m.toFixed(2)}</td></tr>`).join('')+`</table></div>`;
+  $('verdictBox').innerHTML=html;
+  $('planSummary').innerHTML=(lastSteps?`対象 ${lastSteps.targets.join('、')}、段階 ${lastSteps.steps.length}。`:'')+`離隔: <b style="color:${col}">${c.verdict_ja}</b>`+(c.worst?`（最小 ${c.worst.distance_m.toFixed(2)} m／必要 ${c.worst.required_m.toFixed(2)} m）`:'');
+}
+$('btnClear').onclick=evaluateClearance;
+['cx','cy','chead','clen','celev','chook','cslo','cshi'].forEach(id=>$(id).onchange=evaluateClearance);
+$('btnPropose').onclick=async()=>{
+  if (!lastCrane) await evaluateClearance();
+  $('proposeBox').innerHTML='<div class="note">候補を作って一つずつ再判定中…</div>';
+  const r=await fetch(`/api/sites/${site.site_id}/propose`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane, treat_ungrounded_as_live:$('conservative').checked})});
+  const j=await r.json();
+  if (!j.candidates.length){ $('proposeBox').innerHTML=`<div class="note">${j.note||'候補なし'}</div>`; return; }
+  $('proposeBox').innerHTML=`<h4>修正案（engine が再判定済み。採用は人が決める）</h4>`+j.candidates.map((c,i)=>{ const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
+    return `<div class="bay"><div><b style="color:${col}">${c.verdict_ja}</b>　${c.title}</div><div class="note">最小 ${c.min_distance_m?.toFixed(2)} m／余裕 ${c.margin_m?.toFixed(2)} m${c.conditions?.length?'　条件: '+c.conditions[0]:''}</div>${c.steps?`<div class="note">追加停止: ${c.steps.map(s=>s.title+' '+s.ops.map(o=>o.number||o.id).join(' ')).join(' → ')}</div>`:''}<div class="row"><button class="sub" data-i="${i}">採用</button></div></div>`; }).join('');
+  $('proposeBox').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{ const c=j.candidates[+b.dataset.i]; craneToForm(c.crane); if (c.state){ state=structuredClone(c.state); buildSwitchList(); } evaluateClearance(); });
+};
+
+// ---- 承認
+$('btnApprove').onclick=async()=>{
+  const body={state, crane:lastCrane, clearance:lastClearance, steps:lastSteps, approver:$('approver').value};
+  const r=await fetch(`/api/sites/${site.site_id}/approve`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; return; }
+  $('approveBox').innerHTML=`<div class="bay"><div>承認ハッシュ <b>${j.approval_hash}</b></div><div class="note">${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
+};
 function buildSwitchList(){
   const bays={}; for (const n of site.topology.nodes){ if (!(n.id in state.switches)) continue; (bays[n.bay||'母線・共通'] ??= []).push(n); }
   $('switchList').innerHTML=Object.entries(bays).map(([bay,ns])=>`<details class="bay"><summary>${bay}（${ns.length}）</summary>`+ns.map(n=>
