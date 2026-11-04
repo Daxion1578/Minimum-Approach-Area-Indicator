@@ -554,19 +554,15 @@ class LayoutDrawing(Plan):
         e = EQUIP[kv]["cb"]; sp = EQUIP[kv]["phase_sp"]
         for ph in PHASES:
             cx = x + PHASE_IDX[ph] * sp
-            self.rect_m(cx - e["base"] / 2, y - e["base"] / 2, cx + e["base"] / 2, y + e["base"] / 2, LW["thin"])
-            self.sh.circle(self.X(cx), self.Y(y), e["post_d"] / 2 * self.s, LW["thin"])
-            if e["type"] == "v":
-                reach = e["chamber_len"] * _m.sin(_m.radians(e["v_angle"]))
-                for d in (-reach, reach):   # V 形: 2 本の遮断部を y 方向に広げて描く
-                    self.rect_m(cx - e["chamber_d"] / 2, min(y, y + d), cx + e["chamber_d"] / 2, max(y, y + d), LW["thin"])
-            else:
-                self.rect_m(cx - e["chamber_d"] / 2, y - e["chamber_len"] / 2, cx + e["chamber_d"] / 2, y + e["chamber_len"] / 2, LW["thin"])
+            self.rect_m(cx - e["base"] / 2, y - e["tank_len"] / 2 - 0.2, cx + e["base"] / 2, y + e["tank_len"] / 2 + 0.2, LW["dim"])   # 架台
+            self.rect_m(cx - e["tank_d"] / 2, y - e["tank_len"] / 2, cx + e["tank_d"] / 2, y + e["tank_len"] / 2, LW["thin"])         # タンク
+            for d in (-e["bushing_pitch"] / 2, e["bushing_pitch"] / 2):
+                self.sh.circle(self.X(cx), self.Y(y + d), e["bushing_d"] / 2 * self.s, LW["thin"])
+                self.sh.circle(self.X(cx), self.Y(y + d), e["bushing_d"] / 2 * self.s * 0.5, LW["dim"])
         cw, cd, _ = e["cabinet"]
-        self.rect_m(x + sp + 0.6, y - cd / 2, x + sp + 0.6 + cw, y + cd / 2, LW["thin"])   # 操作箱
-        self.line_m(x - sp, y, x + sp + 0.6, y, LW["dim"])   # 連結ロッド
+        self.rect_m(x + sp + e["tank_d"] / 2, y - cd / 2, x + sp + e["tank_d"] / 2 + cw, y + cd / 2, LW["thin"])   # 操作箱（端のタンクの横）
         if label:
-            self.text_m(x + sp + 0.6 + cw + 0.4, y, label, 1.6, anchor="w")
+            self.text_m(x + sp + e["tank_d"] / 2 + cw + 0.4, y, label, 1.6, anchor="w")
 
     def apparatus_plan(self, st):
         kind = st["kind"]
@@ -769,30 +765,20 @@ class LayoutDrawing(Plan):
                     sh.text(Xs(y), Zs(top + e["head"]) + 1.0, node.get("number", ""), 1.6, anchor="s")
             elif kind == "breaker":
                 e = EQUIP[kv]["cb"]
-                rect(y, 0.0, e["base"] + 0.4, 0.3); rect(y, 0.3, e["base"] * 0.6, e["column"] - 0.3)
-                self.porcelain(Xs(y), Zs(e["column"]), e["post_d"] * s, e["post"] * s)
-                zc = e["column"] + e["post"]
-                if e["type"] == "v":
-                    # V 形: 支持碍管の頂部から 2 本の遮断部が斜め上へ
-                    ang = _m.radians(e["v_angle"]); L = e["chamber_len"]; d = e["chamber_d"]
-                    for sgn in (-1, 1):
-                        c = sh.c; c.saveState(); c.translate(Xs(y) * MM, Zs(zc) * MM); c.rotate(sgn * e["v_angle"]) if False else None
-                        c.restoreState()
-                        dy, dz = sgn * L * _m.sin(ang), L * _m.cos(ang)
-                        # 遮断部を細長い四角形（4 点）で描く
-                        nx, nz = -dz / L * d / 2, dy / L * d / 2   # 法線
-                        pts = [(Xs(y + nx), Zs(zc + nz)), (Xs(y + dy + nx), Zs(zc + dz + nz)), (Xs(y + dy - nx), Zs(zc + dz - nz)), (Xs(y - nx), Zs(zc - nz))]
-                        sh.poly(pts, LW["thin"], close=True)
-                        sh.line(Xs(y + dy), Zs(zc + dz), Xs(y + dy), Zs(zc + dz + 0.3), LW["thin"])
-                    rect(y, zc - 0.3, 0.9, 0.3)
-                else:
-                    rect(y, zc, e["chamber_len"], e["chamber_d"])               # 遮断部（水平）
-                    for d in (-e["chamber_len"] / 2, e["chamber_len"] / 2):
-                        sh.line(Xs(y + d), Zs(zc + e["chamber_d"] / 2), Xs(y + d), Zs(zc + e["chamber_d"] / 2 + 0.3), LW["thin"])
+                rect(y, 0.0, e["tank_len"] + 0.4, 0.25)                                       # 基礎
+                for d in (-e["tank_len"] / 2 + 0.4, e["tank_len"] / 2 - 0.4):
+                    rect(y + d, 0.25, 0.25, e["frame"] - 0.25)                                # 架台の脚
+                zt = e["frame"]; r = e["tank_d"] / 2
+                rect(y, zt, e["tank_len"] - e["tank_d"], e["tank_d"])                         # タンク胴
+                sh.circle(Xs(y - e["tank_len"] / 2 + r), Zs(zt + r), r * s, LW["thin"]); sh.circle(Xs(y + e["tank_len"] / 2 - r), Zs(zt + r), r * s, LW["thin"])   # 鏡板
+                for d in (-e["bushing_pitch"] / 2, e["bushing_pitch"] / 2):
+                    rect(y + d, zt + e["tank_d"], e["bushing_d"] + 0.3, 0.3)                  # ターレット
+                    self.porcelain(Xs(y + d), Zs(zt + e["tank_d"] + 0.3), e["bushing_d"] * s, (e["bushing_h"] - 0.3) * s)
+                    sh.line(Xs(y + d), Zs(zt + e["tank_d"] + e["bushing_h"]), Xs(y + d), Zs(zt + e["tank_d"] + e["bushing_h"] + 0.2), LW["thin"])
                 cw, cd, ch = e["cabinet"]
-                rect(y, 0.3, cd, ch, LW["dim"], dash=[1, 0.8])              # 操作箱（手前）
+                rect(y + e["tank_len"] / 2 + cd / 2 + 0.1, 0.25, cd, ch, LW["dim"], dash=[1, 0.8])   # 操作箱（端）
                 if s >= 4 or kv == 220:
-                    sh.text(Xs(y), Zs(zc + (e["chamber_len"] if e["type"] == "v" else e["chamber_d"])) + 1.5, node.get("number", ""), 1.6, anchor="s")
+                    sh.text(Xs(y), Zs(zt + e["tank_d"] + e["bushing_h"]) + 1.5, node.get("number", ""), 1.6, anchor="s")
             elif kind == "transformer":
                 tx, ty, tz = T["tank"]; fx, fy = T["found"]; bx, by = T["bund"]
                 rect(y, 0.0, fy, 0.4, LW["dim"]); rect(y, 0.4, ty, tz, LW["frame"])

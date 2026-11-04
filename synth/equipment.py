@@ -27,21 +27,23 @@ EQUIP = {
             "arm_w": 1.0,         # パンタの幅（折り畳み時）
             "frame": 1.2, "frame_w": 1.2, "ins_d": 0.3, "base": 1.0,
         },
-        "cb": {   # 碍子形（ライブタンク）V 形遮断器: 支持碍管の上から遮断部が 2 本、V 字に開く
-            "type": "v",
-            "column": 2.6, "post": 2.3, "chamber_len": 2.4, "chamber_d": 0.4, "post_d": 0.35, "base": 1.0,
-            "v_angle": 60,        # 遮断部の傾き（鉛直からの角度、度）
-            "cabinet": (1.0, 1.4, 1.6),   # 操作箱 w, d, h
+        "cb": {   # タンク形（デッドタンク）ガス遮断器: 低い架台に横置きのタンク、その上に碍管（ブッシング）が 2 本立つ
+            "type": "dead_tank",
+            "frame": 1.0,          # 架台の高さ
+            "tank_d": 1.1, "tank_len": 3.6,     # タンク直径・長さ（電流方向）
+            "bushing_pitch": 2.6, "bushing_h": 3.1, "bushing_d": 0.45,   # ブッシングの間隔・高さ・直径
+            "base": 1.2,
+            "cabinet": (0.9, 1.2, 1.4),   # 操作箱 w, d, h（タンクの端）
         },
         "ct": {"column": 1.8, "porcelain": 2.6, "head_d": 0.9, "head_h": 0.8, "post_d": 0.3, "base": 0.9},
         "la": {"column": 1.0, "porcelain": 2.3, "d": 0.25, "base": 0.6},
         "terminal_z": 5.2,        # 断路器・CT の端子高さ（column + insulator + head）
-        "cb_terminal_z": 6.1,     # V 形遮断器の端子高さ（column + post + chamber_len·cos(v_angle)）
+        "cb_terminal_z": 5.2,     # 遮断器の端子高さ（frame + tank_d + bushing_h）
     },
     66: {    # 72.5kV 級
         "phase_sp": 1.5,
         "ds": {"type": "double_break", "column": 2.0, "insulator": 0.8, "head": 0.35, "span": 1.3, "frame": 1.8, "frame_w": 0.4, "ins_d": 0.2, "base": 0.5},
-        "cb": {"type": "horizontal", "column": 1.6, "post": 1.2, "chamber_len": 1.2, "chamber_d": 0.28, "post_d": 0.25, "base": 0.6, "cabinet": (0.7, 1.0, 1.2)},
+        "cb": {"type": "dead_tank", "frame": 0.8, "tank_d": 0.7, "tank_len": 2.2, "bushing_pitch": 1.5, "bushing_h": 1.7, "bushing_d": 0.3, "base": 0.8, "cabinet": (0.7, 1.0, 1.2)},
         "ct": {"column": 1.2, "porcelain": 1.4, "head_d": 0.6, "head_h": 0.5, "post_d": 0.22, "base": 0.6},
         "la": {"column": 0.8, "porcelain": 0.9, "d": 0.18, "base": 0.4},
         "terminal_z": 3.2, "cb_terminal_z": 3.2,

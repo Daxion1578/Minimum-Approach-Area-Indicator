@@ -256,8 +256,8 @@ class Site:
                 yp = by - PHASE_IDX[ph] * sp       # この相の母線の y ＝ パンタ型断路器の柱の位置
                 # 線路: 構外鉄塔 → 引留鉄構の腕 → 垂れ下がって線路断路器へ
                 self.capsules(ln, ph, [(px, lb["ls"] + 1.0, cfg["eq_z"]), (px, g["y"], g["z"]), (px, tw["y"], tw["z"])])
-                self.capsules(n1, ph, [(px, lb["ls"], cfg["eq_z"]), (px, lb["cb"] + 2.0, cz)])
-                self.capsules(n2, ph, [(px, lb["cb"] - 2.0, cz), (px, yp + 0.6, cfg["eq_z"])])
+                self.capsules(n1, ph, [(px, lb["ls"], cfg["eq_z"]), (px, lb["cb"] + EQUIP[220]["cb"]["bushing_pitch"] / 2, cz)])
+                self.capsules(n2, ph, [(px, lb["cb"] - EQUIP[220]["cb"]["bushing_pitch"] / 2, cz), (px, yp + 0.6, cfg["eq_z"])])
                 # パンタ型断路器の柱頭 → 母線（真上）。母線区間の導体として持つ
                 self.capsules(buses[sec], ph, [(px, yp, cfg["eq_z"]), (px, yp, bz)])
         # 変圧器ベイ（母線の南側）
@@ -280,8 +280,8 @@ class Site:
                 px = x + PHASE_IDX[ph] * sp
                 yp = by - PHASE_IDX[ph] * sp
                 self.capsules(buses[sec], ph, [(px, yp, bz), (px, yp, cfg["eq_z"])])
-                self.capsules(n1, ph, [(px, yp - 0.6, cfg["eq_z"]), (px, tb["cb"] + 2.0, cz)])
-                self.capsules(n2, ph, [(px, tb["cb"] - 2.0, cz), (px, tb["ls"], cfg["eq_z"])])
+                self.capsules(n1, ph, [(px, yp - 0.6, cfg["eq_z"]), (px, tb["cb"] + EQUIP[220]["cb"]["bushing_pitch"] / 2, cz)])
+                self.capsules(n2, ph, [(px, tb["cb"] - EQUIP[220]["cb"]["bushing_pitch"] / 2, cz), (px, tb["ls"], cfg["eq_z"])])
                 bx = x + PHASE_IDX[ph] * TRANSFORMER["hv_pitch"]
                 self.capsules(hv, ph, [(px, tb["ls"], cfg["eq_z"]), (px, tb["la"], cfg["eq_z"]), (bx, cfg["tr_y"] + TRANSFORMER["hv"]["y"], cfg["tr_z"])])
             d = self._tr.setdefault(n, {})
