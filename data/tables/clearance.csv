@@ -1,5 +1,5 @@
 table_id,voltage_kv_max,clearance_m,per_10kv_above_60_m,source,status
-default-jp,0.6,1.0,0,"公開通達の目安（低圧）。原文照合は docs/spec.md §16",要確認
-default-jp,7,1.2,0,"公開通達の目安（高圧）。原文照合は docs/spec.md §16",要確認
-default-jp,60,2.0,0,"公開通達の目安（特別高圧 60kV まで）。原文照合は docs/spec.md §16",要確認
-default-jp,1000,2.0,0.2,"公開通達の目安（60kV 超は 10kV ごとに 0.2m 加算）。原文照合は docs/spec.md §16",要確認
+default-jp,0.6,1.0,0,"厚労省 職場のあんぜんサイト 災害事例の対策（送配電線類に近接する場所での工事）: 低圧 1m 以上。各社基準は要確認",要確認
+default-jp,7,1.2,0,"同上: 高圧 1.2m 以上。各社基準は要確認",要確認
+default-jp,60,2.0,0,"同上: 特別高圧 2m 以上。各社基準は要確認",要確認
+default-jp,1000,2.0,0.2,"同上: 60kV 以上は 10kV またはその端数ごとに 0.2m 増し。各社基準は要確認",要確認
