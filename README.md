@@ -65,7 +65,9 @@ uvicorn server.app:app --reload     # http://localhost:8000
 3. タブ 3 で「離隔を判定する」→ 不可（3 号変圧器の一次に 3.00 m、必要 5.20 m）。「修正案を出す」→ 「ブームの起伏角を 65° に上げる」を採用 → 可。
 4. タブ 4 で「承認して書き出す」。`data/sites/SITE-01/approved/plan-*/` に `step-0..3-sld.pdf` ができる。
 
-Claude を使うときは `.env.example` を `.env` にコピーして `MAAI_ANTHROPIC_API_KEY` を入れます（シェルの環境変数には入れないでください）。`MAAI_OFFLINE=1` で呼ばずに動かせます。取込の精度は `python scripts/run_eval.py` が表で出します。
+- **Claude を使うとき**: `.env.example` を `.env` にコピーして `MAAI_ANTHROPIC_API_KEY` を入れます。シェルの環境変数には入れないでください。
+- **Claude を呼ばずに動かすとき**: `MAAI_OFFLINE=1`。キーが無いときも、意味づけと説明は規則に切り替わって全画面が動きます。
+- **取込の精度を見るとき**: `python scripts/run_eval.py` が表で出します。
 
 合成変電所と図面を作り直すには `python -m synth.gen_site && python -m synth.gen_drawings`。機器の寸法は `synth/equipment.py` の一か所で、図面と 3D が一緒に変わります。
 
