@@ -113,6 +113,7 @@
 
 <script type="module">
 import * as THREE from './web/vendor/three/three.module.js';
+import { buildEquipment, buildConductors } from './web/equipment3d.js';
 
 // ------------------------------------------------------------ 軌道カメラ（左ドラッグ回転、ホイール拡大、右ドラッグ移動）
 class MiniOrbit {
@@ -136,10 +137,12 @@ const scene=new THREE.Scene(); scene.background=new THREE.Color(0x111418);
 const camera=new THREE.PerspectiveCamera(50,1,0.1,2000); camera.up.set(0,0,1);
 const controls=new MiniOrbit(camera, renderer.domElement);
 scene.add(new THREE.GridHelper(300,30,0x2c343d,0x1f262e).rotateX(Math.PI/2));
-scene.add(new THREE.AmbientLight(0xffffff,0.9));
+{ const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshStandardMaterial({color:0x1a1f26, roughness:1})); ground.position.z=-0.02; scene.add(ground); }
+scene.add(new THREE.HemisphereLight(0xdfe6f0, 0x2a2f36, 0.9));
+{ const sun=new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(-60,80,120); scene.add(sun); }
 const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0xf5c518, invalid:0xff3cf0};
 const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup);
-const condLines={}, switchMeshes={};
+let condMeshes={}, switchMeshes={}; let dims=null;
 function resize(){ const w=view.clientWidth,h=view.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 addEventListener('resize',resize); resize();
 (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
@@ -156,35 +159,18 @@ function capsuleMesh(a,b,r,color,opacity){
 function clearGroup(g){ while(g.children.length){ const c=g.children.pop(); c.geometry?.dispose(); c.material?.dispose(); } }
 
 function buildSite(site){
-  clearGroup(siteGroup); for (const k in condLines) delete condLines[k]; for (const k in switchMeshes) delete switchMeshes[k];
-  const kinds=Object.fromEntries(site.topology.nodes.map(n=>[n.id,n.kind]));
+  clearGroup(siteGroup); condMeshes={}; switchMeshes={};
   // 構内の広がりに合わせてカメラの注視点と距離を決める（原点は敷地の隅でもよいように）
   { const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
-    if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); controls.target.set(c.x,c.y,0); controls.radius=Math.max(60, bb.getSize(new THREE.Vector3()).length()*1.1); } }
-  for (const it of site.layout.items){
-    if (it.primitives.length){
-      const pts=[]; for (const p of it.primitives){ pts.push(new THREE.Vector3(...p.a), new THREE.Vector3(...p.b)); }
-      const l=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:COL.live}));
-      siteGroup.add(l); condLines[it.id]=l;
-    }
-    if (it.at && (kinds[it.id]==='breaker'||kinds[it.id]==='disconnector'||kinds[it.id]==='earthing'||kinds[it.id]==='transformer')){
-      const k=kinds[it.id];
-      const geo = k==='transformer' ? new THREE.BoxGeometry(6,4,3) : k==='breaker' ? new THREE.BoxGeometry(0.9,0.9,1.4) : new THREE.BoxGeometry(0.6,0.6,1.0);
-      const m=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: k==='transformer'?0x3a4452 : k==='breaker'?0x4ea1ff : k==='earthing'?0x9b7a2f : 0x6b7785}));
-      m.position.set(it.at[0], it.at[1], it.at[2] + (k==='transformer'?1.5:0)); siteGroup.add(m); switchMeshes[it.id]=m;
-    }
-  }
-  for (const s of site.layout.structures||[]){
-    const pts=[]; for (const p of s.primitives){ pts.push(new THREE.Vector3(...p.a), new THREE.Vector3(...p.b)); }
-    const l=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0x8b949e,dashSize:1,gapSize:0.6})); l.computeLineDistances(); siteGroup.add(l);
-  }
+    if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); controls.target.set(c.x,c.y,0); controls.radius=Math.max(60, bb.getSize(new THREE.Vector3()).length()*0.9); controls.phi=0.55; controls.theta=-0.9; } }
+  const cond=buildConductors(site); siteGroup.add(cond.group); condMeshes=cond.byId;
+  if (dims){ const eq=buildEquipment(site, dims); siteGroup.add(eq.group); switchMeshes=eq.byId; }
 }
 
 function paint(energ, env, showEnv){
   const st={}; for (const c of energ.components){ for (const n of c.nodes) st[n]=c.state; for (const e of c.edges) st[e]=c.state; }
   const stateOf=id => st[id] ?? st[id+'.a'] ?? st[id+'.hv'];
-  for (const id in condLines){ const s=stateOf(id); condLines[id].material.color.setHex(COL[s] ?? 0x6b7785); }
-  for (const id in switchMeshes){ const pos=state.switches[id]; if (pos) switchMeshes[id].material.opacity = pos==='open'?0.35:1, switchMeshes[id].material.transparent=true; }
+  for (const id in condMeshes){ const s=stateOf(id); const c=COL[s] ?? 0x6b7785; condMeshes[id].mat.color.setHex(c); condMeshes[id].mat.emissive.setHex(s==='live'?0x4a0000:0x000000); }
   clearGroup(envGroup);
   if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, COL[e.state] ?? 0xff4d4d, e.state==='dead_ungrounded'?0.05:0.09)); }
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
@@ -228,6 +214,7 @@ window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classL
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.step));
 
 async function loadSites(){
+  dims=await (await fetch('/api/equipment')).json();
   const sites=await (await fetch('/api/sites')).json();
   $('siteSel').innerHTML=sites.map(s=>`<option value="${s.site_id}">${s.site_id} ${s.name}</option>`).join('');
   $('siteSel').onchange=()=>loadSite($('siteSel').value);

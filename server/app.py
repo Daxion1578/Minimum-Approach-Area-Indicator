@@ -178,6 +178,14 @@ def get_approved(site_id: str, name: str, file: str):
     return FileResponse(p)
 
 
+@app.get("/api/equipment")
+def get_equipment():
+    """機器の外形寸法（synth/equipment.py）。3D が図面と同じ寸法で形を作るため。"""
+    from synth.equipment import EQUIP, GANTRY, LINE_GANTRY_220, LOADS, TOWER_220, TRANSFORMER
+    return {"equip": {str(k): v for k, v in EQUIP.items()}, "transformer": TRANSFORMER, "gantry": GANTRY,
+            "line_gantry_220": LINE_GANTRY_220, "tower_220": TOWER_220, "loads": LOADS}
+
+
 @app.get("/")
 def index():
     return FileResponse(WEB / "index.html")

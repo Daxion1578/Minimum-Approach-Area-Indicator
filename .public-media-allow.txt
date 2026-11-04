@@ -3,3 +3,5 @@ data/sites/SITE-01/drawings/SITE-01_sld.pdf
 data/sites/SITE-01/drawings/SITE-01_plan.pdf
 data/sites/SITE-01/drawings/SITE-01_layout.pdf
 docs/img/step2-tr2-outage.png
+docs/img/3d-site-1104.png
+docs/img/clearance-1104.png
