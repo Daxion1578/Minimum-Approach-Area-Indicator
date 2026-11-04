@@ -17,11 +17,11 @@ gantt
   提出                           :milestone, m1, 2026-11-08, 0d
 ```
 
-更新: 2026-11-04 20:15
+更新: 2026-11-04 20:40
 
 ## 結論
 
-縦切り 1〜3 がすべて `main` に入り、取込 → 停止ステップ → 離隔 → 修正案 → 承認・PDF まで通しで動く（テスト 44 件）。残りは README・台本・収録と、本人の手元確認。ここからは Claude Code CLI で進める。
+縦切り 1〜3、README、動画台本（3 分の秒割り）、仕様・仕組み図の整合まで `main` に入り、新しい venv でも通しで動くことを確かめた。この環境でできることは終わり。残りは本人の手元でしかできないこと（Claude 接続の確認、禁止語リスト、離隔の出典、収録、提出）。
 
 ## 今日できたこと（11/4）
 
@@ -29,10 +29,11 @@ gantt
 - **縦切り 3**: ベクター PDF の単線結線図を投げ込むと、線と記号と番号から topology の下書き（合成図面で 開閉器番号 136/142、隣接 precision 1.0 / recall 0.953、質問 9）。Claude 層 `agent/`（client・mask・structure・explain）。キー無しでも全画面が規則で動く
 - **画面**: 4 タブ（取込・停止条件・重機配置・計画確定）、3D は `equipment.py` の寸法で機器の形、視点ボタン、クレーンの初期値は「段階 3 で不可 → 起伏角 65° で可」になる位置
 - 画面写真 `docs/img/ui-1..4-*.png`、判断の記録 `docs/decisions.md`、境界 `docs/claude-boundary.md`
+- **README**（問題・使う人・4 タブの流れ・設計判断・任せる／任せない・動かし方・データ・この先）、**台本** `docs/demo-plan.md`（秒割り・切る順・操作メモ）、`docs/spec.md` §7/§8/§15 と `docs/architecture.md` を実装に合わせた
 
 ## 確かめた結果
 
-- `python -m pytest -q` → 44 passed。`python scripts/public_safety_check.py --all` → OK（100 ファイル。禁止語リストは未登録）
+- 新しい venv で `pip install -r requirements.txt` → `python -m pytest -q` → 44 passed。`scripts/run_eval.py` の表も同じ。`python scripts/public_safety_check.py --all` → OK（100 ファイル。禁止語リストは未登録）
 - `uvicorn server.app:app` → 取込（PDF 選択 → 取り込む → 質問の無いものを確認済に）→ 2BK を対象に停止ステップ → 段階 3 → 離隔判定「不可」→ 修正案 → 採用「可」→ 承認 → `approved/plan-*/` に PDF 7 枚
 - Claude を実際に呼ぶ経路（`.env` にキー）は**未確認**（この環境にキーが無い）。規則の代替経路だけ確認済み
 
@@ -43,13 +44,13 @@ gantt
 | 1 | 動画の見せ場の順 | A. 図面取込から始めて承認で終わる（流れどおり、推奨） ／ B. 「不可 → 可」を冒頭に出してから流れ | A は分かりやすい。B は最初の 30 秒が強い。台本を書き分けるだけで後戻りできる |
 | 2 | クレーンの 3D | A. 今のカプセル表示のまま（推奨） ／ B. CC-BY の GLB を探して載せる | B は 1〜2 時間と出典の管理が増える。判定には関係しない |
 
-## 次の一手（Claude Code CLI で。順番どおり）
+## 次の一手（本人の手元。順番どおり）
 
-1. 本人: `.env` に `MAAI_ANTHROPIC_API_KEY` を入れて `uvicorn` を起動し、取込タブの右上が「Claude: claude-…」になり、取込の「意味づけ: Claude」と修正案の「説明: Claude」が出ることを確かめる。出なければ `logs/outbound/` の request/response を見る
-2. CLI: `/daily` → README を書く（問題 → 使う人 → 流れ 4 タブ → 設計判断 → Claude に任せること・任せないこと → 合成データと制約 → 動かし方 → この先）。画面写真は `docs/img/ui-*.png`。`docs/claude-boundary.md` と `docs/decisions.md` から引く。「審査」「評価基準」「ハッカソン向け」は使わない
-3. CLI: `docs/demo-plan.md` を 3 分の秒割りに書き直す（0:00 一言 → 0:20 取込 → 0:50 停止ステップで電気が消える → 1:20 不可 → 1:50 修正案と Claude の説明 → 2:20 承認と PDF → 2:40 仕組みとこの先）
-4. 本人: `.forbidden-terms.local.txt` を書いて `python scripts/public_safety_check.py --all`。離隔値の公開出典を `data/tables/clearance.csv` に
-5. 11/7 収録、11/8 午前に通し確認 → 提出
+1. `git pull` → `.env` に `MAAI_ANTHROPIC_API_KEY` → `uvicorn server.app:app --reload`。取込タブ右上が「Claude: claude-…」になり、取込の「意味づけ: Claude」と修正案の「説明: Claude」が出ることを確かめる。出なければ `logs/outbound/` の request/response を見て、CLI に `/daily` で直させる
+2. `.forbidden-terms.local.txt` を書いて `python scripts/public_safety_check.py --all`
+3. 離隔値の公開出典を `data/tables/clearance.csv` の source 列に入れ「要確認」を外す（出典が確かめられなければ「要確認」のまま出す。README にそう書いてある）
+4. README と `docs/demo-plan.md` を読んで、言い回しを自分の言葉に直す（CLI でよい）
+5. 11/7 収録（台本どおり。初期値は変えない）、11/8 午前に通し確認 → 公開前チェック → push → 提出
 
 ## 引き継ぎ（この時点で知っておくこと）
 

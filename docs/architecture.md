@@ -9,23 +9,23 @@
 ```mermaid
 flowchart LR
   subgraph IN["入力"]
-    DXF["結線図 DXF"]
-    TXT["作業指示文"]
-    MACH["machine.json"]
+    PDF["単線結線図（ベクター PDF）"]
+    TXT["作業指示文（この先）"]
+    MACH["クレーン（画面で置く）"]
   end
   subgraph ST["構造"]
     T0["topology 未確認"] --> T1["topology 承認済み"]
   end
   subgraph JD["判定（エンジン）"]
-    EN["energization"] --> EV["envelope"] --> IF["interference"]
+    EN["energization"] --> EV["envelope"] --> IF["clearance"]
   end
   subgraph PR["提案（Claude）"]
-    PP["proposal"]
+    PP["候補（engine）＋ 説明（Claude）"]
   end
   subgraph OUT["承認済み成果物"]
-    AP["envelope.json / .glb"]
+    AP["plan / envelope / step-N-sld.pdf"]
   end
-  DXF --> T0
+  PDF --> T0
   T1 --> EN
   TXT --> EN
   MACH --> IF
@@ -33,9 +33,9 @@ flowchart LR
   IF -- 干渉なし --> AP
 ```
 
-## 提案ループ
+## 修正案の流れ（11/4 時点の実装）
 
-上から下へ時間が流れる。Claude への送信は必ずマスキング関門を通り、Claude の提案は必ずエンジンが再計算してから人に返る。
+上から下へ時間が流れる。候補を作って再判定するのはエンジン、Claude は説明だけ。Claude への送信は必ずマスキング関門を通る。
 
 ```mermaid
 sequenceDiagram
@@ -44,15 +44,13 @@ sequenceDiagram
   participant M as マスキング関門
   participant C as Claude
   U->>E: 重機を配置
-  E-->>U: 干渉あり（1.4m < 離隔 2.2m）
-  U->>E: 修正案を求める
-  loop 干渉が消えるまで（最大5回）
-    E->>M: 干渉・開閉器状態・ルール
-    M->>C: 許可項目だけ（符号化）
-    Note over M: 送信内容を記録
-    C-->>E: 提案（追加操作・配置変更・根拠）
-    E->>E: 適用→課電→包絡→干渉を再計算
-  end
-  E-->>U: 提案と検証結果
-  U->>E: 採用して承認
+  E-->>U: 不可（最小 3.00m < 必要 5.20m、根拠）
+  U->>E: 修正案を出す
+  E->>E: 候補（移動・旋回制限・起伏・追加停止）を作り、一つずつ再判定
+  E-->>U: 候補と判定値（可 → 条件付き可 → 不可）
+  E->>M: 判定値と候補
+  M->>C: 線路名・所名を符号化したもの
+  Note over M: 送信内容を logs/outbound/ に記録
+  C-->>U: 候補ごとの説明と順位づけの理由（数値は作らない）
+  U->>E: 採用 → 再判定 → 承認
 ```

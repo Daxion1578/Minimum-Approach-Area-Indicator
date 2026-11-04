@@ -1,6 +1,6 @@
 # 残りの作業
 
-更新: 2026-11-04 20:15　締切: 11/8 20:00　残り: 4 日
+更新: 2026-11-04 20:40　締切: 11/8 20:00　残り: 4 日
 
 ## 提出物の線引き（11/4 に決定）
 取り替える機器を選ぶ → 停止ステップが自動で出る → 3D で残る充電部とクレーンの離隔 → 可／条件付き可／不可と根拠、修正案 → ステップ図（系統図の塗り分け）→ 人が承認。
@@ -10,29 +10,25 @@ Claude の役割は、図面を読んで機器番号でつなぐ・修正案の�
 ## 日割り
 | 日 | 作る | 夜に捨てる判断 |
 |---|---|---|
-| 11/5 | README。台本の秒割り。Claude を実際に呼ぶ経路の確認（本人の `.env`）。禁止語リストと離隔の出典（本人） | — |
-| 11/6 | 通しで触って直す（文言・画面の間・壊れ）。`docs/spec.md` §15 を今の形に合わせる。`docs/architecture.md` の DXF → PDF | 機能追加禁止 |
+| 11/5 | Claude を実際に呼ぶ経路の確認（本人の `.env`）。禁止語リストと離隔の出典（本人）。README・台本の言い回し | — |
+| 11/6 | 通しで触って直す（文言・画面の間・壊れ） | 機能追加禁止 |
 | 11/7 | 収録・編集 | — |
 | 11/8 | 午前に通し確認、17:00 までに提出 | — |
 
 ## 残り（上から順にやる）
 - [ ] 確かめる Claude 呼び出し: `.env` にキー → 取込タブ右上「Claude: …」、取込の「意味づけ: Claude」、修正案の「説明: Claude」。`logs/outbound/` に記録が残る　11/5　30 分（本人＋CLI）
-- [ ] 書く README（問題、使う人、流れ 4 タブと画面写真、設計判断、Claude に任せること・任せないこと、合成データと制約、動かし方、この先）　11/5　半日（CLI）
-- [ ] 書く `docs/demo-plan.md` を 3 分の秒割りに（一言 → 取込 → 停止ステップで電気が消える → 不可 → 修正案と説明 → 承認と PDF → 仕組み・この先）　11/5　2h（CLI）
 - [ ] 書く `.forbidden-terms.local.txt`。書いたら `python scripts/public_safety_check.py --all`　11/5　30 分（本人）
 - [ ] 受け取る 離隔値の公開出典を `data/tables/clearance.csv` に反映し「要確認」を外す　11/5　1h（本人）
-- [ ] 直す `docs/spec.md` §7（machine→crane, interference→clearance, rules）§8（structure=取込の意味づけ, propose→explain, audit 無し）§15（縦切り 2〜4 の確認手順を今の画面に）　11/6　1h（CLI）
-- [ ] 直す `docs/architecture.md`（入力は DXF でなく PDF、作業指示文は「この先」）　11/6　30 分（CLI）
-- [ ] 通し確認: 新しい venv で `pip install -r requirements.txt` → `pytest` → `uvicorn` → 4 タブを順に。壊れたら直す　11/6　1h
+- [ ] 読む README と `docs/demo-plan.md` を自分の言葉に直す（CLI でよい）　11/5　1h
 - [ ] 収録: 画面収録 + 語り。実在の名前・写真を映さない　11/7　1 日（本人）
 - [ ] 提出: 公開前チェック → push → 動画 → 提出フォーム　11/8　1h（本人）
 
 ## 落とす候補（時間が無ければ上から捨てる）
 - クレーンの GLB（今のカプセル表示のまま出す。判断 #2）
-- `docs/spec.md` の全面整合（§15 だけ直して残りは「11/4 時点の仕様」と注記）
 - Claude 呼び出しの実演（キー無しの規則経路で収録し、README に「Claude 接続時は意味づけと説明が Claude になる」と書く）
 
 ## 済
+- [x] 11/4 README、動画台本（秒割り）、`docs/spec.md` §7/§8/§15 と `docs/architecture.md` の整合、新しい venv での通し確認
 - [x] 11/4 縦切り 2: 幾何・クレーン・離隔判定・停止ステップ生成・修正案の候補・承認と塗り分け PDF（engine＋画面＋テスト）　da5d3da まで
 - [x] 11/4 縦切り 3: PDF 取込 `ingest/pdf_sld.py`、精度 `scripts/run_eval.py`、Claude 層 `agent/`（client・mask・structure・explain）、取込タブ、`/api/ingest` `/api/.../explain` `/api/agent`　0b92942
 - [x] 11/4 3D の機器形状（`equipment.py` の寸法から）、視点ボタン、デモ用初期値、画面写真 5 枚　1be39e4
