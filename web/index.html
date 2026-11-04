@@ -236,7 +236,7 @@ async function loadSite(id){
 }
 
 // ---- 図面取込
-fetch('/api/agent').then(r=>r.json()).then(a=>{ $('agentState').textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 未接続（.env にキー無し）→ 規則で代替'; });
+fetch('/api/agent').then(r=>r.json()).then(a=>{ $('agentState').textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 未接続（キー無し、またはオフライン設定）→ 規則で代替'; });
 $('btnIngest').onclick=async()=>{
   const f=$('ingestFile').files[0]; if (!f){ $('ingestBox').innerHTML='<div class="warn">PDF を選んでから。合成変電所の図面は data/sites/SITE-01/drawings/SITE-01_sld.pdf</div>'; return; }
   $('ingestBox').innerHTML='<div class="note">導体を拾って、番号で結んでいる…</div>';
