@@ -43,6 +43,7 @@
 - サーバ: `uvicorn server.app:app --reload`（http://localhost:8000）
 - 公開前チェック: `python scripts/public_safety_check.py --all`
 - 環境の点検: `python scripts/doctor.py`
+- 通しの確認（サーバなし・Claude なし）: `python scripts/check_demo.py`。GitHub Actions（`.github/workflows/check.yml`）が push のたびに同じものを回し、Summary に表を出す（本人はスマホでこれを見る）
 
 ## ディレクトリ（予定）
 ```

@@ -1,5 +1,7 @@
 # MAAI（間合い）— Minimum Approach Area Indicator
 
+[![check](https://github.com/Daxion1578/Minimum-Approach-Area-Indicator/actions/workflows/check.yml/badge.svg)](https://github.com/Daxion1578/Minimum-Approach-Area-Indicator/actions/workflows/check.yml)
+
 **見えない間合いを、見えるように。**
 
 変電所の機器を取り替えるとき、どこを止め、どこに接地し、残った充電部とクレーンの間にどれだけ距離が残るかを、図面から計算して描き出す机上の道具です。安全の判定は、同じ入力にいつも同じ答えを返す計算コード（決定論）が行います。Claude は図面の意味づけと説明だけを受け持ち、採否は人が決めます。
@@ -7,6 +9,12 @@
 > このリポジトリのデータはすべて合成です。実在する事業者・変電所・図面・写真・人は含みません（[データについて](#データについて)）。
 
 ![停止ステップを段階 3 まで進めたところ。2号変圧器まわりだけ電気が消え、残りは赤いまま](docs/img/ui-2-steps.png)
+
+## すぐ見る（インストールなし・スマホ可）
+
+- **動いている証拠**: 上の `check` バッジ → 最新の実行 → **Summary**。push のたびに GitHub 上で、図面取込 → 停止ステップ → 離隔判定「不可」→ 修正案「起伏角 65°」で「可」→ 承認、を通しで動かし、段階ごとの合否を表で出しています（Claude は呼ばない経路）。
+- **画面**: 下の「流れ」の画面写真。
+- **手元で同じ確認**: `python scripts/check_demo.py`（サーバを立てずに 1 分以内）。
 
 ## 何を解くか
 
