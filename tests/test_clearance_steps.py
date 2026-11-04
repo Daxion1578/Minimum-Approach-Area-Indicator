@@ -103,3 +103,19 @@ def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
     from engine.clearance import load_rules
     relaxed = evaluate(env, c, {**load_rules(), "margin_m": 0.0})
     assert relaxed["verdict"] == OK and relaxed["conditions"] == []
+
+
+def test_every_step_is_valid_for_every_transformer_and_breaker(topo, states):
+    """どの変圧器・遮断器を対象にしても、途中の段階を含めて充電部への接地（invalid）が起きない。
+    接地まで届かない対象は ok=False と理由を返す（「通った」にしない）。"""
+    ids = [n for n, v in topo.nodes.items() if v.kind in ("transformer", "breaker")]
+    assert ids
+    for i in ids:
+        r = generate(topo, states["normal"], [i])
+        for s in r["steps"]:
+            res = energize(topo, s["state"])
+            assert res.errors == [] and not res.invalid_ids, (i, s["n"])
+        if r["ok"]:
+            assert energize(topo, r["steps"][-1]["state"]).state_of(i) == DEAD_GROUNDED, i
+        else:
+            assert r["problems"], i
