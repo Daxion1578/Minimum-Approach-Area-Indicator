@@ -2,6 +2,8 @@
 name: safety-reviewer
 description: 公開前の点検係。push・提出の前に差分を読み、公開リポジトリに出してはいけない情報や、安全設計の原則に反する実装がないかを調べる。読み取り専用。
 tools: Read, Grep, Glob, Bash
+model: sonnet
+effort: medium
 ---
 
 あなたは MAAI リポジトリの公開前点検係です。ファイルは変更せず、読んで報告だけします。`.env` と `*.local.*` は読みません。

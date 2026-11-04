@@ -6,6 +6,12 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
+@pytest.fixture(autouse=True)
+def _offline(monkeypatch):
+    """テストは Claude を呼ばない（.env にキーがあっても）。編集のたびに走るので、呼ぶと API を無駄に使う。"""
+    monkeypatch.setenv("MAAI_OFFLINE", "1")
+
+
 @pytest.fixture(scope="session")
 def site():
     from synth.gen_site import build

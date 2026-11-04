@@ -63,5 +63,6 @@ logs/        outbound/, proposals/（コミットしない）
 ## このリポジトリの Claude Code 設定
 - フック: `git commit` / `git push` の前に公開安全チェック、`engine/` 編集後に pytest。
 - スキル: `/daily`（朝の手順）、`/wrap`（夜の手順）、`/critique`（外部批評）、`/slice`（縦切りの進め方）、`/verify`（手元確認の手順を出す）、`/report`（STATUS.md の更新）、`/publish-check`（公開前点検）。
-- サブエージェント: `safety-reviewer`（読み取り専用の公開前点検係）、`task-keeper`（`TASKS.md` だけを保守するタスク係）。
+- サブエージェント: `safety-reviewer`（読み取り専用の公開前点検係、Sonnet・medium）、`task-keeper`（`TASKS.md` だけを保守するタスク係、Haiku・low）。軽い係ほど安いモデルにする。
+- テストは常に `MAAI_OFFLINE=1`（`tests/conftest.py`）。本物の Claude を呼ぶ確認は手で 1 回だけ。
 - Claude に任せること・任せないことの一覧は `docs/claude-boundary.md`。使い方を増やしたら1行足す。

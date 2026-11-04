@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 LOG_DIR = ROOT / "logs" / "outbound"
 
-DEFAULT_MODELS = {"structure": "claude-sonnet-4-5", "propose": "claude-sonnet-4-5"}
+DEFAULT_MODELS = {"structure": "claude-sonnet-5-5", "propose": "claude-sonnet-5-5"}
 
 
 def available() -> bool:
@@ -29,7 +29,7 @@ def model_for(purpose: str) -> str:
     return os.environ.get(f"MAAI_MODEL_{purpose.upper()}") or DEFAULT_MODELS[purpose]
 
 
-def ask_json(purpose: str, system: str, user_obj: dict, mask: Mask | None = None, max_tokens: int = 4000) -> dict | None:
+def ask_json(purpose: str, system: str, user_obj: dict, mask: Mask | None = None, max_tokens: int = 16000) -> dict | None:
     """マスクした JSON を渡し、JSON を受け取る。呼べないときは None。"""
     if not available():
         return None
@@ -41,10 +41,19 @@ def ask_json(purpose: str, system: str, user_obj: dict, mask: Mask | None = None
     (LOG_DIR / f"{stamp}.request.json").write_text(json.dumps({"model": model_for(purpose), "system": system, "user": masked}, ensure_ascii=False, indent=1), encoding="utf-8")
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ["MAAI_ANTHROPIC_API_KEY"])
-    msg = client.messages.create(model=model_for(purpose), max_tokens=max_tokens, system=system,
-                                 messages=[{"role": "user", "content": body + "\n\nJSON だけを返してください。"}])
+    try:
+        msg = client.messages.create(model=model_for(purpose), max_tokens=max_tokens, system=system,
+                                     messages=[{"role": "user", "content": body + "\n\nJSON だけを返してください。"}])
+    except anthropic.APIError as e:
+        # 呼べなかったら規則の代替に任せる（画面は止めない）。理由は記録に残す
+        (LOG_DIR / f"{stamp}.error.txt").write_text(f"{type(e).__name__}: {e}", encoding="utf-8")
+        return None
     text = "".join(getattr(b, "text", "") for b in msg.content)
     (LOG_DIR / f"{stamp}.response.txt").write_text(text, encoding="utf-8")
+    if msg.stop_reason != "end_turn":
+        # 上限で切れた・断られた返事は使わない（途中までの JSON を信じない）。規則の代替に任せる
+        (LOG_DIR / f"{stamp}.error.txt").write_text(f"stop_reason={msg.stop_reason}", encoding="utf-8")
+        return None
     text = text.strip()
     if text.startswith("```"):
         text = text.strip("`")
