@@ -72,7 +72,7 @@
     <h4>状態の例（手で開閉を変えることもできる）</h4>
     <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
     <div class="row"><label>未接地の停止区間も課電扱い（保守側）</label><input type="checkbox" id="conservative" checked></div>
-    <div class="row"><label>包絡を表示</label><input type="checkbox" id="showEnv" checked></div>
+    <div class="row"><label>近づけない範囲（包絡）を表示</label><input type="checkbox" id="showEnv" checked></div>
     <div class="legend">
       <span><i class="dot" style="background:var(--live)"></i> 課電</span>
       <span><i class="dot" style="background:var(--deadg)"></i> 停電・接地あり</span>
@@ -89,7 +89,7 @@
     <h3>重機配置</h3>
     <div class="note">3D の地面をクリックするとクレーンのベースがそこへ移る。諸元は 25t 級ラフテレーンの例示値。向きは x 軸から反時計回り（0°=東、90°=北）。</div>
     <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="88" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="72" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="0" step="5" style="width:70px"></div>
-    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フック垂下 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
+    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フックの吊り下げ長 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
     <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-50" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="50" step="5" style="width:70px"><span class="note">5° 刻みで掃引</span></div>
     <div class="row"><button class="act" id="btnClear">離隔を判定する</button><button class="sub" id="btnPropose">修正案を出す</button></div>
     <div id="verdictBox"></div>
@@ -100,7 +100,7 @@
   <section class="step" id="s3">
     <h3>計画確定</h3>
     <div id="planSummary" class="note">停止条件と重機配置を済ませてから。</div>
-    <div class="row"><label class="k">承認者（符号）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
+    <div class="row"><label class="k">承認者（名前でなく符号）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
     <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に engine がもう一度判定する。不可は承認できない</span></div>
     <div id="approveBox"></div>
   </section>
@@ -248,7 +248,7 @@ $('btnIngest').onclick=async()=>{
   const kindOf=Object.fromEntries((a.labels||[]).map(l=>[l.number,l.kind]));
   const sw=[...c.switches].sort((x,y)=>x.number.localeCompare(y.number));
   let html=`<div class="bay"><div><b>${a.summary||''}</b></div><div class="note">意味づけ: ${a.source==='claude'?'Claude':'規則（Claude 未使用）'}。導体 ${c.stats.main_segments} 本 → ネット ${c.nets.length}、開閉器 ${c.switches.length}、変圧器 ${c.transformers.length}</div></div>`;
-  if (ev && !ev.error) html+=`<div class="bay"><h4>合成変電所の真値との突き合わせ</h4><table><tr><th>開閉器番号の再現</th><td>${ev.numbers.found} / ${ev.numbers.drawn}</td></tr><tr><th>種別</th><td>${ev.kinds.ok} / ${ev.kinds.of}</td></tr><tr><th>隣接の一致 precision / recall</th><td>${ev.adjacency.precision} / ${ev.adjacency.recall}</td></tr><tr><th>変圧器</th><td>${ev.transformers.found} / ${ev.transformers.truth}</td></tr></table>${ev.numbers.missing.length?`<div class="note">見つからず: ${ev.numbers.missing.join(', ')}</div>`:''}</div>`;
+  if (ev && !ev.error) html+=`<div class="bay"><h4>読み取り精度（合成変電所の正解データと照合）</h4><table><tr><th>開閉器番号の再現</th><td>${ev.numbers.found} / ${ev.numbers.drawn}</td></tr><tr><th>種別</th><td>${ev.kinds.ok} / ${ev.kinds.of}</td></tr><tr><th>隣接の一致 precision / recall</th><td>${ev.adjacency.precision} / ${ev.adjacency.recall}</td></tr><tr><th>変圧器</th><td>${ev.transformers.found} / ${ev.transformers.truth}</td></tr></table>${ev.numbers.missing.length?`<div class="note">見つからず: ${ev.numbers.missing.join(', ')}</div>`:''}</div>`;
   const qs=(a.questions||[]);
   html+=`<div class="bay"><h4>人に確かめてほしいこと（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
   html+=`<details class="bay" open><summary>開閉器 ${sw.length}（未確認 → チェックで確認済）</summary><div id="ingestSw">`+sw.map(s=>{ const k=kindOf[s.number]||s.kind_guess; const bad=qs.some(q=>q.startsWith(s.number+' ')); return `<label class="sw"><input type="checkbox" data-n="${s.number}"><span class="id">${s.number}</span><span class="note">${kindJa[k]||k}　${(s.nets||[]).join(' ↔ ')||'—'}${bad?' <b style="color:var(--deadu)">要確認</b>':''}</span></label>`; }).join('')+`</div><div class="row"><button class="sub" id="btnConfirmAll">質問の無いものを確認済にする</button><span class="note" id="ingestCount"></span></div></details>`;
