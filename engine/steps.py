@@ -158,7 +158,8 @@ def generate(topo: Topology, normal_state: dict, targets: list[str], note: str =
     for t in targets:
         try:
             if r3.state_of(t) != DEAD_GROUNDED:
-                problems.append(f"{t} が接地済みの停電になっていない（{r3.state_of(t)}）")
+                ja = {"live": "課電", "dead_ungrounded": "停電・未接地", "invalid": "充電部に接地"}.get(r3.state_of(t), r3.state_of(t))
+                problems.append(f"{t} が接地済みの停電にならない（いまは{ja}）。この機器だけでは接地開閉器が届かない。変圧器やベイを対象に選び直す")
         except KeyError:
             problems.append(f"{t} の状態が取れない")
     problems += [e["message"] for e in r3.errors]
