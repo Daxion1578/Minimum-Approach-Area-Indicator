@@ -2,223 +2,112 @@
  "schema_version": "0.1",
  "site_id": "SITE-01",
  "generated_by": "synth/gen_site.py",
- "name": "合成変電所 SITE-01（220/66kV, 1・1/2母線, 変圧器2台）",
+ "name": "合成変電所 SITE-01（全屋外気中、220kV 単母線・66kV 1・1/2 母線、変圧器 3 バンク）",
  "notes": [
   "合成データ。実在の設備・事業者・図面とは無関係。",
-  "寸法・構成はすべて仮定値。"
+  "寸法・構成・番号はすべて仮定値。"
  ],
  "nodes": [
   {
    "id": "220-BUS-A",
    "kind": "bus",
    "voltage_kv": 220,
-   "name": "220kV 1号母線"
-  },
-  {
-   "id": "220-BUS-B",
-   "kind": "bus",
-   "voltage_kv": 220,
-   "name": "220kV 2号母線"
+   "name": "220kV 母線 A区間"
   },
   {
    "id": "220-BUS-A-ES",
    "kind": "earthing",
    "voltage_kv": 220,
-   "name": "220kV 1号母線接地",
+   "name": "220kV 母線 A区間 接地",
    "attached_to": "220-BUS-A",
-   "number": "20A-10E"
+   "number": "20B-1E"
+  },
+  {
+   "id": "220-BUS-B",
+   "kind": "bus",
+   "voltage_kv": 220,
+   "name": "220kV 母線 B区間"
   },
   {
    "id": "220-BUS-B-ES",
    "kind": "earthing",
    "voltage_kv": 220,
-   "name": "220kV 2号母線接地",
+   "name": "220kV 母線 B区間 接地",
    "attached_to": "220-BUS-B",
-   "number": "20B-10E"
+   "number": "20B-2E"
   },
   {
-   "id": "220-D1-N1",
-   "kind": "terminal",
+   "id": "220-BUS-C",
+   "kind": "bus",
    "voltage_kv": 220,
-   "bay": "D1"
+   "name": "220kV 母線 C区間"
   },
   {
-   "id": "220-D1-N2",
-   "kind": "terminal",
+   "id": "220-BUS-C-ES",
+   "kind": "earthing",
    "voltage_kv": 220,
-   "bay": "D1"
+   "name": "220kV 母線 C区間 接地",
+   "attached_to": "220-BUS-C",
+   "number": "20B-3E"
   },
   {
-   "id": "220-D1-T1",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D1 北側回路引出点",
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-N3",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-N4",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-T2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D1 南側回路引出点",
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-N5",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-N6",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D1"
-  },
-  {
-   "id": "220-D1-LSA",
+   "id": "220-SEC-AB",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20E1-1101"
+   "name": "220kV セクション断路器 A-B",
+   "number": "20B-101"
   },
   {
-   "id": "220-D1-CB1",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20E1-110"
-  },
-  {
-   "id": "220-D1-LS1B",
+   "id": "220-SEC-BC",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20E1-1103"
-  },
-  {
-   "id": "220-D1-LS2A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20M-1201"
-  },
-  {
-   "id": "220-D1-CB2",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20M-120"
-  },
-  {
-   "id": "220-D1-LS2B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20M-1203"
-  },
-  {
-   "id": "220-D1-LS3A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20T-1303"
-  },
-  {
-   "id": "220-D1-CB3",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20T-130"
-  },
-  {
-   "id": "220-D1-LSB",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D1",
-   "number": "20T-1301"
-  },
-  {
-   "id": "220-D1-N1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N1",
-   "number": "20E1-1101E"
-  },
-  {
-   "id": "220-D1-N2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N2",
-   "number": "20E1-1103E"
-  },
-  {
-   "id": "220-D1-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-T1",
-   "number": "20E1-1103E"
-  },
-  {
-   "id": "220-D1-N3-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N3",
-   "number": "20M-1201E"
-  },
-  {
-   "id": "220-D1-N4-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N4",
-   "number": "20M-1203E"
-  },
-  {
-   "id": "220-D1-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-T2",
-   "number": "20T-1303E"
-  },
-  {
-   "id": "220-D1-N5-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N5",
-   "number": "20T-1303E"
-  },
-  {
-   "id": "220-D1-N6-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D1-N6",
-   "number": "20T-1301E"
+   "name": "220kV セクション断路器 B-C",
+   "number": "20B-201"
   },
   {
    "id": "220-LINE-E1",
    "kind": "source",
    "voltage_kv": 220,
    "name": "東線1L",
-   "bay": "D1"
+   "bay": "L1"
   },
   {
-   "id": "220-LINE-E1-LS",
+   "id": "220-L1-LS",
    "kind": "disconnector",
    "voltage_kv": 220,
    "name": "東線1L 線路断路器",
-   "bay": "D1",
+   "bay": "L1",
    "number": "20E1-1100"
+  },
+  {
+   "id": "220-L1-CB",
+   "kind": "breaker",
+   "voltage_kv": 220,
+   "name": "東線1L 遮断器",
+   "bay": "L1",
+   "number": "20E1-110"
+  },
+  {
+   "id": "220-L1-BLS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "東線1L 母線側断路器",
+   "bay": "L1",
+   "number": "20E1-1101"
+  },
+  {
+   "id": "220-L1-N1",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "東線1L 線路側区間",
+   "bay": "L1"
+  },
+  {
+   "id": "220-L1-N2",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "東線1L 母線側区間",
+   "bay": "L1"
   },
   {
    "id": "220-LINE-E1-ES",
@@ -229,211 +118,57 @@
    "number": "20E1-1100E"
   },
   {
-   "id": "220-TR-1-HV",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "1号変圧器 一次",
-   "bay": "D1"
-  },
-  {
-   "id": "220-TR-1-LS",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "name": "1号変圧器 一次 断路器",
-   "bay": "D1",
-   "number": "20T-1300"
-  },
-  {
-   "id": "220-TR-1-ES",
+   "id": "220-L1-N1-ES",
    "kind": "earthing",
    "voltage_kv": 220,
-   "name": "1号変圧器 一次 接地",
-   "attached_to": "220-TR-1-HV",
-   "number": "20T-1300E"
-  },
-  {
-   "id": "220-D2-N1",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-N2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-T1",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D2 北側回路引出点",
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-N3",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-N4",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-T2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D2 南側回路引出点",
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-N5",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-N6",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D2"
-  },
-  {
-   "id": "220-D2-LSA",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20E2-2101"
-  },
-  {
-   "id": "220-D2-CB1",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20E2-210"
-  },
-  {
-   "id": "220-D2-LS1B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20E2-2103"
-  },
-  {
-   "id": "220-D2-LS2A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20M-2201"
-  },
-  {
-   "id": "220-D2-CB2",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20M-220"
-  },
-  {
-   "id": "220-D2-LS2B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20M-2203"
-  },
-  {
-   "id": "220-D2-LS3A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20T-2303"
-  },
-  {
-   "id": "220-D2-CB3",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20T-230"
-  },
-  {
-   "id": "220-D2-LSB",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D2",
-   "number": "20T-2301"
-  },
-  {
-   "id": "220-D2-N1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N1",
-   "number": "20E2-2101E"
-  },
-  {
-   "id": "220-D2-N2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N2",
-   "number": "20E2-2103E"
-  },
-  {
-   "id": "220-D2-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-T1",
-   "number": "20E2-2103E"
-  },
-  {
-   "id": "220-D2-N3-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N3",
-   "number": "20M-2201E"
-  },
-  {
-   "id": "220-D2-N4-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N4",
-   "number": "20M-2203E"
-  },
-  {
-   "id": "220-D2-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-T2",
-   "number": "20T-2303E"
-  },
-  {
-   "id": "220-D2-N5-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N5",
-   "number": "20T-2303E"
-  },
-  {
-   "id": "220-D2-N6-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D2-N6",
-   "number": "20T-2301E"
+   "name": "東線1L 線路側区間 接地",
+   "attached_to": "220-L1-N1",
+   "number": "20E1-1101E"
   },
   {
    "id": "220-LINE-E2",
    "kind": "source",
    "voltage_kv": 220,
    "name": "東線2L",
-   "bay": "D2"
+   "bay": "L2"
   },
   {
-   "id": "220-LINE-E2-LS",
+   "id": "220-L2-LS",
    "kind": "disconnector",
    "voltage_kv": 220,
    "name": "東線2L 線路断路器",
-   "bay": "D2",
+   "bay": "L2",
    "number": "20E2-2100"
+  },
+  {
+   "id": "220-L2-CB",
+   "kind": "breaker",
+   "voltage_kv": 220,
+   "name": "東線2L 遮断器",
+   "bay": "L2",
+   "number": "20E2-210"
+  },
+  {
+   "id": "220-L2-BLS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "東線2L 母線側断路器",
+   "bay": "L2",
+   "number": "20E2-2101"
+  },
+  {
+   "id": "220-L2-N1",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "東線2L 線路側区間",
+   "bay": "L2"
+  },
+  {
+   "id": "220-L2-N2",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "東線2L 母線側区間",
+   "bay": "L2"
   },
   {
    "id": "220-LINE-E2-ES",
@@ -444,411 +179,195 @@
    "number": "20E2-2100E"
   },
   {
+   "id": "220-L2-N1-ES",
+   "kind": "earthing",
+   "voltage_kv": 220,
+   "name": "東線2L 線路側区間 接地",
+   "attached_to": "220-L2-N1",
+   "number": "20E2-2101E"
+  },
+  {
+   "id": "220-T1-BLS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 母線側断路器",
+   "bay": "T1",
+   "number": "20T-1101"
+  },
+  {
+   "id": "220-T1-CB",
+   "kind": "breaker",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 遮断器",
+   "bay": "T1",
+   "number": "20T-110"
+  },
+  {
+   "id": "220-T1-LS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 機器側断路器",
+   "bay": "T1",
+   "number": "20T-1100"
+  },
+  {
+   "id": "220-T1-N1",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 母線側区間",
+   "bay": "T1"
+  },
+  {
+   "id": "220-T1-N2",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 遮断器-断路器間",
+   "bay": "T1"
+  },
+  {
+   "id": "220-TR-1-HV",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次",
+   "bay": "T1"
+  },
+  {
+   "id": "220-T1-N2-ES",
+   "kind": "earthing",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 遮断器-断路器間 接地",
+   "attached_to": "220-T1-N2",
+   "number": "20T-1101E"
+  },
+  {
+   "id": "220-TR-1-HV-ES",
+   "kind": "earthing",
+   "voltage_kv": 220,
+   "name": "1号変圧器 一次 接地",
+   "attached_to": "220-TR-1-HV",
+   "number": "20T-1100E"
+  },
+  {
+   "id": "220-T2-BLS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "2号変圧器 一次 母線側断路器",
+   "bay": "T2",
+   "number": "20T-2101"
+  },
+  {
+   "id": "220-T2-CB",
+   "kind": "breaker",
+   "voltage_kv": 220,
+   "name": "2号変圧器 一次 遮断器",
+   "bay": "T2",
+   "number": "20T-210"
+  },
+  {
+   "id": "220-T2-LS",
+   "kind": "disconnector",
+   "voltage_kv": 220,
+   "name": "2号変圧器 一次 機器側断路器",
+   "bay": "T2",
+   "number": "20T-2100"
+  },
+  {
+   "id": "220-T2-N1",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "2号変圧器 一次 母線側区間",
+   "bay": "T2"
+  },
+  {
+   "id": "220-T2-N2",
+   "kind": "terminal",
+   "voltage_kv": 220,
+   "name": "2号変圧器 一次 遮断器-断路器間",
+   "bay": "T2"
+  },
+  {
    "id": "220-TR-2-HV",
    "kind": "terminal",
    "voltage_kv": 220,
    "name": "2号変圧器 一次",
-   "bay": "D2"
+   "bay": "T2"
   },
   {
-   "id": "220-TR-2-LS",
-   "kind": "disconnector",
+   "id": "220-T2-N2-ES",
+   "kind": "earthing",
    "voltage_kv": 220,
-   "name": "2号変圧器 一次 断路器",
-   "bay": "D2",
-   "number": "20T-2300"
+   "name": "2号変圧器 一次 遮断器-断路器間 接地",
+   "attached_to": "220-T2-N2",
+   "number": "20T-2101E"
   },
   {
-   "id": "220-TR-2-ES",
+   "id": "220-TR-2-HV-ES",
    "kind": "earthing",
    "voltage_kv": 220,
    "name": "2号変圧器 一次 接地",
    "attached_to": "220-TR-2-HV",
-   "number": "20T-2300E"
+   "number": "20T-2100E"
   },
   {
-   "id": "220-D3-N1",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-N2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-T1",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D3 北側回路引出点",
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-N3",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-N4",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-T2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D3 南側回路引出点",
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-N5",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-N6",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D3"
-  },
-  {
-   "id": "220-D3-LSA",
+   "id": "220-T3-BLS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W1-3101"
+   "name": "3号変圧器 一次 母線側断路器",
+   "bay": "T3",
+   "number": "20T-3101"
   },
   {
-   "id": "220-D3-CB1",
+   "id": "220-T3-CB",
    "kind": "breaker",
    "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W1-310"
+   "name": "3号変圧器 一次 遮断器",
+   "bay": "T3",
+   "number": "20T-310"
   },
   {
-   "id": "220-D3-LS1B",
+   "id": "220-T3-LS",
    "kind": "disconnector",
    "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W1-3103"
+   "name": "3号変圧器 一次 機器側断路器",
+   "bay": "T3",
+   "number": "20T-3100"
   },
   {
-   "id": "220-D3-LS2A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20M-3201"
-  },
-  {
-   "id": "220-D3-CB2",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20M-320"
-  },
-  {
-   "id": "220-D3-LS2B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20M-3203"
-  },
-  {
-   "id": "220-D3-LS3A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W2-3303"
-  },
-  {
-   "id": "220-D3-CB3",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W2-330"
-  },
-  {
-   "id": "220-D3-LSB",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D3",
-   "number": "20W2-3301"
-  },
-  {
-   "id": "220-D3-N1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N1",
-   "number": "20W1-3101E"
-  },
-  {
-   "id": "220-D3-N2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N2",
-   "number": "20W1-3103E"
-  },
-  {
-   "id": "220-D3-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-T1",
-   "number": "20W1-3103E"
-  },
-  {
-   "id": "220-D3-N3-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N3",
-   "number": "20M-3201E"
-  },
-  {
-   "id": "220-D3-N4-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N4",
-   "number": "20M-3203E"
-  },
-  {
-   "id": "220-D3-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-T2",
-   "number": "20W2-3303E"
-  },
-  {
-   "id": "220-D3-N5-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N5",
-   "number": "20W2-3303E"
-  },
-  {
-   "id": "220-D3-N6-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D3-N6",
-   "number": "20W2-3301E"
-  },
-  {
-   "id": "220-LINE-W1",
-   "kind": "source",
-   "voltage_kv": 220,
-   "name": "西線1L",
-   "bay": "D3"
-  },
-  {
-   "id": "220-LINE-W1-LS",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "name": "西線1L 線路断路器",
-   "bay": "D3",
-   "number": "20W1-3100"
-  },
-  {
-   "id": "220-LINE-W1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "name": "西線1L 線路接地",
-   "attached_to": "220-LINE-W1",
-   "number": "20W1-3100E"
-  },
-  {
-   "id": "220-LINE-W2",
-   "kind": "source",
-   "voltage_kv": 220,
-   "name": "西線2L",
-   "bay": "D3"
-  },
-  {
-   "id": "220-LINE-W2-LS",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "name": "西線2L 線路断路器",
-   "bay": "D3",
-   "number": "20W2-3300"
-  },
-  {
-   "id": "220-LINE-W2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "name": "西線2L 線路接地",
-   "attached_to": "220-LINE-W2",
-   "number": "20W2-3300E"
-  },
-  {
-   "id": "220-D4-N1",
+   "id": "220-T3-N1",
    "kind": "terminal",
    "voltage_kv": 220,
-   "bay": "D4"
+   "name": "3号変圧器 一次 母線側区間",
+   "bay": "T3"
   },
   {
-   "id": "220-D4-N2",
+   "id": "220-T3-N2",
    "kind": "terminal",
    "voltage_kv": 220,
-   "bay": "D4"
+   "name": "3号変圧器 一次 遮断器-断路器間",
+   "bay": "T3"
   },
   {
-   "id": "220-D4-T1",
+   "id": "220-TR-3-HV",
    "kind": "terminal",
    "voltage_kv": 220,
-   "name": "D4 北側回路引出点",
-   "bay": "D4"
+   "name": "3号変圧器 一次",
+   "bay": "T3"
   },
   {
-   "id": "220-D4-N3",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D4"
-  },
-  {
-   "id": "220-D4-N4",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D4"
-  },
-  {
-   "id": "220-D4-T2",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "name": "D4 南側回路引出点",
-   "bay": "D4"
-  },
-  {
-   "id": "220-D4-N5",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D4"
-  },
-  {
-   "id": "220-D4-N6",
-   "kind": "terminal",
-   "voltage_kv": 220,
-   "bay": "D4"
-  },
-  {
-   "id": "220-D4-LSA",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-4101"
-  },
-  {
-   "id": "220-D4-CB1",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-410"
-  },
-  {
-   "id": "220-D4-LS1B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-4103"
-  },
-  {
-   "id": "220-D4-LS2A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20M-4201"
-  },
-  {
-   "id": "220-D4-CB2",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20M-420"
-  },
-  {
-   "id": "220-D4-LS2B",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20M-4203"
-  },
-  {
-   "id": "220-D4-LS3A",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-4303"
-  },
-  {
-   "id": "220-D4-CB3",
-   "kind": "breaker",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-430"
-  },
-  {
-   "id": "220-D4-LSB",
-   "kind": "disconnector",
-   "voltage_kv": 220,
-   "bay": "D4",
-   "number": "20X-4301"
-  },
-  {
-   "id": "220-D4-N1-ES",
+   "id": "220-T3-N2-ES",
    "kind": "earthing",
    "voltage_kv": 220,
-   "attached_to": "220-D4-N1",
-   "number": "20X-4101E"
+   "name": "3号変圧器 一次 遮断器-断路器間 接地",
+   "attached_to": "220-T3-N2",
+   "number": "20T-3101E"
   },
   {
-   "id": "220-D4-N2-ES",
+   "id": "220-TR-3-HV-ES",
    "kind": "earthing",
    "voltage_kv": 220,
-   "attached_to": "220-D4-N2",
-   "number": "20X-4103E"
-  },
-  {
-   "id": "220-D4-T1-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-T1",
-   "number": "20X-4103E"
-  },
-  {
-   "id": "220-D4-N3-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-N3",
-   "number": "20M-4201E"
-  },
-  {
-   "id": "220-D4-N4-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-N4",
-   "number": "20M-4203E"
-  },
-  {
-   "id": "220-D4-T2-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-T2",
-   "number": "20X-4303E"
-  },
-  {
-   "id": "220-D4-N5-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-N5",
-   "number": "20X-4303E"
-  },
-  {
-   "id": "220-D4-N6-ES",
-   "kind": "earthing",
-   "voltage_kv": 220,
-   "attached_to": "220-D4-N6",
-   "number": "20X-4301E"
+   "name": "3号変圧器 一次 接地",
+   "attached_to": "220-TR-3-HV",
+   "number": "20T-3100E"
   },
   {
    "id": "66-BUS-A",
@@ -975,21 +494,21 @@
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D1",
-   "number": "6N1-1303"
+   "number": "6S1-1303"
   },
   {
    "id": "66-D1-CB3",
    "kind": "breaker",
    "voltage_kv": 66,
    "bay": "D1",
-   "number": "6N1-130"
+   "number": "6S1-130"
   },
   {
    "id": "66-D1-LSB",
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D1",
-   "number": "6N1-1301"
+   "number": "6S1-1301"
   },
   {
    "id": "66-D1-N1-ES",
@@ -1031,21 +550,21 @@
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D1-T2",
-   "number": "6N1-1303E"
+   "number": "6S1-1303E"
   },
   {
    "id": "66-D1-N5-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D1-N5",
-   "number": "6N1-1303E"
+   "number": "6S1-1303E"
   },
   {
    "id": "66-D1-N6-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D1-N6",
-   "number": "6N1-1301E"
+   "number": "6S1-1301E"
   },
   {
    "id": "66-TR-1-LV",
@@ -1071,27 +590,27 @@
    "number": "6T-1100E"
   },
   {
-   "id": "66-LINE-N1",
+   "id": "66-LINE-S1",
    "kind": "source",
    "voltage_kv": 66,
-   "name": "北線1L",
+   "name": "南線1L",
    "bay": "D1"
   },
   {
-   "id": "66-LINE-N1-LS",
+   "id": "66-LINE-S1-LS",
    "kind": "disconnector",
    "voltage_kv": 66,
-   "name": "北線1L 線路断路器",
+   "name": "南線1L 線路断路器",
    "bay": "D1",
-   "number": "6N1-1300"
+   "number": "6S1-1300"
   },
   {
-   "id": "66-LINE-N1-ES",
+   "id": "66-LINE-S1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
-   "name": "北線1L 線路接地",
-   "attached_to": "66-LINE-N1",
-   "number": "6N1-1300E"
+   "name": "南線1L 線路接地",
+   "attached_to": "66-LINE-S1",
+   "number": "6S1-1300E"
   },
   {
    "id": "66-D2-N1",
@@ -1190,21 +709,21 @@
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D2",
-   "number": "6N2-2303"
+   "number": "6S2-2303"
   },
   {
    "id": "66-D2-CB3",
    "kind": "breaker",
    "voltage_kv": 66,
    "bay": "D2",
-   "number": "6N2-230"
+   "number": "6S2-230"
   },
   {
    "id": "66-D2-LSB",
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D2",
-   "number": "6N2-2301"
+   "number": "6S2-2301"
   },
   {
    "id": "66-D2-N1-ES",
@@ -1246,21 +765,21 @@
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D2-T2",
-   "number": "6N2-2303E"
+   "number": "6S2-2303E"
   },
   {
    "id": "66-D2-N5-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D2-N5",
-   "number": "6N2-2303E"
+   "number": "6S2-2303E"
   },
   {
    "id": "66-D2-N6-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D2-N6",
-   "number": "6N2-2301E"
+   "number": "6S2-2301E"
   },
   {
    "id": "66-TR-2-LV",
@@ -1286,27 +805,27 @@
    "number": "6T-2100E"
   },
   {
-   "id": "66-LINE-N2",
+   "id": "66-LINE-S2",
    "kind": "source",
    "voltage_kv": 66,
-   "name": "北線2L",
+   "name": "南線2L",
    "bay": "D2"
   },
   {
-   "id": "66-LINE-N2-LS",
+   "id": "66-LINE-S2-LS",
    "kind": "disconnector",
    "voltage_kv": 66,
-   "name": "北線2L 線路断路器",
+   "name": "南線2L 線路断路器",
    "bay": "D2",
-   "number": "6N2-2300"
+   "number": "6S2-2300"
   },
   {
-   "id": "66-LINE-N2-ES",
+   "id": "66-LINE-S2-ES",
    "kind": "earthing",
    "voltage_kv": 66,
-   "name": "北線2L 線路接地",
-   "attached_to": "66-LINE-N2",
-   "number": "6N2-2300E"
+   "name": "南線2L 線路接地",
+   "attached_to": "66-LINE-S2",
+   "number": "6S2-2300E"
   },
   {
    "id": "66-D3-N1",
@@ -1363,21 +882,21 @@
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S1-3101"
+   "number": "6T-3101"
   },
   {
    "id": "66-D3-CB1",
    "kind": "breaker",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S1-310"
+   "number": "6T-310"
   },
   {
    "id": "66-D3-LS1B",
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S1-3103"
+   "number": "6T-3103"
   },
   {
    "id": "66-D3-LS2A",
@@ -1405,42 +924,42 @@
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S2-3303"
+   "number": "6P1-3303"
   },
   {
    "id": "66-D3-CB3",
    "kind": "breaker",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S2-330"
+   "number": "6P1-330"
   },
   {
    "id": "66-D3-LSB",
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D3",
-   "number": "6S2-3301"
+   "number": "6P1-3301"
   },
   {
    "id": "66-D3-N1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-N1",
-   "number": "6S1-3101E"
+   "number": "6T-3101E"
   },
   {
    "id": "66-D3-N2-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-N2",
-   "number": "6S1-3103E"
+   "number": "6T-3103E"
   },
   {
    "id": "66-D3-T1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-T1",
-   "number": "6S1-3103E"
+   "number": "6T-3103E"
   },
   {
    "id": "66-D3-N3-ES",
@@ -1461,67 +980,67 @@
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-T2",
-   "number": "6S2-3303E"
+   "number": "6P1-3303E"
   },
   {
    "id": "66-D3-N5-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-N5",
-   "number": "6S2-3303E"
+   "number": "6P1-3303E"
   },
   {
    "id": "66-D3-N6-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D3-N6",
-   "number": "6S2-3301E"
+   "number": "6P1-3301E"
   },
   {
-   "id": "66-LINE-S1",
-   "kind": "source",
+   "id": "66-TR-3-LV",
+   "kind": "terminal",
    "voltage_kv": 66,
-   "name": "南線1L",
+   "name": "3号変圧器 二次",
    "bay": "D3"
   },
   {
-   "id": "66-LINE-S1-LS",
+   "id": "66-TR-3-LS",
    "kind": "disconnector",
    "voltage_kv": 66,
-   "name": "南線1L 線路断路器",
+   "name": "3号変圧器 二次 断路器",
    "bay": "D3",
-   "number": "6S1-3100"
+   "number": "6T-3100"
   },
   {
-   "id": "66-LINE-S1-ES",
+   "id": "66-TR-3-ES",
    "kind": "earthing",
    "voltage_kv": 66,
-   "name": "南線1L 線路接地",
-   "attached_to": "66-LINE-S1",
-   "number": "6S1-3100E"
+   "name": "3号変圧器 二次 接地",
+   "attached_to": "66-TR-3-LV",
+   "number": "6T-3100E"
   },
   {
-   "id": "66-LINE-S2",
+   "id": "66-LINE-P1",
    "kind": "source",
    "voltage_kv": 66,
-   "name": "南線2L",
+   "name": "港線1L",
    "bay": "D3"
   },
   {
-   "id": "66-LINE-S2-LS",
+   "id": "66-LINE-P1-LS",
    "kind": "disconnector",
    "voltage_kv": 66,
-   "name": "南線2L 線路断路器",
+   "name": "港線1L 線路断路器",
    "bay": "D3",
-   "number": "6S2-3300"
+   "number": "6P1-3300"
   },
   {
-   "id": "66-LINE-S2-ES",
+   "id": "66-LINE-P1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
-   "name": "南線2L 線路接地",
-   "attached_to": "66-LINE-S2",
-   "number": "6S2-3300E"
+   "name": "港線1L 線路接地",
+   "attached_to": "66-LINE-P1",
+   "number": "6P1-3300E"
   },
   {
    "id": "66-D4-N1",
@@ -1578,21 +1097,21 @@
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D4",
-   "number": "6P1-4101"
+   "number": "6SC-4101"
   },
   {
    "id": "66-D4-CB1",
    "kind": "breaker",
    "voltage_kv": 66,
    "bay": "D4",
-   "number": "6P1-410"
+   "number": "6SC-410"
   },
   {
    "id": "66-D4-LS1B",
    "kind": "disconnector",
    "voltage_kv": 66,
    "bay": "D4",
-   "number": "6P1-4103"
+   "number": "6SC-4103"
   },
   {
    "id": "66-D4-LS2A",
@@ -1641,21 +1160,21 @@
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D4-N1",
-   "number": "6P1-4101E"
+   "number": "6SC-4101E"
   },
   {
    "id": "66-D4-N2-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D4-N2",
-   "number": "6P1-4103E"
+   "number": "6SC-4103E"
   },
   {
    "id": "66-D4-T1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
    "attached_to": "66-D4-T1",
-   "number": "6P1-4103E"
+   "number": "6SC-4103E"
   },
   {
    "id": "66-D4-N3-ES",
@@ -1693,27 +1212,27 @@
    "number": "6P2-4301E"
   },
   {
-   "id": "66-LINE-P1",
-   "kind": "source",
+   "id": "66-SC-1",
+   "kind": "load",
    "voltage_kv": 66,
-   "name": "港線1L",
+   "name": "#1SC",
    "bay": "D4"
   },
   {
-   "id": "66-LINE-P1-LS",
+   "id": "66-SC-1-LS",
    "kind": "disconnector",
    "voltage_kv": 66,
-   "name": "港線1L 線路断路器",
+   "name": "#1SC 断路器",
    "bay": "D4",
-   "number": "6P1-4100"
+   "number": "6SC-4100"
   },
   {
-   "id": "66-LINE-P1-ES",
+   "id": "66-SC-1-ES",
    "kind": "earthing",
    "voltage_kv": 66,
-   "name": "港線1L 線路接地",
-   "attached_to": "66-LINE-P1",
-   "number": "6P1-4100E"
+   "name": "#1SC 接地",
+   "attached_to": "66-SC-1",
+   "number": "6SC-4100E"
   },
   {
    "id": "66-LINE-P2",
@@ -1737,6 +1256,390 @@
    "name": "港線2L 線路接地",
    "attached_to": "66-LINE-P2",
    "number": "6P2-4300E"
+  },
+  {
+   "id": "66-D5-N1",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-N2",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-T1",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "name": "D5 北側回路引出点",
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-N3",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-N4",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-T2",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "name": "D5 南側回路引出点",
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-N5",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-N6",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D5"
+  },
+  {
+   "id": "66-D5-LSA",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6SR-5101"
+  },
+  {
+   "id": "66-D5-CB1",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6SR-510"
+  },
+  {
+   "id": "66-D5-LS1B",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6SR-5103"
+  },
+  {
+   "id": "66-D5-LS2A",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6M-5201"
+  },
+  {
+   "id": "66-D5-CB2",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6M-520"
+  },
+  {
+   "id": "66-D5-LS2B",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6M-5203"
+  },
+  {
+   "id": "66-D5-LS3A",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6H1-5303"
+  },
+  {
+   "id": "66-D5-CB3",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6H1-530"
+  },
+  {
+   "id": "66-D5-LSB",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D5",
+   "number": "6H1-5301"
+  },
+  {
+   "id": "66-D5-N1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N1",
+   "number": "6SR-5101E"
+  },
+  {
+   "id": "66-D5-N2-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N2",
+   "number": "6SR-5103E"
+  },
+  {
+   "id": "66-D5-T1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-T1",
+   "number": "6SR-5103E"
+  },
+  {
+   "id": "66-D5-N3-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N3",
+   "number": "6M-5201E"
+  },
+  {
+   "id": "66-D5-N4-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N4",
+   "number": "6M-5203E"
+  },
+  {
+   "id": "66-D5-T2-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-T2",
+   "number": "6H1-5303E"
+  },
+  {
+   "id": "66-D5-N5-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N5",
+   "number": "6H1-5303E"
+  },
+  {
+   "id": "66-D5-N6-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D5-N6",
+   "number": "6H1-5301E"
+  },
+  {
+   "id": "66-SR-1",
+   "kind": "load",
+   "voltage_kv": 66,
+   "name": "#1SR",
+   "bay": "D5"
+  },
+  {
+   "id": "66-SR-1-LS",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "name": "#1SR 断路器",
+   "bay": "D5",
+   "number": "6SR-5100"
+  },
+  {
+   "id": "66-SR-1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "name": "#1SR 接地",
+   "attached_to": "66-SR-1",
+   "number": "6SR-5100E"
+  },
+  {
+   "id": "66-LINE-H1",
+   "kind": "source",
+   "voltage_kv": 66,
+   "name": "浜線1L",
+   "bay": "D5"
+  },
+  {
+   "id": "66-LINE-H1-LS",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "name": "浜線1L 線路断路器",
+   "bay": "D5",
+   "number": "6H1-5300"
+  },
+  {
+   "id": "66-LINE-H1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "name": "浜線1L 線路接地",
+   "attached_to": "66-LINE-H1",
+   "number": "6H1-5300E"
+  },
+  {
+   "id": "66-D6-N1",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-N2",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-T1",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "name": "D6 北側回路引出点",
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-N3",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-N4",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-T2",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "name": "D6 南側回路引出点",
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-N5",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-N6",
+   "kind": "terminal",
+   "voltage_kv": 66,
+   "bay": "D6"
+  },
+  {
+   "id": "66-D6-LSA",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-6101"
+  },
+  {
+   "id": "66-D6-CB1",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-610"
+  },
+  {
+   "id": "66-D6-LS1B",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-6103"
+  },
+  {
+   "id": "66-D6-LS2A",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6M-6201"
+  },
+  {
+   "id": "66-D6-CB2",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6M-620"
+  },
+  {
+   "id": "66-D6-LS2B",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6M-6203"
+  },
+  {
+   "id": "66-D6-LS3A",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-6303"
+  },
+  {
+   "id": "66-D6-CB3",
+   "kind": "breaker",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-630"
+  },
+  {
+   "id": "66-D6-LSB",
+   "kind": "disconnector",
+   "voltage_kv": 66,
+   "bay": "D6",
+   "number": "6X-6301"
+  },
+  {
+   "id": "66-D6-N1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N1",
+   "number": "6X-6101E"
+  },
+  {
+   "id": "66-D6-N2-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N2",
+   "number": "6X-6103E"
+  },
+  {
+   "id": "66-D6-T1-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-T1",
+   "number": "6X-6103E"
+  },
+  {
+   "id": "66-D6-N3-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N3",
+   "number": "6M-6201E"
+  },
+  {
+   "id": "66-D6-N4-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N4",
+   "number": "6M-6203E"
+  },
+  {
+   "id": "66-D6-T2-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-T2",
+   "number": "6X-6303E"
+  },
+  {
+   "id": "66-D6-N5-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N5",
+   "number": "6X-6303E"
+  },
+  {
+   "id": "66-D6-N6-ES",
+   "kind": "earthing",
+   "voltage_kv": 66,
+   "attached_to": "66-D6-N6",
+   "number": "6X-6301E"
   },
   {
    "id": "TR-1",
@@ -1765,511 +1668,225 @@
      "voltage_kv": 66
     }
    }
+  },
+  {
+   "id": "TR-3",
+   "kind": "transformer",
+   "name": "3号変圧器 220/66kV",
+   "number": "3BK",
+   "windings": {
+    "hv": {
+     "voltage_kv": 220
+    },
+    "lv": {
+     "voltage_kv": 66
+    }
+   }
   }
  ],
  "edges": [
   {
-   "id": "220-D1-DROP-A",
+   "id": "220-BUS-A--220-SEC-AB-a",
    "from": "220-BUS-A",
-   "to": "220-D1-LSA.a",
+   "to": "220-SEC-AB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-DROP-B",
+   "id": "220-SEC-AB-b--220-BUS-B",
+   "from": "220-SEC-AB.b",
+   "to": "220-BUS-B",
+   "conductor": "bare"
+  },
+  {
+   "id": "220-BUS-B--220-SEC-BC-a",
    "from": "220-BUS-B",
-   "to": "220-D1-LSB.b",
+   "to": "220-SEC-BC.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-LSA-b--220-D1-N1",
-   "from": "220-D1-LSA.b",
-   "to": "220-D1-N1",
+   "id": "220-SEC-BC-b--220-BUS-C",
+   "from": "220-SEC-BC.b",
+   "to": "220-BUS-C",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N1--220-D1-CB1-a",
-   "from": "220-D1-N1",
-   "to": "220-D1-CB1.a",
+   "id": "220-LINE-E1--220-L1-LS-b",
+   "from": "220-LINE-E1",
+   "to": "220-L1-LS.b",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-CB1-b--220-D1-N2",
-   "from": "220-D1-CB1.b",
-   "to": "220-D1-N2",
+   "id": "220-L1-LS-a--220-L1-N1",
+   "from": "220-L1-LS.a",
+   "to": "220-L1-N1",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N2--220-D1-LS1B-a",
-   "from": "220-D1-N2",
-   "to": "220-D1-LS1B.a",
+   "id": "220-L1-N1--220-L1-CB-a",
+   "from": "220-L1-N1",
+   "to": "220-L1-CB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-LS1B-b--220-D1-T1",
-   "from": "220-D1-LS1B.b",
-   "to": "220-D1-T1",
+   "id": "220-L1-CB-b--220-L1-N2",
+   "from": "220-L1-CB.b",
+   "to": "220-L1-N2",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-T1--220-D1-LS2A-a",
-   "from": "220-D1-T1",
-   "to": "220-D1-LS2A.a",
+   "id": "220-L1-N2--220-L1-BLS-a",
+   "from": "220-L1-N2",
+   "to": "220-L1-BLS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-LS2A-b--220-D1-N3",
-   "from": "220-D1-LS2A.b",
-   "to": "220-D1-N3",
+   "id": "220-L1-BLS-b--220-BUS-A",
+   "from": "220-L1-BLS.b",
+   "to": "220-BUS-A",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N3--220-D1-CB2-a",
-   "from": "220-D1-N3",
-   "to": "220-D1-CB2.a",
+   "id": "220-LINE-E2--220-L2-LS-b",
+   "from": "220-LINE-E2",
+   "to": "220-L2-LS.b",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-CB2-b--220-D1-N4",
-   "from": "220-D1-CB2.b",
-   "to": "220-D1-N4",
+   "id": "220-L2-LS-a--220-L2-N1",
+   "from": "220-L2-LS.a",
+   "to": "220-L2-N1",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N4--220-D1-LS2B-a",
-   "from": "220-D1-N4",
-   "to": "220-D1-LS2B.a",
+   "id": "220-L2-N1--220-L2-CB-a",
+   "from": "220-L2-N1",
+   "to": "220-L2-CB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-LS2B-b--220-D1-T2",
-   "from": "220-D1-LS2B.b",
-   "to": "220-D1-T2",
+   "id": "220-L2-CB-b--220-L2-N2",
+   "from": "220-L2-CB.b",
+   "to": "220-L2-N2",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-T2--220-D1-LS3A-a",
-   "from": "220-D1-T2",
-   "to": "220-D1-LS3A.a",
+   "id": "220-L2-N2--220-L2-BLS-a",
+   "from": "220-L2-N2",
+   "to": "220-L2-BLS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-LS3A-b--220-D1-N5",
-   "from": "220-D1-LS3A.b",
-   "to": "220-D1-N5",
+   "id": "220-L2-BLS-b--220-BUS-C",
+   "from": "220-L2-BLS.b",
+   "to": "220-BUS-C",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N5--220-D1-CB3-a",
-   "from": "220-D1-N5",
-   "to": "220-D1-CB3.a",
+   "id": "220-BUS-A--220-T1-BLS-a",
+   "from": "220-BUS-A",
+   "to": "220-T1-BLS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-CB3-b--220-D1-N6",
-   "from": "220-D1-CB3.b",
-   "to": "220-D1-N6",
+   "id": "220-T1-BLS-b--220-T1-N1",
+   "from": "220-T1-BLS.b",
+   "to": "220-T1-N1",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-N6--220-D1-LSB-a",
-   "from": "220-D1-N6",
-   "to": "220-D1-LSB.a",
+   "id": "220-T1-N1--220-T1-CB-a",
+   "from": "220-T1-N1",
+   "to": "220-T1-CB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-T1--220-LINE-E1-LS-a",
-   "from": "220-D1-T1",
-   "to": "220-LINE-E1-LS.a",
+   "id": "220-T1-CB-b--220-T1-N2",
+   "from": "220-T1-CB.b",
+   "to": "220-T1-N2",
    "conductor": "bare"
   },
   {
-   "id": "220-LINE-E1-LS-b--220-LINE-E1",
-   "from": "220-LINE-E1-LS.b",
-   "to": "220-LINE-E1",
+   "id": "220-T1-N2--220-T1-LS-a",
+   "from": "220-T1-N2",
+   "to": "220-T1-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D1-T2--220-TR-1-LS-a",
-   "from": "220-D1-T2",
-   "to": "220-TR-1-LS.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-TR-1-LS-b--220-TR-1-HV",
-   "from": "220-TR-1-LS.b",
+   "id": "220-T1-LS-b--220-TR-1-HV",
+   "from": "220-T1-LS.b",
    "to": "220-TR-1-HV",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-DROP-A",
-   "from": "220-BUS-A",
-   "to": "220-D2-LSA.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-DROP-B",
+   "id": "220-BUS-B--220-T2-BLS-a",
    "from": "220-BUS-B",
-   "to": "220-D2-LSB.b",
+   "to": "220-T2-BLS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-LSA-b--220-D2-N1",
-   "from": "220-D2-LSA.b",
-   "to": "220-D2-N1",
+   "id": "220-T2-BLS-b--220-T2-N1",
+   "from": "220-T2-BLS.b",
+   "to": "220-T2-N1",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-N1--220-D2-CB1-a",
-   "from": "220-D2-N1",
-   "to": "220-D2-CB1.a",
+   "id": "220-T2-N1--220-T2-CB-a",
+   "from": "220-T2-N1",
+   "to": "220-T2-CB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-CB1-b--220-D2-N2",
-   "from": "220-D2-CB1.b",
-   "to": "220-D2-N2",
+   "id": "220-T2-CB-b--220-T2-N2",
+   "from": "220-T2-CB.b",
+   "to": "220-T2-N2",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-N2--220-D2-LS1B-a",
-   "from": "220-D2-N2",
-   "to": "220-D2-LS1B.a",
+   "id": "220-T2-N2--220-T2-LS-a",
+   "from": "220-T2-N2",
+   "to": "220-T2-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D2-LS1B-b--220-D2-T1",
-   "from": "220-D2-LS1B.b",
-   "to": "220-D2-T1",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-T1--220-D2-LS2A-a",
-   "from": "220-D2-T1",
-   "to": "220-D2-LS2A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-LS2A-b--220-D2-N3",
-   "from": "220-D2-LS2A.b",
-   "to": "220-D2-N3",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-N3--220-D2-CB2-a",
-   "from": "220-D2-N3",
-   "to": "220-D2-CB2.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-CB2-b--220-D2-N4",
-   "from": "220-D2-CB2.b",
-   "to": "220-D2-N4",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-N4--220-D2-LS2B-a",
-   "from": "220-D2-N4",
-   "to": "220-D2-LS2B.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-LS2B-b--220-D2-T2",
-   "from": "220-D2-LS2B.b",
-   "to": "220-D2-T2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-T2--220-D2-LS3A-a",
-   "from": "220-D2-T2",
-   "to": "220-D2-LS3A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-LS3A-b--220-D2-N5",
-   "from": "220-D2-LS3A.b",
-   "to": "220-D2-N5",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-N5--220-D2-CB3-a",
-   "from": "220-D2-N5",
-   "to": "220-D2-CB3.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-CB3-b--220-D2-N6",
-   "from": "220-D2-CB3.b",
-   "to": "220-D2-N6",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-N6--220-D2-LSB-a",
-   "from": "220-D2-N6",
-   "to": "220-D2-LSB.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-T1--220-LINE-E2-LS-a",
-   "from": "220-D2-T1",
-   "to": "220-LINE-E2-LS.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-LINE-E2-LS-b--220-LINE-E2",
-   "from": "220-LINE-E2-LS.b",
-   "to": "220-LINE-E2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D2-T2--220-TR-2-LS-a",
-   "from": "220-D2-T2",
-   "to": "220-TR-2-LS.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-TR-2-LS-b--220-TR-2-HV",
-   "from": "220-TR-2-LS.b",
+   "id": "220-T2-LS-b--220-TR-2-HV",
+   "from": "220-T2-LS.b",
    "to": "220-TR-2-HV",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-DROP-A",
-   "from": "220-BUS-A",
-   "to": "220-D3-LSA.a",
+   "id": "220-BUS-C--220-T3-BLS-a",
+   "from": "220-BUS-C",
+   "to": "220-T3-BLS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-DROP-B",
-   "from": "220-BUS-B",
-   "to": "220-D3-LSB.b",
+   "id": "220-T3-BLS-b--220-T3-N1",
+   "from": "220-T3-BLS.b",
+   "to": "220-T3-N1",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-LSA-b--220-D3-N1",
-   "from": "220-D3-LSA.b",
-   "to": "220-D3-N1",
+   "id": "220-T3-N1--220-T3-CB-a",
+   "from": "220-T3-N1",
+   "to": "220-T3-CB.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-N1--220-D3-CB1-a",
-   "from": "220-D3-N1",
-   "to": "220-D3-CB1.a",
+   "id": "220-T3-CB-b--220-T3-N2",
+   "from": "220-T3-CB.b",
+   "to": "220-T3-N2",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-CB1-b--220-D3-N2",
-   "from": "220-D3-CB1.b",
-   "to": "220-D3-N2",
+   "id": "220-T3-N2--220-T3-LS-a",
+   "from": "220-T3-N2",
+   "to": "220-T3-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "220-D3-N2--220-D3-LS1B-a",
-   "from": "220-D3-N2",
-   "to": "220-D3-LS1B.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-LS1B-b--220-D3-T1",
-   "from": "220-D3-LS1B.b",
-   "to": "220-D3-T1",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-T1--220-D3-LS2A-a",
-   "from": "220-D3-T1",
-   "to": "220-D3-LS2A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-LS2A-b--220-D3-N3",
-   "from": "220-D3-LS2A.b",
-   "to": "220-D3-N3",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-N3--220-D3-CB2-a",
-   "from": "220-D3-N3",
-   "to": "220-D3-CB2.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-CB2-b--220-D3-N4",
-   "from": "220-D3-CB2.b",
-   "to": "220-D3-N4",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-N4--220-D3-LS2B-a",
-   "from": "220-D3-N4",
-   "to": "220-D3-LS2B.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-LS2B-b--220-D3-T2",
-   "from": "220-D3-LS2B.b",
-   "to": "220-D3-T2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-T2--220-D3-LS3A-a",
-   "from": "220-D3-T2",
-   "to": "220-D3-LS3A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-LS3A-b--220-D3-N5",
-   "from": "220-D3-LS3A.b",
-   "to": "220-D3-N5",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-N5--220-D3-CB3-a",
-   "from": "220-D3-N5",
-   "to": "220-D3-CB3.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-CB3-b--220-D3-N6",
-   "from": "220-D3-CB3.b",
-   "to": "220-D3-N6",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-N6--220-D3-LSB-a",
-   "from": "220-D3-N6",
-   "to": "220-D3-LSB.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-T1--220-LINE-W1-LS-a",
-   "from": "220-D3-T1",
-   "to": "220-LINE-W1-LS.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-LINE-W1-LS-b--220-LINE-W1",
-   "from": "220-LINE-W1-LS.b",
-   "to": "220-LINE-W1",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D3-T2--220-LINE-W2-LS-a",
-   "from": "220-D3-T2",
-   "to": "220-LINE-W2-LS.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-LINE-W2-LS-b--220-LINE-W2",
-   "from": "220-LINE-W2-LS.b",
-   "to": "220-LINE-W2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-DROP-A",
-   "from": "220-BUS-A",
-   "to": "220-D4-LSA.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-DROP-B",
-   "from": "220-BUS-B",
-   "to": "220-D4-LSB.b",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-LSA-b--220-D4-N1",
-   "from": "220-D4-LSA.b",
-   "to": "220-D4-N1",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N1--220-D4-CB1-a",
-   "from": "220-D4-N1",
-   "to": "220-D4-CB1.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-CB1-b--220-D4-N2",
-   "from": "220-D4-CB1.b",
-   "to": "220-D4-N2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N2--220-D4-LS1B-a",
-   "from": "220-D4-N2",
-   "to": "220-D4-LS1B.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-LS1B-b--220-D4-T1",
-   "from": "220-D4-LS1B.b",
-   "to": "220-D4-T1",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-T1--220-D4-LS2A-a",
-   "from": "220-D4-T1",
-   "to": "220-D4-LS2A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-LS2A-b--220-D4-N3",
-   "from": "220-D4-LS2A.b",
-   "to": "220-D4-N3",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N3--220-D4-CB2-a",
-   "from": "220-D4-N3",
-   "to": "220-D4-CB2.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-CB2-b--220-D4-N4",
-   "from": "220-D4-CB2.b",
-   "to": "220-D4-N4",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N4--220-D4-LS2B-a",
-   "from": "220-D4-N4",
-   "to": "220-D4-LS2B.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-LS2B-b--220-D4-T2",
-   "from": "220-D4-LS2B.b",
-   "to": "220-D4-T2",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-T2--220-D4-LS3A-a",
-   "from": "220-D4-T2",
-   "to": "220-D4-LS3A.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-LS3A-b--220-D4-N5",
-   "from": "220-D4-LS3A.b",
-   "to": "220-D4-N5",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N5--220-D4-CB3-a",
-   "from": "220-D4-N5",
-   "to": "220-D4-CB3.a",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-CB3-b--220-D4-N6",
-   "from": "220-D4-CB3.b",
-   "to": "220-D4-N6",
-   "conductor": "bare"
-  },
-  {
-   "id": "220-D4-N6--220-D4-LSB-a",
-   "from": "220-D4-N6",
-   "to": "220-D4-LSB.a",
+   "id": "220-T3-LS-b--220-TR-3-HV",
+   "from": "220-T3-LS.b",
+   "to": "220-TR-3-HV",
    "conductor": "bare"
   },
   {
@@ -2393,15 +2010,15 @@
    "conductor": "bare"
   },
   {
-   "id": "66-D1-T2--66-LINE-N1-LS-a",
+   "id": "66-D1-T2--66-LINE-S1-LS-a",
    "from": "66-D1-T2",
-   "to": "66-LINE-N1-LS.a",
+   "to": "66-LINE-S1-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "66-LINE-N1-LS-b--66-LINE-N1",
-   "from": "66-LINE-N1-LS.b",
-   "to": "66-LINE-N1",
+   "id": "66-LINE-S1-LS-b--66-LINE-S1",
+   "from": "66-LINE-S1-LS.b",
+   "to": "66-LINE-S1",
    "conductor": "bare"
   },
   {
@@ -2525,15 +2142,15 @@
    "conductor": "bare"
   },
   {
-   "id": "66-D2-T2--66-LINE-N2-LS-a",
+   "id": "66-D2-T2--66-LINE-S2-LS-a",
    "from": "66-D2-T2",
-   "to": "66-LINE-N2-LS.a",
+   "to": "66-LINE-S2-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "66-LINE-N2-LS-b--66-LINE-N2",
-   "from": "66-LINE-N2-LS.b",
-   "to": "66-LINE-N2",
+   "id": "66-LINE-S2-LS-b--66-LINE-S2",
+   "from": "66-LINE-S2-LS.b",
+   "to": "66-LINE-S2",
    "conductor": "bare"
   },
   {
@@ -2645,27 +2262,27 @@
    "conductor": "bare"
   },
   {
-   "id": "66-D3-T1--66-LINE-S1-LS-a",
+   "id": "66-D3-T1--66-TR-3-LS-a",
    "from": "66-D3-T1",
-   "to": "66-LINE-S1-LS.a",
+   "to": "66-TR-3-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "66-LINE-S1-LS-b--66-LINE-S1",
-   "from": "66-LINE-S1-LS.b",
-   "to": "66-LINE-S1",
+   "id": "66-TR-3-LS-b--66-TR-3-LV",
+   "from": "66-TR-3-LS.b",
+   "to": "66-TR-3-LV",
    "conductor": "bare"
   },
   {
-   "id": "66-D3-T2--66-LINE-S2-LS-a",
+   "id": "66-D3-T2--66-LINE-P1-LS-a",
    "from": "66-D3-T2",
-   "to": "66-LINE-S2-LS.a",
+   "to": "66-LINE-P1-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "66-LINE-S2-LS-b--66-LINE-S2",
-   "from": "66-LINE-S2-LS.b",
-   "to": "66-LINE-S2",
+   "id": "66-LINE-P1-LS-b--66-LINE-P1",
+   "from": "66-LINE-P1-LS.b",
+   "to": "66-LINE-P1",
    "conductor": "bare"
   },
   {
@@ -2777,15 +2394,15 @@
    "conductor": "bare"
   },
   {
-   "id": "66-D4-T1--66-LINE-P1-LS-a",
+   "id": "66-D4-T1--66-SC-1-LS-a",
    "from": "66-D4-T1",
-   "to": "66-LINE-P1-LS.a",
+   "to": "66-SC-1-LS.a",
    "conductor": "bare"
   },
   {
-   "id": "66-LINE-P1-LS-b--66-LINE-P1",
-   "from": "66-LINE-P1-LS.b",
-   "to": "66-LINE-P1",
+   "id": "66-SC-1-LS-b--66-SC-1",
+   "from": "66-SC-1-LS.b",
+   "to": "66-SC-1",
    "conductor": "bare"
   },
   {
@@ -2798,6 +2415,246 @@
    "id": "66-LINE-P2-LS-b--66-LINE-P2",
    "from": "66-LINE-P2-LS.b",
    "to": "66-LINE-P2",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-DROP-A",
+   "from": "66-BUS-A",
+   "to": "66-D5-LSA.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-DROP-B",
+   "from": "66-BUS-B",
+   "to": "66-D5-LSB.b",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-LSA-b--66-D5-N1",
+   "from": "66-D5-LSA.b",
+   "to": "66-D5-N1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N1--66-D5-CB1-a",
+   "from": "66-D5-N1",
+   "to": "66-D5-CB1.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-CB1-b--66-D5-N2",
+   "from": "66-D5-CB1.b",
+   "to": "66-D5-N2",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N2--66-D5-LS1B-a",
+   "from": "66-D5-N2",
+   "to": "66-D5-LS1B.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-LS1B-b--66-D5-T1",
+   "from": "66-D5-LS1B.b",
+   "to": "66-D5-T1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-T1--66-D5-LS2A-a",
+   "from": "66-D5-T1",
+   "to": "66-D5-LS2A.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-LS2A-b--66-D5-N3",
+   "from": "66-D5-LS2A.b",
+   "to": "66-D5-N3",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N3--66-D5-CB2-a",
+   "from": "66-D5-N3",
+   "to": "66-D5-CB2.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-CB2-b--66-D5-N4",
+   "from": "66-D5-CB2.b",
+   "to": "66-D5-N4",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N4--66-D5-LS2B-a",
+   "from": "66-D5-N4",
+   "to": "66-D5-LS2B.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-LS2B-b--66-D5-T2",
+   "from": "66-D5-LS2B.b",
+   "to": "66-D5-T2",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-T2--66-D5-LS3A-a",
+   "from": "66-D5-T2",
+   "to": "66-D5-LS3A.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-LS3A-b--66-D5-N5",
+   "from": "66-D5-LS3A.b",
+   "to": "66-D5-N5",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N5--66-D5-CB3-a",
+   "from": "66-D5-N5",
+   "to": "66-D5-CB3.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-CB3-b--66-D5-N6",
+   "from": "66-D5-CB3.b",
+   "to": "66-D5-N6",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-N6--66-D5-LSB-a",
+   "from": "66-D5-N6",
+   "to": "66-D5-LSB.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-T1--66-SR-1-LS-a",
+   "from": "66-D5-T1",
+   "to": "66-SR-1-LS.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-SR-1-LS-b--66-SR-1",
+   "from": "66-SR-1-LS.b",
+   "to": "66-SR-1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D5-T2--66-LINE-H1-LS-a",
+   "from": "66-D5-T2",
+   "to": "66-LINE-H1-LS.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-LINE-H1-LS-b--66-LINE-H1",
+   "from": "66-LINE-H1-LS.b",
+   "to": "66-LINE-H1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-DROP-A",
+   "from": "66-BUS-A",
+   "to": "66-D6-LSA.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-DROP-B",
+   "from": "66-BUS-B",
+   "to": "66-D6-LSB.b",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-LSA-b--66-D6-N1",
+   "from": "66-D6-LSA.b",
+   "to": "66-D6-N1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N1--66-D6-CB1-a",
+   "from": "66-D6-N1",
+   "to": "66-D6-CB1.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-CB1-b--66-D6-N2",
+   "from": "66-D6-CB1.b",
+   "to": "66-D6-N2",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N2--66-D6-LS1B-a",
+   "from": "66-D6-N2",
+   "to": "66-D6-LS1B.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-LS1B-b--66-D6-T1",
+   "from": "66-D6-LS1B.b",
+   "to": "66-D6-T1",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-T1--66-D6-LS2A-a",
+   "from": "66-D6-T1",
+   "to": "66-D6-LS2A.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-LS2A-b--66-D6-N3",
+   "from": "66-D6-LS2A.b",
+   "to": "66-D6-N3",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N3--66-D6-CB2-a",
+   "from": "66-D6-N3",
+   "to": "66-D6-CB2.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-CB2-b--66-D6-N4",
+   "from": "66-D6-CB2.b",
+   "to": "66-D6-N4",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N4--66-D6-LS2B-a",
+   "from": "66-D6-N4",
+   "to": "66-D6-LS2B.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-LS2B-b--66-D6-T2",
+   "from": "66-D6-LS2B.b",
+   "to": "66-D6-T2",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-T2--66-D6-LS3A-a",
+   "from": "66-D6-T2",
+   "to": "66-D6-LS3A.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-LS3A-b--66-D6-N5",
+   "from": "66-D6-LS3A.b",
+   "to": "66-D6-N5",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N5--66-D6-CB3-a",
+   "from": "66-D6-N5",
+   "to": "66-D6-CB3.a",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-CB3-b--66-D6-N6",
+   "from": "66-D6-CB3.b",
+   "to": "66-D6-N6",
+   "conductor": "bare"
+  },
+  {
+   "id": "66-D6-N6--66-D6-LSB-a",
+   "from": "66-D6-N6",
+   "to": "66-D6-LSB.a",
    "conductor": "bare"
   },
   {
@@ -2822,6 +2679,18 @@
    "id": "66-TR-2-LV--TR-2-lv",
    "from": "66-TR-2-LV",
    "to": "TR-2.lv",
+   "conductor": "enclosed"
+  },
+  {
+   "id": "220-TR-3-HV--TR-3-hv",
+   "from": "220-TR-3-HV",
+   "to": "TR-3.hv",
+   "conductor": "enclosed"
+  },
+  {
+   "id": "66-TR-3-LV--TR-3-lv",
+   "from": "66-TR-3-LV",
+   "to": "TR-3.lv",
    "conductor": "enclosed"
   }
  ],

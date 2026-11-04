@@ -143,6 +143,9 @@ function clearGroup(g){ while(g.children.length){ const c=g.children.pop(); c.ge
 function buildSite(site){
   clearGroup(siteGroup); for (const k in condLines) delete condLines[k]; for (const k in switchMeshes) delete switchMeshes[k];
   const kinds=Object.fromEntries(site.topology.nodes.map(n=>[n.id,n.kind]));
+  // 構内の広がりに合わせてカメラの注視点と距離を決める（原点は敷地の隅でもよいように）
+  { const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
+    if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); controls.target.set(c.x,c.y,0); controls.radius=Math.max(60, bb.getSize(new THREE.Vector3()).length()*1.1); } }
   for (const it of site.layout.items){
     if (it.primitives.length){
       const pts=[]; for (const p of it.primitives){ pts.push(new THREE.Vector3(...p.a), new THREE.Vector3(...p.b)); }

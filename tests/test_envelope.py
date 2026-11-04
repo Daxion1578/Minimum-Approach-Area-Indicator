@@ -32,8 +32,8 @@ def test_envelope_follows_energization_state(topo, site, states):
     ids_strict = {e["conductor_id"] for e in envelopes(topo, site.layout, res, treat_ungrounded_as_live=False)["envelopes"]}
     assert "220-TR-2-HV" not in ids_conservative       # 接地済みの区間には包絡を作らない
     assert "220-LINE-E2" in ids_strict                 # 運転継続の線路には作る
-    assert "220-D2-N4" in ids_conservative and "220-D2-N4" not in ids_strict  # 未接地は保守側でだけ
-    assert res.state_of("220-D2-N4") == DEAD_UNGROUNDED
+    assert "220-T2-N1" in ids_conservative and "220-T2-N1" not in ids_strict  # 未接地は保守側でだけ
+    assert res.state_of("220-T2-N1") == DEAD_UNGROUNDED
 
 
 def test_enclosed_conductors_get_no_envelope(topo, site, states):
