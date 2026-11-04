@@ -11,9 +11,7 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
-    ],
-    "ask": [
+      "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(pip install:*)"
     ],
