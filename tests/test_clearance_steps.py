@@ -80,3 +80,19 @@ def test_steps_do_not_ground_the_new_bay(topo, site, states):
     assert r["ok"], r["problems"]
     assert "220-L1-CB" in {o["id"] for o in r["steps"][0]["ops"]}
     assert not any(o["id"].startswith("66-D6") for o in r["steps"][2]["ops"])
+
+
+def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
+    """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。余裕の基準を 0 にすれば同じ配置が「可」になる。"""
+    from engine.steps import generate
+    st = generate(topo, states["normal"], ["TR-2"])
+    final = st["steps"][-1]["state"]
+    env = envelopes(topo, site.layout, energize(topo, final), ClearanceTable.load())
+    c = Crane(base=(88.0, 72.0), heading_deg=0, boom_len_m=14, boom_elev_deg=55, slew_deg=(-50, 50), hook_drop_m=2)  # 画面の初期値で起伏 55°
+    out = evaluate(env, c)
+    assert out["verdict"] == CONDITIONAL
+    assert 0 <= out["worst"]["margin_m"] < 0.5
+    assert out["conditions"] and out["reasons"][0].startswith("R6")
+    from engine.clearance import load_rules
+    relaxed = evaluate(env, c, {**load_rules(), "margin_m": 0.0})
+    assert relaxed["verdict"] == OK and relaxed["conditions"] == []
