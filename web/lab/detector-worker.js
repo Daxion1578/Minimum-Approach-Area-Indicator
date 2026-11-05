@@ -22,7 +22,11 @@ async function fetchVerified(f, as) {
 async function loadOrt() {
   if (ort) return ort;
   const [code, wasm] = await Promise.all([fetchVerified(ORT.code, 'text'), fetchVerified(ORT.wasm, 'buffer')]);
-  const mod = await import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+  // 照合済みの本文を blob: の URL から読み込む。blob: の URL は相対パスの基準にできず、wasm の場所を
+  // new URL('…wasm', import.meta.url) で求める処理が失敗するため、import.meta.url を配布元の URL に置き換える
+  // （wasm 本体は照合済みのものを wasmBinary で渡すので、その URL から取りに行くことはない）
+  const patched = code.replaceAll('import.meta.url', JSON.stringify(ORT.base + ORT.code.file));
+  const mod = await import(URL.createObjectURL(new Blob([patched], { type: 'text/javascript' })));
   mod.env.wasm.wasmBinary = wasm;   // 照合済みの wasm を渡す（パスからは取りに行かせない）
   mod.env.wasm.numThreads = 1;      // Pages は cross-origin isolation が無く、複数スレッドは使えない
   mod.env.wasm.proxy = false;
