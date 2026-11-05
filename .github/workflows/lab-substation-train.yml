@@ -36,10 +36,12 @@ jobs:
       - name: Install (CPU)
         run: |
           python -m pip install --upgrade pip
-          printf '%s\n' 'torch==2.5.1+cpu' 'torchvision==0.20.1+cpu' 'sympy==1.13.1' > /tmp/constraints.txt
+          # numpy 2.4 で np.trapz が無くなり、ultralytics 8.3.40 の精度計算（compute_ap）が落ちる（1回目の学習で発生）ので 2.3 未満にする
+          printf '%s\n' 'torch==2.5.1+cpu' 'torchvision==0.20.1+cpu' 'sympy==1.13.1' 'numpy<2.3' > /tmp/constraints.txt
           pip install -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu \
             torch torchvision "ultralytics==8.3.40" onnx onnxslim onnxruntime "playwright==1.48.0"
-          pip list 2>/dev/null | grep -iE '^(torch|torchvision|ultralytics|onnx|onnxslim|onnxruntime|numpy|sympy|playwright) '
+          pip list 2>/dev/null | grep -iE '^(torch|torchvision|ultralytics|onnx|onnxslim|onnxruntime|numpy|sympy|playwright|opencv-python) '
+          python -c "import numpy as np; assert hasattr(np, 'trapz'), 'numpy に trapz が無い'; print('numpy', np.__version__, 'trapz あり')"
       - name: Download data (Zenodo, CC BY 4.0)
         run: |
           curl -fL --retry 3 -o /tmp/ds.zip "$DATA_URL"
