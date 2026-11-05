@@ -235,7 +235,7 @@
   addEventListener('unhandledrejection', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + ((ev.reason && ev.reason.message) || ev.reason)); });
 </script>
 <script type="module">
-import { CLASSES, classInfo, namesMatch, Tracker, makeFrame, trackShape, segSegDist } from './detector.js';
+import { CLASSES, VOCAB_LABEL, classInfo, useVocab, Tracker, makeFrame, trackShape, segSegDist } from './detector.js';
 import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
 // three.js は同梱品だけを使う（このページはキーを扱うので、改ざん照合のない CDN のコードは読み込まない）
 let THREE = null;
@@ -712,14 +712,15 @@ async function startDetector(buf, name) {
   detState = 'loading'; detErr = ''; showDetInfo(`検出器を準備しています（${name}。初回は実行部品 約22MB を取得）…`);
   try {
     const info = await detector.init(buf);
-    // 探す語が画面と同じ順で同じでなければ使わない（違うモデルだと、がいしを「人」と読み違えて離隔帯が出ないことがある）
-    if (info.nc !== CLASSES.length || !namesMatch(info.names)) {
+    // 探す語が、画面の知っている表のどれかと同じ順で同じでなければ使わない（違うモデルだと、がいしを「人」と読み違えて離隔帯が出ないことがある）
+    const vocab = useVocab(info.names);
+    if (!vocab || info.nc !== CLASSES.length) {
       detector.close(); detState = 'error'; detErr = 'モデルの探す語が画面と合わない';
-      showDetInfo(`このモデルは使えません: 探す語が画面と合いません（モデル ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export の成果物の yoloworld-s.onnx を選んでください`, true);
+      showDetInfo(`このモデルは使えません: 探す語が画面の表と合いません（モデル ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export か lab-substation-train の成果物のモデルを選んでください`, true);
       return;
     }
     detState = 'ready';
-    showDetInfo(`検出器: 使えます（${info.ep}・初回 ${info.warmMs} ms）` + (info.ep === 'WASM' ? '。WebGPU が使えないため遅くなります' : ''));
+    showDetInfo(`検出器: 使えます（${VOCAB_LABEL[vocab]}・${info.ep}・初回 ${info.warmMs} ms）` + (info.ep === 'WASM' ? '。WebGPU が使えないため遅くなります' : ''));
   } catch (e) { detState = 'error'; detErr = e.message; showDetInfo('検出器を準備できません: ' + e.message, true); }
 }
 async function showSavedModel() {
@@ -730,7 +731,7 @@ async function showSavedModel() {
 }
 $('modelFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  if (!/\.onnx$/i.test(f.name)) toast(`「${f.name}」は .onnx ではありません。読めなければ yoloworld-s.onnx を選んでください`, 'warn');
+  if (!/\.onnx$/i.test(f.name)) toast(`「${f.name}」は .onnx ではありません。成果物の zip の中の .onnx を選んでください`, 'warn');
   const buf = await f.arrayBuffer();
   try { await saveModel(f.name, buf.slice(0)); } catch (err) { toast('このブラウザに保存できませんでした: ' + err.message, 'warn'); }
   $('btnModelDel').hidden = false; startDetector(buf, f.name);

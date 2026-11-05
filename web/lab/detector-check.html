@@ -45,7 +45,7 @@
     <button id="btnModelDel" hidden>保存したモデルを消す</button>
     <label class="note"><input type="checkbox" id="wasmOnly"> WebGPU を使わない（比べる用）</label>
   </div>
-  <p class="note">モデルは GitHub Actions の <span class="mono">lab-yoloworld-export</span> の成果物 <span class="mono">yoloworld-onnx</span>（zip）の中の <span class="mono">yoloworld-s.onnx</span>。AGPL-3.0 のためリポジトリには置かない。選ぶとこのブラウザに保存され、<a href="camera-ar.html">カメラAR</a> でも使える。実行部品（onnxruntime-web 1.20.1、約22MB）は jsDelivr から取り、ハッシュで照合してから使う。</p>
+  <p class="note">モデルは GitHub Actions の成果物（zip）の中の .onnx。<span class="mono">lab-yoloworld-export</span> の <span class="mono">yoloworld-s.onnx</span>（YOLO-World・語11個）か、<span class="mono">lab-substation-train</span> の <span class="mono">substation-*.onnx</span>（公開データで学習した変電所機器15種類）。AGPL-3.0 のためリポジトリには置かない。選ぶとこのブラウザに保存され、<a href="camera-ar.html">カメラAR</a> でも使える。実行部品（onnxruntime-web 1.20.1、約22MB）は jsDelivr から取り、ハッシュで照合してから使う。</p>
 
   <h2>写真</h2>
   <div class="row">
@@ -64,7 +64,7 @@
   <p class="warnbox">実験用です。検出は候補にすぎず、見落としも誤りもあります。電気が来ているかは写真では分かりません。</p>
 </main>
 <script type="module">
-import { CLASSES, classInfo, namesMatch, nms } from './detector.js';
+import { CLASSES, VOCAB_LABEL, classInfo, namesMatch, useVocab, nms } from './detector.js';
 import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
 
 const $ = id => document.getElementById(id);
@@ -81,11 +81,12 @@ async function startDetector(buf, name) {
   setStatus(`検出器を準備しています（${esc(name)}）…`);
   try {
     const info = await det.init(buf, $('wasmOnly').checked ? 'wasm' : 'webgpu');
-    if (info.nc !== CLASSES.length || !namesMatch(info.names)) {   // 探す語が画面と同じ順で同じでなければ使わない
+    const vocab = useVocab(info.names);   // 探す語が、画面の知っている表のどれかと同じ順で同じでなければ使わない
+    if (!vocab || info.nc !== CLASSES.length) {
       det.close();
-      throw new Error(`探す語が画面と合わない（モデル: ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export の成果物の yoloworld-s.onnx を選んでください`);
+      throw new Error(`探す語が画面の表と合わない（モデル: ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export か lab-substation-train の成果物のモデルを選んでください`);
     }
-    setStatus(`使えます: ${info.ep}・初回 ${info.warmMs} ms・探す語 ${info.nc} 個（画面と一致）${info.ep === 'WASM' && info.gpuError ? '（WebGPU: ' + info.gpuError + '）' : ''}`, 'ok');
+    setStatus(`使えます: ${VOCAB_LABEL[vocab]}・${info.ep}・初回 ${info.warmMs} ms${info.ep === 'WASM' && info.gpuError ? '（WebGPU: ' + info.gpuError + '）' : ''}`, 'ok');
     return info;
   } catch (e) { setStatus('検出器を準備できません: ' + e.message, 'ng'); throw e; }
   finally { updateRun(); }
@@ -99,7 +100,7 @@ async function showSaved() {
 }
 $('modelFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  if (!/\.onnx$/i.test(f.name)) setStatus(`「${f.name}」は .onnx ではありません。読めなければ yoloworld-s.onnx を選んでください`, 'warn');
+  if (!/\.onnx$/i.test(f.name)) setStatus(`「${f.name}」は .onnx ではありません。成果物の zip の中の .onnx を選んでください`, 'warn');
   const buf = await f.arrayBuffer();
   try { await saveModel(f.name, buf.slice(0)); } catch (err) { setStatus('このブラウザに保存できませんでした（容量など）: ' + err.message, 'warn'); }
   await showSaved();

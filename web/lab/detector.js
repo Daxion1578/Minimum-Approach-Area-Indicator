@@ -4,24 +4,53 @@
 
 export const INPUT = 640;
 
-// 探す語。lab/yoloworld/classes.txt と同じ順（テストで照合する）。
+// 検出器ごとの「探す語」の表。モデルの付帯情報（names）と同じ順で完全に一致した表だけを使う（テストで各 classes.txt と照合する）。
 // role: live = 充電部になりうる（離隔帯を出す。既定は充電中） / approach = 近づく物（離隔帯までの距離を出す） / other = その他
-export const CLASSES = [
-  { en: 'insulator', ja: 'がいし', role: 'live' },
-  { en: 'bushing', ja: 'ブッシング', role: 'live' },
-  { en: 'overhead power line', ja: '架空線', role: 'live' },
-  { en: 'disconnect switch', ja: '断路器', role: 'live' },
-  { en: 'circuit breaker', ja: '遮断器', role: 'live' },
-  { en: 'transformer', ja: '変圧器', role: 'live' },
-  { en: 'lattice steel tower', ja: '鉄塔・鉄構', role: 'other' },
-  { en: 'mobile crane', ja: '移動式クレーン', role: 'approach' },
-  { en: 'crane boom', ja: 'クレーンのブーム', role: 'approach' },
-  { en: 'aerial work platform', ja: '高所作業車', role: 'approach' },
-  { en: 'person', ja: '人', role: 'approach' },
-];
+export const VOCABS = {
+  // YOLO-World に語を固定して書き出したもの（lab/yoloworld/classes.txt）
+  'yoloworld-v1': [
+    { en: 'insulator', ja: 'がいし', role: 'live' },
+    { en: 'bushing', ja: 'ブッシング', role: 'live' },
+    { en: 'overhead power line', ja: '架空線', role: 'live' },
+    { en: 'disconnect switch', ja: '断路器', role: 'live' },
+    { en: 'circuit breaker', ja: '遮断器', role: 'live' },
+    { en: 'transformer', ja: '変圧器', role: 'live' },
+    { en: 'lattice steel tower', ja: '鉄塔・鉄構', role: 'other' },
+    { en: 'mobile crane', ja: '移動式クレーン', role: 'approach' },
+    { en: 'crane boom', ja: 'クレーンのブーム', role: 'approach' },
+    { en: 'aerial work platform', ja: '高所作業車', role: 'approach' },
+    { en: 'person', ja: '人', role: 'approach' },
+  ],
+  // 公開データ（変電所機器 15 種類、CC BY 4.0）で学習したもの（lab/substation/classes.txt）。どれも充電部になりうる。
+  // 開・閉の別は学習データの分け方で、充電中か停止中かの判断には使わない（決めるのは人）
+  'substation-v1': [
+    { en: 'open blade disconnect switch', ja: '断路器（ブレード・開）', role: 'live' },
+    { en: 'closed blade disconnect switch', ja: '断路器（ブレード・閉）', role: 'live' },
+    { en: 'open tandem disconnect switch', ja: '断路器（タンデム・開）', role: 'live' },
+    { en: 'closed tandem disconnect switch', ja: '断路器（タンデム・閉）', role: 'live' },
+    { en: 'breaker', ja: '遮断器', role: 'live' },
+    { en: 'fuse disconnect switch', ja: 'ヒューズ付き断路器', role: 'live' },
+    { en: 'glass disc insulator', ja: 'がいし（ガラス懸垂）', role: 'live' },
+    { en: 'porcelain pin insulator', ja: 'がいし（磁器ピン）', role: 'live' },
+    { en: 'muffle', ja: 'ケーブルヘッド（終端）', role: 'live' },
+    { en: 'lightning arrester', ja: '避雷器', role: 'live' },
+    { en: 'recloser', ja: 'リクローザ', role: 'live' },
+    { en: 'power transformer', ja: '変圧器', role: 'live' },
+    { en: 'current transformer', ja: '変流器（CT）', role: 'live' },
+    { en: 'potential transformer', ja: '計器用変圧器（VT）', role: 'live' },
+    { en: 'tripolar disconnect switch', ja: '三極断路器', role: 'live' },
+  ],
+};
+export const VOCAB_LABEL = { 'yoloworld-v1': 'YOLO-World・語11個', 'substation-v1': '変電所機器15種類（公開データで学習）' };
+// いま使っている表。useVocab で切り替わる（ES モジュールの live binding なので、読み込んだ側にも反映される）
+export let CLASSES = VOCABS['yoloworld-v1'];
+export let VOCAB_ID = 'yoloworld-v1';
+const sameNames = (v, names) => Array.isArray(names) && names.length === v.length && names.every((n, i) => n === v[i].en);
+// モデルの探す語と同じ順で完全に一致する表の名前（無ければ null）
+export const vocabFor = names => Object.keys(VOCABS).find(id => sameNames(VOCABS[id], names)) || null;
+export const namesMatch = names => vocabFor(names) !== null;
+export function useVocab(names) { const id = vocabFor(names); if (id) { CLASSES = VOCABS[id]; VOCAB_ID = id; } return id; }
 export const classInfo = cls => CLASSES[cls] || { en: `class ${cls}`, ja: `種類${cls}`, role: 'other' };
-// モデルの探す語が画面の語と同じ順で同じか（違うモデルで「がいし」を「人」と読み違えないため）
-export const namesMatch = names => Array.isArray(names) && names.length === CLASSES.length && names.every((n, i) => n === CLASSES[i].en);
 
 // ------------------------------------------------------------ ONNX の付帯情報（探す語）を読む
 // protobuf の1階層ぶんの項目を順に渡す。長さつきの項目は中を見ずに飛ばせるので、重み（数十MB）を読まずに済む
@@ -238,10 +267,11 @@ export class Tracker {
   constructor(opts = {}) {
     this.opts = {
       keepMs: 4000, minMove: 0.15, maxObs: 40, minObs: 3, sigma: 0.012, assumeDepth: 10, maxUnc: 4, movingWindowMs: 6000,
-      moving: new Set(CLASSES.flatMap((c, i) => c.role === 'approach' ? [i] : [])), ...opts,
+      moving: null, ...opts,   // null なら、いま使っている表で role が approach の種類を動く物とみなす
     };
     this.tracks = []; this.nextId = 1;
   }
+  isMoving(cls) { return this.opts.moving ? this.opts.moving.has(cls) : classInfo(cls).role === 'approach'; }
   reset() { this.tracks = []; this.nextId = 1; }
   // dets: decode() の枠（frame の W×H の座標）。frame: makeFrame() の戻り値。now: ミリ秒。戻り値: dets と同じ並びの追跡番号
   update(dets, frame, now) {
@@ -270,11 +300,11 @@ export class Tracker {
       const t = { id: this.nextId++, cls: d.cls, box: d, obs: [], est: null, cand: null, unc: Infinity, ext: { h: 0, w: 0, dir: null }, hits: 0, firstSeen: now, lastSeen: now, score: d.score };
       this.tracks.push(t); ids[di] = t.id; this.observe(t, d, frame, now);
     });
-    this.tracks = this.tracks.filter(t => now - t.lastSeen < keepMs || (t.est && !this.opts.moving.has(t.cls)));
+    this.tracks = this.tracks.filter(t => now - t.lastSeen < keepMs || (t.est && !this.isMoving(t.cls)));
     return ids;
   }
   observe(t, d, frame, now) {
-    const o = this.opts, cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2, r = frame.rayOf(cx, cy), moving = o.moving.has(t.cls);
+    const o = this.opts, cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2, r = frame.rayOf(cx, cy), moving = this.isMoving(t.cls);
     r.t = now; t.box = d; t.lastSeen = now; t.hits++; t.score = d.score;
     const last = t.obs[t.obs.length - 1];
     if (!last || len(sub(last.o, r.o)) > o.minMove) {   // 前に足した場所から minMove 以上動いたときだけ足す

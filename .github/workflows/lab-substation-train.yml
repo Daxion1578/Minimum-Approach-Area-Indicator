@@ -1,0 +1,98 @@
+name: lab-substation-train
+# 実験ブランチ lab-camera-ar 専用。公開データ（変電所機器 15 種類、Zenodo 7884270、CC BY 4.0）だけで検出器を学習し、
+# 出発点の違う2つを同時に作って比べる。
+#   oiv7    = Open Images V7 で学習済みの YOLOv8n から追加学習（その重みを COCO から始めたかは公開元の記載がなく不明）
+#   scratch = 事前学習なし。変電所データだけでゼロから学習（使うデータは CC BY 4.0 だけ）
+# データ（実在の変電所の写真）はこの job の中でだけ使い、リポジトリにも成果物にも入れない。
+# モデル（Ultralytics、AGPL-3.0）はコミットせず、許諾書の全文・対応ソースの在り処・データの出典を添えて成果物に置く。
+on:
+  push:
+    branches: [lab-camera-ar]
+    paths:
+      - 'lab/substation/**'
+      - '.github/workflows/lab-substation-train.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lab-substation-train
+  cancel-in-progress: true
+env:
+  DATA_URL: 'https://zenodo.org/records/7884270/files/substation-semantic-dataset.zip?download=1'
+  DATA_MD5: 'ca897cb85a3b944af6a1355e83530c32'
+jobs:
+  train:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [oiv7, scratch]
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (CPU)
+        run: |
+          python -m pip install --upgrade pip
+          printf '%s\n' 'torch==2.5.1+cpu' 'torchvision==0.20.1+cpu' 'sympy==1.13.1' > /tmp/constraints.txt
+          pip install -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu \
+            torch torchvision "ultralytics==8.3.40" onnx onnxslim onnxruntime "playwright==1.48.0"
+          pip list 2>/dev/null | grep -iE '^(torch|torchvision|ultralytics|onnx|onnxslim|onnxruntime|numpy|sympy|playwright) '
+      - name: Download data (Zenodo, CC BY 4.0)
+        run: |
+          curl -fL --retry 3 -o /tmp/ds.zip "$DATA_URL"
+          echo "$DATA_MD5  /tmp/ds.zip" | md5sum -c -
+          mkdir -p /tmp/ds && unzip -q /tmp/ds.zip -d /tmp/ds -x '*masks*' && rm /tmp/ds.zip
+          find /tmp/ds -maxdepth 3 -type d | head -20
+          curl -fsS https://zenodo.org/api/records/7884270 | python -c "import json,sys; m=json.load(sys.stdin)['metadata']; print('creators:', '; '.join(c['name'] for c in m.get('creators', []))); print('title:', m.get('title')); print('license:', m.get('license'))" | tee /tmp/ds-meta.txt
+      - name: Prepare (polygons to boxes)
+        run: python lab/substation/prepare.py /tmp/ds /tmp/sub
+      - name: Train (${{ matrix.variant }})
+        run: python lab/substation/train.py --variant ${{ matrix.variant }} --data /tmp/sub/data.yaml --stats /tmp/sub/stats.json --hours 4.2
+      - name: License and source
+        run: |
+          D=lab/substation/dist
+          curl -fsSL -o $D/LICENSE-AGPL-3.0.txt https://raw.githubusercontent.com/ultralytics/ultralytics/v8.3.40/LICENSE \
+            || curl -fsSL -o $D/LICENSE-AGPL-3.0.txt https://www.gnu.org/licenses/agpl-3.0.txt
+          if [ "${{ matrix.variant }}" = "oiv7" ]; then
+            INIT="出発点の重み: yolov8n-oiv7.pt（Ultralytics、AGPL-3.0。Open Images V7 で学習。Open Images は公開元の表示で画像 CC BY 2.0・注釈 CC BY 4.0。この重みを COCO の重みから始めたかは公開元の記載がなく不明）"
+          else
+            INIT="出発点の重み: なし（事前学習なし。学習に使ったデータは下の CC BY 4.0 のデータだけ）"
+          fi
+          {
+            echo "substation-${{ matrix.variant }}.onnx は Ultralytics YOLOv8n（AGPL-3.0）を、公開データで学習して ONNX に書き出したもの。"
+            echo "$INIT"
+            echo "学習データ: A Semantically Annotated 15-Class Ground Truth Dataset for Substation Equipment（Zenodo、https://doi.org/10.5281/zenodo.7884270）"
+            sed 's/^/  /' /tmp/ds-meta.txt
+            echo "  許諾: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/ 。注釈の多角形を囲む長方形に変換して学習に使った。データそのものは含まない。"
+            echo "許諾書の全文（モデル）: LICENSE-AGPL-3.0.txt"
+            echo "対応するソース: Ultralytics 8.3.40 https://github.com/ultralytics/ultralytics/tree/v8.3.40"
+            echo "  学習の手順: https://github.com/${{ github.repository }}/tree/${{ github.sha }}/lab/substation"
+            echo "MAAI リポジトリ（Apache-2.0）には入れない。実験用に端末へ読み込んで使う。"
+          } > $D/LICENSE-NOTE.txt
+          cat $D/LICENSE-NOTE.txt; ls -la $D
+      - uses: actions/upload-artifact@v4
+        with:
+          name: substation-${{ matrix.variant }}
+          path: lab/substation/dist/
+          retention-days: 30
+      - name: Browser check (model in onnxruntime-web vs Ultralytics, on a validation image)
+        run: |
+          python -m playwright install --with-deps chromium
+          mkdir -p _ci
+          python - <<'EOF'
+          from pathlib import Path
+          import shutil
+          labs = sorted(Path('/tmp/sub/labels/val').glob('*.txt'), key=lambda p: -len(p.read_text().splitlines()))
+          for lab in labs:
+              imgs = [p for p in Path('/tmp/sub/images/val').glob(lab.stem + '.*') if p.suffix.lower() in ('.jpg', '.jpeg', '.png')]
+              if imgs:
+                  shutil.copy(imgs[0].resolve(), '_ci/check' + imgs[0].suffix.lower())
+                  print('確認用の画像:', imgs[0].name, '枠', len(lab.read_text().splitlines()))
+                  break
+          EOF
+          IMG=$(ls _ci/check.* | head -1)
+          python lab/yoloworld/check_ultralytics.py "$IMG" _ci/expect.json --model lab/substation/dist/substation-${{ matrix.variant }}.onnx --require ''
+          python lab/yoloworld/check_browser.py --root . --model lab/substation/dist/substation-${{ matrix.variant }}.onnx --image "$IMG" --expect _ci/expect.json

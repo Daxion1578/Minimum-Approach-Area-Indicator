@@ -30,6 +30,15 @@ GitHub Pages の配信ブランチを `lab-camera-ar` にして、Android の Ch
 2. zip を開き、`yoloworld-s.onnx`（約48MB）を端末に置く。中の `LICENSE-NOTE.txt` と `LICENSE-AGPL-3.0.txt` が許諾と対応ソースの在り処。
 3. `web/lab/detector-check.html` で「モデルを選ぶ」→ 写真を選んで「検出する」。枠が出れば動いている。選んだモデルは `camera-ar.html` でも使える。
 
+## 変電所機器の検出器（公開データで学習・試験中）
+
+YOLO-World（語を指定するだけの検出器）は、変電所の機器を言葉として知らず、広く写した写真では枠が出なかった。そこで公開データだけで検出器を学習する（Actions の `lab-substation-train`）。
+
+- データ: A Semantically Annotated 15-Class Ground Truth Dataset for Substation Equipment（Zenodo 7884270、CC BY 4.0）。ブラジルの配電用変電所1か所を約2年撮った1,660枚、15種類（断路器の開閉と形式、遮断器、がいし2種、ケーブルヘッド、避雷器、リクローザ、変圧器・変流器・計器用変圧器）。Actions の中でだけ使い、リポジトリにも成果物にも入れない。
+- 出発点を変えた2つを同時に学習して比べる。`oiv7` は Open Images V7 で学習済みの YOLOv8n から（公開元の表示では画像 CC BY 2.0・注釈 CC BY 4.0。ただしその重みを COCO から始めたかは記載がなく不明）。`scratch` は事前学習なしで、使うデータは CC BY 4.0 のこのデータだけ。
+- できるモデルは Ultralytics の AGPL-3.0 で、成果物に許諾書の全文・対応ソース・データの出典を添える。MAAI 本体には入れない。
+- 確認用の画像は学習用と同じ変電所・近い時期の写真を含むので、数値は甘めに出る。日本の設備での当たり外れは点検ページで確かめる。
+
 ## 段階
 
 1. Claude が1コマから候補を示す → 人が選んで照準で2回狙う → 3D の点 → 離隔帯を表示。

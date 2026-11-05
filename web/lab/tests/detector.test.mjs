@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { CLASSES, INPUT, toTensorData, decode, makeFrame, triangulateMany, Tracker, segSegDist, trackShape, readOnnxNames, namesMatch } from '../detector.js';
+import { CLASSES, VOCABS, INPUT, toTensorData, decode, makeFrame, triangulateMany, Tracker, segSegDist, trackShape, readOnnxNames, namesMatch, useVocab, vocabFor } from '../detector.js';
 
 const here = p => fileURLToPath(new URL(p, import.meta.url));
 let n = 0;
@@ -22,9 +22,20 @@ function pose(pos, yawDeg, pitchDeg) {
 }
 const W = 360, H = 640, PROJ = perspective(60, W / H);
 
-test('探す語が lab/yoloworld/classes.txt と同じ順', () => {
-  const txt = readFileSync(here('../../../lab/yoloworld/classes.txt'), 'utf8').split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('#'));
-  assert.deepEqual(CLASSES.map(c => c.en), txt);
+test('探す語の表が、それぞれの classes.txt と同じ順', () => {
+  const read = f => readFileSync(here(f), 'utf8').split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('#'));
+  assert.deepEqual(VOCABS['yoloworld-v1'].map(c => c.en), read('../../../lab/yoloworld/classes.txt'));
+  assert.deepEqual(VOCABS['substation-v1'].map(c => c.en), read('../../../lab/substation/classes.txt'));
+  assert.ok(VOCABS['substation-v1'].every(c => c.role === 'live'), '変電所機器はどれも充電部になりうる');
+});
+
+test('モデルの探す語で表を切り替え、知らない語のモデルは使わない', () => {
+  const sub = VOCABS['substation-v1'].map(c => c.en), yw = VOCABS['yoloworld-v1'].map(c => c.en);
+  assert.equal(useVocab(sub), 'substation-v1'); assert.equal(CLASSES.length, 15);
+  assert.equal(new Tracker().isMoving(0), false, '変電所機器の表には動く物がない');
+  assert.equal(useVocab(['insulator']), null); assert.equal(CLASSES.length, 15, '合わなければ切り替えない');
+  assert.equal(useVocab(yw), 'yoloworld-v1'); assert.equal(new Tracker().isMoving(8), true, 'クレーンのブームは動く物');
+  assert.equal(vocabFor([...sub].reverse()), null);
 });
 
 test('前処理: 中央に置いて 0〜1、余白は灰色', () => {
