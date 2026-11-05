@@ -1,7 +1,7 @@
 """重機の包絡・離隔判定（engine/crane.py, engine/clearance.py）と停止ステップ生成（engine/steps.py）。"""
-from engine.clearance import CONDITIONAL, NG, OK, evaluate
+from engine.clearance import CONDITIONAL, DEFAULT_RULES, NG, OK, evaluate
 from engine.crane import Crane
-from engine.energize import DEAD_GROUNDED, LIVE, energize
+from engine.energize import LIVE, energize
 from engine.envelope import ClearanceTable, envelopes
 from engine.steps import generate
 
@@ -16,6 +16,21 @@ def test_crane_sweep_has_parts_for_each_angle():
     caps = c.sweep(5.0)
     assert [x["part"] for x in caps[:1]] == ["carrier"]
     assert sum(1 for x in caps if x["part"] == "boom") == 5
+    c2 = Crane(base=(0, 0), slew_deg=(-10, 10), boom_elev2_deg=70)
+    assert sum(1 for x in c2.sweep(5.0) if x["part"] == "boom") == 10      # 起伏角が 2 つなら両方で掃引
+
+
+def test_sweep_does_not_miss_approach_between_steps(topo, site, states):
+    """刻みの間の最接近を見落とさない: 粗い刻みの判定は、細かい刻みの判定より近い（保守側）か同じ距離を返す。"""
+    env = _env(topo, site, states)
+    from synth.gen_site import P
+    by = P["220"]["bus"]["y"]
+    import math
+    for base in ((60.0, by - 16.0), (47.0, by - 14.0), (70.0, by - 15.5)):
+        c = Crane(base=base, heading_deg=90, boom_len_m=14, boom_elev_deg=40, slew_deg=(-60, 60))
+        fine = min(h["distance_m"] for h in evaluate(env, c, {**DEFAULT_RULES, "slew_step_deg": 0.25})["hits"])
+        coarse = min(h["distance_m"] for h in evaluate(env, c, {**DEFAULT_RULES, "slew_step_deg": 10.0})["hits"])
+        assert coarse <= fine + 1e-6, (base, coarse, fine)
     tip = c.tip(0.0)
     assert tip[2] > c.pivot()[2]
 
@@ -50,36 +65,48 @@ def test_outage_removes_envelopes_and_changes_verdict(topo, site, states):
     assert after["verdict"] in (OK, CONDITIONAL)
 
 
-def test_steps_for_transformer_isolate_both_sides_and_ground(topo, site, states):
-    r = generate(topo, states["normal"], ["TR-2"])
+def _opened(r):
+    return {o["id"] for o in r["ops"]}
+
+
+def test_breaker_target_opens_itself_and_both_neighbouring_disconnectors(topo, states):
+    """遮断器を取り替える: 遮断器と両隣の断路器を切る。ほかは平常どおり。"""
+    r = generate(topo, states["normal"], ["66-D1-CB1"])
     assert r["ok"], r["problems"]
-    titles = [s["title"] for s in r["steps"]]
-    assert titles == ["遮断器を開放", "断路器を開放（両側）", "接地開閉器を投入"]
-    ids1 = {o["id"] for o in r["steps"][0]["ops"]}
-    assert "220-T2-CB" in ids1 and "66-D2-CB1" in ids1 and "66-D2-CB2" in ids1     # 1・1/2 は両隣の遮断器
-    ids2 = {o["id"] for o in r["steps"][1]["ops"]}
-    assert {"220-T2-BLS", "220-T2-LS", "66-TR-2-LS"} <= ids2
-    res = energize(topo, r["steps"][2]["state"])
-    assert res.errors == [] and res.state_of("TR-2") == DEAD_GROUNDED
-    assert res.state_of("220-BUS-B") == LIVE and res.state_of("220-LINE-E1") == LIVE
+    assert _opened(r) == {"66-D1-CB1", "66-D1-LSA", "66-D1-LS1B"}
+    assert len(r["steps"]) == 1 and r["steps"][0]["title"] == "作業日の停止範囲"
+    assert r["conditions"][0].startswith("作業する機器に電気が流れ込む端すべてに")   # 接地は条件として必ず書く
+    res = energize(topo, r["state"])
+    assert res.state_of("66-D1-CB1.a") != LIVE and res.state_of("66-D1-CB1.b") != LIVE
+    assert res.state_of("66-BUS-A") == LIVE and res.state_of("TR-1") == LIVE
 
 
-def test_steps_for_bus_section_open_section_switches(topo, site, states):
+def test_line_side_disconnector_opens_breaker_and_bus_side_and_asks_remote_end(topo, states):
+    """線路側の断路器を取り替える: 構内は遮断器と母線側断路器を切り、相手端の遮断器・断路器を切る条件を書く。"""
+    r = generate(topo, states["normal"], ["220-L1-LS"])
+    assert r["ok"], r["problems"]
+    assert _opened(r) == {"220-L1-LS", "220-L1-CB", "220-L1-BLS"}
+    assert any("相手端" in c for c in r["conditions"])
+    assert r["state"]["sources"]["220-LINE-E1"] == "dead"
+    assert energize(topo, r["state"]).state_of("220-BUS-A") == LIVE
+
+
+def test_bus_side_disconnector_keeps_bus_live_and_asks_terminal_detach(topo, states):
+    """母線側の断路器: 母線は止めず、母線側の端子の切り離しを条件にする。回路側は遮断器と次の断路器まで。"""
+    r = generate(topo, states["normal"], ["220-T2-BLS"])
+    assert r["ok"], r["problems"]
+    assert {"220-T2-BLS", "220-T2-CB", "220-T2-LS"} <= _opened(r)
+    assert any("切り離す" in c and "母線は充電のまま" in c for c in r["conditions"])
+    res = energize(topo, r["state"])
+    assert res.state_of("220-BUS-B") == LIVE and res.state_of("220-T2-BLS.b") != LIVE
+
+
+def test_bus_section_opens_section_switches(topo, states):
     r = generate(topo, states["normal"], ["220-BUS-B"])
     assert r["ok"], r["problems"]
-    ids2 = {o["id"] for o in r["steps"][1]["ops"]}
-    assert {"220-SEC-AB", "220-SEC-BC"} <= ids2
-    ids3 = {o["id"] for o in r["steps"][2]["ops"]}
-    assert "220-BUS-B-ES" in ids3
-    res = energize(topo, r["steps"][2]["state"])
-    assert res.state_of("220-BUS-A") == LIVE and res.state_of("220-BUS-C") == LIVE and res.state_of("220-BUS-B") == DEAD_GROUNDED
-
-
-def test_steps_do_not_ground_the_new_bay(topo, site, states):
-    r = generate(topo, states["normal"], ["220-L1-CB"])
-    assert r["ok"], r["problems"]
-    assert "220-L1-CB" in {o["id"] for o in r["steps"][0]["ops"]}
-    assert not any(o["id"].startswith("66-D6") for o in r["steps"][2]["ops"])
+    assert {"220-SEC-AB", "220-SEC-BC"} <= _opened(r)
+    res = energize(topo, r["state"])
+    assert res.state_of("220-BUS-A") == LIVE and res.state_of("220-BUS-C") == LIVE and res.state_of("220-BUS-B") != LIVE
 
 
 def test_steps_refuse_empty_or_unknown_targets(topo, states):
@@ -89,34 +116,28 @@ def test_steps_refuse_empty_or_unknown_targets(topo, states):
         assert r["ok"] is False and r["steps"] == [] and r["problems"], targets
 
 
-def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
-    """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。
-    台本の「起伏角 65°」は既定の余裕基準（0.5m）では可、基準を 1.0m に上げると同じ配置が条件付き可になる。"""
-    from engine.clearance import load_rules
-    from engine.steps import generate
-    st = generate(topo, states["normal"], ["TR-2"])
-    final = st["steps"][-1]["state"]
-    env = envelopes(topo, site.layout, energize(topo, final), ClearanceTable.load())
-    c = Crane(base=(88.0, 72.0), heading_deg=0, boom_len_m=14, boom_elev_deg=65, slew_deg=(-50, 50), hook_drop_m=2)
-    out = evaluate(env, c)
-    assert out["verdict"] == OK and out["conditions"] == []
-    m = out["worst"]["margin_m"]
-    assert 0.5 <= m < 1.0
-    strict = evaluate(env, c, {**load_rules(), "margin_m": 1.0})
-    assert strict["verdict"] == CONDITIONAL and strict["conditions"] and strict["reasons"][0].startswith("R6")
-
-
-def test_every_step_is_valid_for_every_transformer_and_breaker(topo, states):
-    """どの変圧器・遮断器を対象にしても、途中の段階を含めて充電部への接地（invalid）が起きない。
-    接地まで届かない対象は ok=False と理由を返す（「通った」にしない）。"""
-    ids = [n for n, v in topo.nodes.items() if v.kind in ("transformer", "breaker")]
-    assert ids
+def test_every_switch_transformer_bus_gets_a_dead_scope_without_errors(topo, states):
+    """どの遮断器・断路器・変圧器・母線を対象にしても、対象が停電になり、誤り（充電部への接地）が出ない。
+    閉じた接地開閉器は使わない（接地は作業手順で取る前提）。"""
+    ids = [n for n, v in topo.nodes.items() if v.kind in ("transformer", "breaker", "disconnector", "bus")]
+    assert len(ids) > 80
     for i in ids:
         r = generate(topo, states["normal"], [i])
-        for s in r["steps"]:
-            res = energize(topo, s["state"])
-            assert res.errors == [] and not res.invalid_ids, (i, s["n"])
-        if r["ok"]:
-            assert energize(topo, r["steps"][-1]["state"]).state_of(i) == DEAD_GROUNDED, i
-        else:
-            assert r["problems"], i
+        assert r["ok"], (i, r["problems"])
+        res = energize(topo, r["state"])
+        assert res.errors == [] and not res.invalid_ids, i
+        assert not any(v == "closed" for k, v in r["state"]["switches"].items() if topo.nodes[k].kind == "earthing"), i
+
+
+def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
+    """R6: 必要離隔は満たすが余裕が margin_m 未満なら「条件付き可」と条件。
+    同じ配置でも、余裕の基準を最小余裕より大きくすると条件付き可になる。"""
+    from engine.clearance import load_rules
+    from engine.steps import generate
+    env = envelopes(topo, site.layout, energize(topo, states["normal"]), ClearanceTable.load())
+    c = Crane(base=(5.0, 5.0), heading_deg=0, boom_len_m=8, boom_elev_deg=80, slew_deg=(-10, 10))
+    out = evaluate(env, c)
+    m = out["worst"]["margin_m"]
+    assert out["verdict"] == OK and out["conditions"] == [] and m > 0.5
+    strict = evaluate(env, c, {**load_rules(), "margin_m": m + 0.5})
+    assert strict["verdict"] == CONDITIONAL and strict["conditions"] and strict["reasons"][0].startswith("R6")

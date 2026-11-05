@@ -92,8 +92,6 @@ async def _maai_call(method, path, body, has_pdf):
 
   // 取込タブ: 手元に図面が無くても試せるように、合成変電所の図面を選ぶボタン
   document.addEventListener('DOMContentLoaded', () => {
-    const sub = document.querySelector('header small');
-    if (sub) sub.textContent = sub.textContent.replace('判定はサーバの engine/ が行い', '判定は engine/（このブラウザの中で動く、サーバ版と同じコード）が行い');
     const input = document.getElementById('ingestFile');
     if (!input) return;
     const b = document.createElement('button');

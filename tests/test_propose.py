@@ -1,12 +1,12 @@
 """修正案の候補（engine/propose.py）。候補の判定値は、その候補を engine にかけ直した結果と一致しなければならない。"""
 from engine.clearance import NG, OK, evaluate
 from engine.crane import Crane
-from engine.energize import DEAD_GROUNDED, energize
+from engine.energize import LIVE, energize
 from engine.envelope import ClearanceTable, envelopes
 from engine.propose import propose
 from engine.steps import generate
 
-# 画面の初期値（docs/demo-plan.md）。段階 3 で不可、起伏角 65° で可になる位置
+# 手で置く配置の例。2号変圧器を止めた状態で不可、起伏角 65° で可になる位置
 DEMO = dict(base=(88.0, 72.0), heading_deg=0, boom_len_m=14, boom_elev_deg=45, slew_deg=(-50, 50), hook_drop_m=2)
 ORDER = {OK: 0, "conditional": 1, NG: 2}
 
@@ -53,4 +53,4 @@ def test_outage_candidate_grounds_its_target(topo, site, states):
     assert outs, "追加停止の候補が出ていない"
     for c in outs:
         res = energize(topo, c["state"])
-        assert res.errors == [] and res.state_of(c["target"]) == DEAD_GROUNDED
+        assert res.errors == [] and res.state_of(c["target"]) != LIVE

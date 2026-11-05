@@ -67,8 +67,9 @@ def setup_font() -> str:
 class Sheet:
     """図面 1 枚。紙の座標は mm（左下原点）。図枠・表題欄を持つ。"""
 
-    def __init__(self, path, pagesize, font, name, number, scale_text):
-        self.c = canvas.Canvas(str(path), pagesize=landscape(pagesize))
+    def __init__(self, path, pagesize, font, name, number, scale_text, canvas_obj=None):
+        # canvas_obj: 画面用に SVG へ描くとき（synth/svg_canvas.py）。無ければ PDF
+        self.c = canvas_obj if canvas_obj is not None else canvas.Canvas(str(path), pagesize=landscape(pagesize))
         self.w, self.h = (v / MM for v in landscape(pagesize))
         self.font = font
         self.c.setLineWidth(LW["frame"])
@@ -159,9 +160,10 @@ class Sheet:
 # --------------------------------------------------------------------------
 # 単線結線図
 # --------------------------------------------------------------------------
-STATE_RGB = {"live": (0.85, 0.1, 0.1), "dead_grounded": (0.1, 0.55, 0.2), "dead_ungrounded": (0.85, 0.55, 0.0), "invalid": (0.75, 0.0, 0.75)}
-STATE_DASH = {"live": None, "dead_grounded": [3.0, 1.5], "dead_ungrounded": [1.2, 1.2], "invalid": [0.6, 0.6]}
-STATE_JA = {"live": "充電", "dead_grounded": "停電・接地", "dead_ungrounded": "停電・未接地", "invalid": "充電部に接地（誤り）"}
+# 2 形態（11/6〜）: live=充電、dead=停電（全方向から切り離された区間）。4 状態は計算の内部と旧来の図のため
+STATE_RGB = {"live": (0.85, 0.1, 0.1), "dead": (0.1, 0.55, 0.2), "dead_grounded": (0.1, 0.55, 0.2), "dead_ungrounded": (0.85, 0.55, 0.0), "invalid": (0.75, 0.0, 0.75)}
+STATE_DASH = {"live": None, "dead": [3.0, 1.5], "dead_grounded": [3.0, 1.5], "dead_ungrounded": [1.2, 1.2], "invalid": [0.6, 0.6]}
+STATE_JA = {"live": "充電", "dead": "停電", "dead_grounded": "停電・接地", "dead_ungrounded": "停電・未接地", "invalid": "充電部に接地（誤り）"}
 
 
 class SLD:
@@ -171,6 +173,7 @@ class SLD:
         self.nodes = {n["id"]: n for n in topo["nodes"]}
         self.states = states or {}
         self.switches = switches or {}
+        self.marks: dict[str, tuple[float, float]] = {}   # 機器 ID → 記号の位置（紙 mm）。画面で押すため
 
     def st(self, nid):
         return self.states.get(nid) or self.states.get(nid + ".a") or self.states.get(nid + ".hv")
@@ -197,6 +200,7 @@ class SLD:
 
     # ---- 図記号（紙 mm）。縦の枝の上に描く ----
     def cb(self, x, y, kv, nid, horizontal=False):
+        self.marks[nid] = (x, y)
         w = LW[kv]
         if self.symbols == "circle":
             self.sh.circle(x, y, 2.0, w)
@@ -209,6 +213,7 @@ class SLD:
         self.sh.text(x + 2.6, y - 0.8, self.num(nid), 2.2)
 
     def ds(self, x, y, kv, nid, earth=False, panto=False, horizontal=False, label=True, es_id=None, earth_side=-1):
+        self.marks[nid] = (x, y)
         w = LW[kv]
         if self.symbols == "circle":
             self.sh.circle(x, y, 1.8, w); self.sh.line(x - 1.3, y - 1.3, x + 1.3, y + 1.3, w); self.sh.line(x - 1.3, y + 1.3, x + 1.3, y - 1.3, w)
@@ -246,6 +251,7 @@ class SLD:
         self.sh.text(x + 4.5 * s, y + 1.0, self.num(nid), 1.8, anchor="se" if s < 0 else "sw")
 
     def transformer(self, x, y, nid, label):
+        self.marks[nid] = (x, y)
         self.sh.circle(x, y + 2.2, 3.0, LW[220]); self.sh.circle(x, y - 2.2, 3.0, LW[66])
         self.sh.text(x + 4.0, y + 1.0, self.num(nid), 2.5)
         self.sh.text(x + 4.0, y - 2.5, label, 2.0)
@@ -398,10 +404,14 @@ class SLD:
         if self.states:
             # 凡例（色と線種。モノクロ印刷でも線種で読める）
             x0, y0 = 40, sh.h - 30
-            for i, (k, ja) in enumerate(STATE_JA.items()):
+            used = set(self.states.values())
+            two = not (used & {"dead_grounded", "dead_ungrounded"})
+            keys = (["live", "dead"] + (["invalid"] if "invalid" in used else [])) if two else ["live", "dead_grounded", "dead_ungrounded", "invalid"]
+            for i, k in enumerate(keys):
                 sh.line(x0 + i * 48, y0, x0 + i * 48 + 10, y0, 1.2, dash=STATE_DASH[k], rgb=STATE_RGB[k])
-                sh.text(x0 + i * 48 + 12, y0 - 0.8, ja, 2.2)
-            sh.text(x0, y0 - 4.5, "「開」「閉」は開閉器の操作後の位置。線種: 実線=充電、破線=停電・接地、点線=停電・未接地", 2.2)
+                sh.text(x0 + i * 48 + 12, y0 - 0.8, STATE_JA[k], 2.2)
+            sh.text(x0, y0 - 4.5, ("「開」は開閉器を切った位置。線種: 実線=充電、破線=停電（全方向から切り離した区間）" if two else
+                                   "「開」「閉」は開閉器の操作後の位置。線種: 実線=充電、破線=停電・接地、点線=停電・未接地"), 2.2)
         # 220kV（右上）: 構内 x 22〜114m を紙 x 215〜395mm に
         cfg = P["220"]
         x0, x1 = cfg["bus"]["x0"], cfg["bus"]["x1"]

@@ -5,13 +5,16 @@
 API（すべて契約 contracts/ の形でやり取りする）:
   GET  /api/sites                      サイト一覧
   GET  /api/sites/{site_id}            topology / layout / states（状態の例）
-  POST /api/sites/{site_id}/energize   body: {"state": state.json, "treat_ungrounded_as_live": true}
+  POST /api/sites/{site_id}/energize   body: {"state": state.json}
                                        → {"energization": §6.4, "envelope": §6.5（承認前）}
-  POST /api/sites/{site_id}/steps      body: {"targets": ["TR-2"], "state": 通常状態} → 停止ステップ §6.8（段階ごとの state つき）
+  POST /api/sites/{site_id}/steps      body: {"targets": ["220-T2-CB"], "state": 通常状態} → 作業日の停止範囲 §7.6（切る機器・条件・停止後の state）
   POST /api/sites/{site_id}/clearance  body: {"state", "crane", "treat_ungrounded_as_live"} → {"energization","envelope","clearance" §6.7}
   POST /api/sites/{site_id}/propose    body: {"state", "crane"} → 修正案の候補（決定論。各候補は再判定済み）
   POST /api/sites/{site_id}/approve    body: {"state","crane","clearance","steps","approver"} → approved/ に書き出し、承認ハッシュ
   GET  /api/sites/{site_id}/approved/{name}/{file}   書き出した JSON / PDF
+  POST /api/sites/{site_id}/select     body: {"state", "pick_id", "weight_t"?, "set_xy"?} → 重機の選定 §7.9
+  POST /api/sites/{site_id}/sld        body: {"state", "title"?} → 塗り分けた単線結線図 SVG と機器の位置
+  GET  /api/cranes                     クレーンのクラスと吊る機器の例示値
   POST /api/sites/{site_id}/explain    body: {"proposal", "clearance"} → 修正案の説明（Claude。呼べなければ定型文）
   POST /api/ingest                     multipart file=単線結線図 PDF（ベクター）→ 候補グラフ・topology 下書き・意味づけ（Claude）・精度（真値があるとき）
   GET  /api/agent                      Claude を呼べる状態か（キーの有無・オフライン設定）
@@ -36,7 +39,9 @@ from engine.crane import Crane
 from engine.energize import energize
 from engine.envelope import ClearanceTable, envelopes
 from engine.propose import propose
-from engine.steps import generate
+from engine.steps import GROUNDING_NOTE, generate
+from engine.crane_select import load_classes, select as select_crane
+from engine.envelope import DEFAULT_TABLE as CLEARANCE_CSV
 from engine.topology import Topology, TopologyError
 from agent import client as agent_client
 from agent.explain import explain as explain_proposal
@@ -65,7 +70,7 @@ def load_site(site_id: str) -> dict:
 
 class EnergizeRequest(BaseModel):
     state: dict
-    treat_ungrounded_as_live: bool = True
+    treat_ungrounded_as_live: bool = False   # 2 形態（11/6）。停電＝全方向から切り離された区間
 
 
 class StepsRequest(BaseModel):
@@ -76,7 +81,7 @@ class StepsRequest(BaseModel):
 class ClearanceRequest(BaseModel):
     state: dict
     crane: dict
-    treat_ungrounded_as_live: bool = True
+    treat_ungrounded_as_live: bool = False   # 2 形態（11/6）。停電＝全方向から切り離された区間
 
 
 class ApproveRequest(BaseModel):
@@ -86,6 +91,10 @@ class ApproveRequest(BaseModel):
     steps: dict | None = None
     approver: str = "APPROVER-01"
     note: str = ""
+
+
+def _sha(obj) -> str:
+    return hashlib.sha256(json.dumps(obj, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
 def _topo(site: dict) -> Topology:
@@ -141,6 +150,42 @@ def post_propose(site_id: str, req: ClearanceRequest):
     return propose(_topo(site), site["layout"], req.state, Crane.from_dict(req.crane), conservative=req.treat_ungrounded_as_live)
 
 
+class SelectRequest(BaseModel):
+    state: dict
+    pick_id: str
+    weight_t: float | None = None
+    set_xy: list[float] | None = None
+
+
+@app.post("/api/sites/{site_id}/select")
+def post_select(site_id: str, req: SelectRequest):
+    """重機の選定（§7.9）: 吊る機器と資材置場から、一番小さいクラスと据付位置。"""
+    site = load_site(site_id)
+    return select_crane(_topo(site), site["layout"], req.state, req.pick_id, req.weight_t,
+                        tuple(req.set_xy) if req.set_xy else None)
+
+
+@app.get("/api/cranes")
+def get_cranes():
+    from engine.crane_select import _table
+    t = _table()
+    return {"classes": [{"id": k["id"], "name": k["name"]} for k in load_classes()], "lift_items": t["lift_items"], "status": t["status"], "note": t["note"]}
+
+
+class SldRequest(BaseModel):
+    state: dict
+    title: str = "単線結線図"
+    subtitle: str | None = None
+
+
+@app.post("/api/sites/{site_id}/sld")
+def post_sld(site_id: str, req: SldRequest):
+    """単線結線図を状態で塗り分けた SVG（承認の PDF と同じ描き方）と、開閉器・変圧器の位置（画面で押すため）。"""
+    from synth.step_drawings import sld_svg
+    site = load_site(site_id)
+    return sld_svg(site, req.state, req.title, req.subtitle)
+
+
 @app.post("/api/sites/{site_id}/approve")
 def post_approve(site_id: str, req: ApproveRequest):
     """承認: 判定が可／条件付き可であることをもう一度確かめてから書き出す。暦日は入れない（相対時刻だけ）。"""
@@ -149,19 +194,24 @@ def post_approve(site_id: str, req: ApproveRequest):
     res = energize(topo, req.state)
     if res.errors:
         raise HTTPException(400, "課電判定に誤りがある状態は承認できない: " + "; ".join(e["message"] for e in res.errors))
-    env = envelopes(topo, site["layout"], res, ClearanceTable.load(), True)
-    verdict = None
-    if req.crane:
-        out = evaluate(env, Crane.from_dict(req.crane))
-        verdict = out["verdict"]
-        if verdict == "ng":
-            raise HTTPException(400, "離隔が不可の計画は承認できない: " + out["reasons"][0])
+    env = envelopes(topo, site["layout"], res, ClearanceTable.load(), False)
+    if not req.crane:
+        raise HTTPException(400, "重機の配置が無い計画は承認できない（この道具の承認は、作業日の停止範囲とクレーンの配置の組）")
+    out = evaluate(env, Crane.from_dict(req.crane))
+    verdict = out["verdict"]
+    if verdict == "ng":
+        raise HTTPException(400, "離隔が不可の計画は承認できない: " + out["reasons"][0])
     name = f"plan-{int(time.monotonic() * 1000) % 100000000:08d}"
     out_dir = SITES / site_id / "approved" / name
     out_dir.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": "0.1", "site_id": site_id, "approver": req.approver, "note": req.note, "verdict": verdict,
                "state": req.state, "crane": req.crane, "clearance": req.clearance, "steps": req.steps,
-               "envelope_count": len(env["envelopes"])}
+               "envelope_count": len(env["envelopes"]),
+               "conditions": list(dict.fromkeys(((req.steps or {}).get("conditions") or [GROUNDING_NOTE]) + out["conditions"])),
+               # どの版の結線・配置・離隔表で判定したか（承認ハッシュに含める）
+               "inputs": {"topology_sha256": _sha(site["topology"]), "layout_sha256": _sha(site["layout"]),
+                          "clearance_table_sha256": hashlib.sha256(CLEARANCE_CSV.read_bytes()).hexdigest()[:16],
+                          "clearance_table_id": env.get("clearance_table_id")}}
     body = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     h = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
     payload["approval_hash"] = h

@@ -43,13 +43,14 @@ def test_envelope_radius_is_conductor_radius_plus_clearance(topo, site, states):
 
 
 def test_envelope_follows_energization_state(topo, site, states):
+    """2 形態（既定）: 停電（切り離した区間）には包絡を作らない。旧来の保守側（未接地も充電扱い）は引数で選べる。"""
     res = energize(topo, states["tr2-outage"])
     assert res.state_of("220-TR-2-HV") == DEAD_GROUNDED
-    ids_conservative = {e["conductor_id"] for e in envelopes(topo, site.layout, res)["envelopes"]}
-    ids_strict = {e["conductor_id"] for e in envelopes(topo, site.layout, res, treat_ungrounded_as_live=False)["envelopes"]}
-    assert "220-TR-2-HV" not in ids_conservative       # 接地済みの区間には包絡を作らない
-    assert "220-LINE-E2" in ids_strict                 # 運転継続の線路には作る
-    assert "220-T2-N1" in ids_conservative and "220-T2-N1" not in ids_strict  # 未接地は保守側でだけ
+    ids_default = {e["conductor_id"] for e in envelopes(topo, site.layout, res)["envelopes"]}
+    ids_old = {e["conductor_id"] for e in envelopes(topo, site.layout, res, treat_ungrounded_as_live=True)["envelopes"]}
+    assert "220-TR-2-HV" not in ids_default            # 停電の区間には包絡を作らない
+    assert "220-LINE-E2" in ids_default                # 運転継続の線路には作る
+    assert "220-T2-N1" not in ids_default and "220-T2-N1" in ids_old   # 切り離しただけの区間も停電（旧来は充電扱い）
     assert res.state_of("220-T2-N1") == DEAD_UNGROUNDED
 
 

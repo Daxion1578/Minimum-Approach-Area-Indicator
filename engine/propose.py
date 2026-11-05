@@ -19,14 +19,14 @@ from engine.steps import generate
 from engine.topology import Topology
 
 
-def _eval(topo, layout, state, crane, table, conservative=True):
+def _eval(topo, layout, state, crane, table, conservative=False):
     res = energize(topo, state)
     env = envelopes(topo, layout, res, table, conservative)
     return evaluate(env, crane), res
 
 
 def propose(topo: Topology, layout: dict, state: dict, crane: Crane, max_candidates: int = 8,
-            conservative: bool = True) -> dict:
+            conservative: bool = False) -> dict:
     table = ClearanceTable.load()
     base_out, _ = _eval(topo, layout, state, crane, table, conservative)
     cands: list[dict] = []
@@ -75,11 +75,14 @@ def propose(topo: Topology, layout: dict, state: dict, crane: Crane, max_candida
     if target:
         st = generate(topo, state, [target])
         if st["ok"]:
-            add("outage", f"{topo.nodes[target].name or target} を追加で停止（接地まで）", crane, st["steps"][-1]["state"],
+            add("outage", f"{topo.nodes[target].name or target} を追加で停止", crane, st["steps"][-1]["state"],
                 {"steps": [{"n": s["n"], "title": s["title"], "ops": s["ops"]} for s in st["steps"]], "target": target})
     order = {OK: 0, "conditional": 1, NG: 2}
     cands.sort(key=lambda c: (order[c["verdict"]], c["kind"] == "outage", -(c["margin_m"] or -9)))
-    return {"baseline": base_out["verdict"], "baseline_worst": worst, "candidates": cands[:max_candidates]}
+    top = cands[:max_candidates]
+    # 追加停止の案は、可でなくても必ず見せる（止めるかどうかは人が決める。費用の比較に要る）
+    top += [c for c in cands[max_candidates:] if c["kind"] == "outage"]
+    return {"baseline": base_out["verdict"], "baseline_worst": worst, "candidates": top}
 
 
 def _owner_equipment(topo: Topology, conductor_id: str) -> str | None:

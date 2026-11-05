@@ -3,8 +3,9 @@
     python scripts/check_demo.py              # 結果の表を画面に出す
     python scripts/check_demo.py --out FILE   # 同じ表を Markdown で FILE に追記（GitHub Actions の Summary 用）
 
-流れ: 図面取込 → 2BK の停止ステップ 段階 3 → 離隔判定「不可」→ 修正案「起伏角 65°」→ 再判定「可」→ 承認（塗り分け PDF）。
-クレーンは画面の初期値のまま。一つでも不合格なら終了コード 1。
+流れ: 図面取込 → 66kV 遮断器（66-D1-CB1）の作業日の停止範囲 → 重機の選定（一番小さいクラス）→ 追加停止で小さくできるか
+→ 採用した配置の離隔判定 → 承認（停止範囲図 PDF）→ 重機の無い計画・不可の計画は承認できない。
+一つでも不合格なら終了コード 1。
 """
 from __future__ import annotations
 
@@ -23,8 +24,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 import server.app as appmod  # noqa: E402
 
-CRANE = {"base": [88, 72], "heading_deg": 0, "boom_len_m": 14, "boom_elev_deg": 45, "slew_deg": [-50, 50],
-         "hook_drop_m": 2, "load": {"w": 2.0, "d": 2.0, "h": 2.5}}
+TARGET = "66-D1-CB1"
 
 
 def run() -> list[tuple[str, bool, str]]:
@@ -39,7 +39,6 @@ def run() -> list[tuple[str, bool, str]]:
     ok = num.get("found", 0) >= 130 and adj.get("precision", 0) >= 0.95
     rows.append(("1 図面取込", ok, f"開閉器番号 {num.get('found')}/{num.get('drawn')}、隣接 precision {adj.get('precision')} / recall {adj.get('recall')}、質問 {ev.get('questions')}"))
 
-    # 承認の書き出しは一時ディレクトリへ（リポジトリを汚さない）
     tmp = Path(tempfile.mkdtemp()) / "sites"
     (tmp / "SITE-01").mkdir(parents=True)
     shutil.copytree(real / "SITE-01" / "truth", tmp / "SITE-01" / "truth")
@@ -47,29 +46,35 @@ def run() -> list[tuple[str, bool, str]]:
     appmod.load_site.cache_clear()
 
     normal = c.get("/api/sites/SITE-01").json()["states"]["normal"]
-    st = c.post("/api/sites/SITE-01/steps", json={"targets": ["TR-2"], "state": normal}).json()
-    ok = st.get("ok") and len(st.get("steps", [])) == 3
-    rows.append(("2 停止ステップ（2BK）", bool(ok), " → ".join(s["title"] for s in st.get("steps", [])) or "; ".join(st.get("problems", []))))
-    final = st["steps"][-1]["state"]
+    st = c.post("/api/sites/SITE-01/steps", json={"targets": [TARGET], "state": normal}).json()
+    ok = st.get("ok") and len(st.get("ops", [])) == 3 and st.get("conditions")
+    rows.append(("2 作業日の停止範囲（66kV 遮断器）", bool(ok), "切る: " + "、".join(o["number"] or o["id"] for o in st.get("ops", [])) or "; ".join(st.get("problems", []))))
+    day = st["state"]
 
-    cl = c.post("/api/sites/SITE-01/clearance", json={"state": final, "crane": CRANE}).json()["clearance"]
-    rows.append(("3 離隔判定（段階 3）", cl["verdict"] == "ng", f"{cl['verdict_ja']}: {cl['reasons'][0]}"))
+    sel = c.post("/api/sites/SITE-01/select", json={"state": day, "pick_id": TARGET}).json()
+    ch = sel.get("chosen") or {}
+    rows.append(("3 重機の選定（一番小さいクラス）", bool(sel.get("ok")),
+                 f"{ch.get('name')}（{ch.get('verdict_ja')}、最小 {ch.get('min_distance_m')} m／必要 {ch.get('required_m')} m）。一つ下が使えない理由: {sel.get('smaller_why_not')}" if ch else "; ".join(sel.get("problems", []))))
 
-    pr = c.post("/api/sites/SITE-01/propose", json={"state": final, "crane": CRANE}).json()
-    pick = next((x for x in pr["candidates"] if x["kind"] == "elev" and x["crane"]["boom_elev_deg"] == 65), None)
-    rows.append(("4 修正案「起伏角 65°」", bool(pick and pick["verdict"] == "ok"),
-                 f"{pick['verdict_ja']}（最小 {pick['min_distance_m']:.2f} m／必要 {pick['required_m']:.2f} m）" if pick else "候補に無い"))
+    wo = sel.get("with_outage") or {}
+    ch2 = wo.get("chosen")
+    rows.append(("4 追加停止で小さくできるか", bool(ch2), wo.get("note") or "追加停止の案が無い"))
 
-    crane2 = pick["crane"] if pick else CRANE
-    cl2 = c.post("/api/sites/SITE-01/clearance", json={"state": final, "crane": crane2}).json()["clearance"]
-    r = c.post("/api/sites/SITE-01/approve", json={"state": final, "crane": crane2, "clearance": cl2, "steps": st})
+    state2, crane2 = (wo["state"], ch2["crane"]) if ch2 else (day, ch.get("crane"))
+    cl = c.post("/api/sites/SITE-01/clearance", json={"state": state2, "crane": crane2}).json()["clearance"]
+    rows.append(("5 採用した配置の離隔判定", cl["verdict"] != "ng" and cl["verdict"] == (ch2 or ch)["verdict"],
+                 f"{cl['verdict_ja']}: {cl['reasons'][0]}"))
+
+    r = c.post("/api/sites/SITE-01/approve", json={"state": state2, "crane": crane2, "clearance": cl, "steps": st})
     a = r.json()
     pdfs = [f for f in a.get("files", []) if f.endswith(".pdf")]
-    ok = r.status_code == 200 and len(pdfs) >= 4 and not a.get("drawing_error")
-    rows.append(("5 承認と書き出し", ok, f"承認ハッシュ {str(a.get('approval_hash', ''))[:12]}…、PDF {len(pdfs)} 枚" if r.status_code == 200 else f"失敗 {r.status_code}"))
+    ok = r.status_code == 200 and len(pdfs) >= 2 and not a.get("drawing_error")
+    rows.append(("6 承認と書き出し", ok, f"承認ハッシュ {str(a.get('approval_hash', ''))[:12]}…、停止範囲図 PDF {len(pdfs)} 枚" if r.status_code == 200 else f"失敗 {r.status_code}"))
 
-    bad = c.post("/api/sites/SITE-01/approve", json={"state": final, "crane": CRANE})
-    rows.append(("6 不可は承認できない", bad.status_code == 400, f"HTTP {bad.status_code}"))
+    no_crane = c.post("/api/sites/SITE-01/approve", json={"state": day})
+    bad = c.post("/api/sites/SITE-01/approve", json={"state": normal, "crane": dict(crane2, base=[34.0, 44.0], boom_elev_deg=30)})
+    rows.append(("7 重機の無い計画・不可は承認できない", no_crane.status_code == 400 and bad.status_code == 400,
+                 f"重機なし HTTP {no_crane.status_code}、不可 HTTP {bad.status_code}"))
     return rows
 
 

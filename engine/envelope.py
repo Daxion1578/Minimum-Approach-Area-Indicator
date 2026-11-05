@@ -1,7 +1,8 @@
 """安全包絡（§7.3）。課電判定の結果と配置から、近づいてはいけない領域をカプセルで作る。
 
 半径 = 導体半径 + 離隔距離。離隔は `data/tables/clearance.csv`（電圧階級 → m、出典列つき、既定値は「要確認」）。
-保守側の既定: treat_ungrounded_as_live=True（未接地の停止区間も包絡を作る）。
+状態は充電・停電の 2 形態（11/6）。停電＝開閉器で全方向から切り離された区間で、包絡を作らない。
+treat_ungrounded_as_live=True にすると、切り離しただけの区間も充電扱いにできる（旧来の保守側。既定ではない）。
 """
 from __future__ import annotations
 
@@ -75,7 +76,7 @@ def _conductor_of(topo: Topology, item_id: str) -> str:
 
 
 def envelopes(topo: Topology, layout: dict, res: Energization, table: ClearanceTable | None = None,
-              treat_ungrounded_as_live: bool = True, step: int | None = None) -> dict:
+              treat_ungrounded_as_live: bool = False, step: int | None = None) -> dict:
     """§6.5 envelope.json（承認前なので approved は無し）。"""
     table = table or ClearanceTable.load()
     states = {LIVE, INVALID}

@@ -40,16 +40,30 @@
   #hud { position:absolute; left:10px; top:10px; background:rgba(27,32,38,.85); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; pointer-events:none; }
   .warn { background:#3a0a0a; border:1px solid #7a1212; border-radius:6px; padding:6px 8px; font-size:12px; margin:8px 0; }
   .soon { color:var(--mute); font-style:italic; }
+  #guide { color:var(--fg); font-size:12px; background:#16202c; border:1px solid #2b4560; border-radius:6px; padding:3px 10px; }
+  #guide b { color:var(--accent); }
+  #sldView { position:absolute; inset:0; background:#f4f5f6; display:none; }
+  #sldScroll { position:absolute; inset:0; overflow:auto; }
+  #sldZoom { position:absolute; right:12px; top:10px; display:flex; gap:6px; }
+  #sldView.on { display:block; }
+  #sldWrap { position:relative; width:100%; }
+  #sldWrap svg { display:block; width:100%; height:auto; }
+  .mk { position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .mk:hover { border-color:#4ea1ff; background:rgba(78,161,255,.15); }
+  .mk.tgt { border-color:#4ea1ff; background:rgba(78,161,255,.25); }
+  #sldTip { position:absolute; left:10px; bottom:10px; background:rgba(27,32,38,.9); color:#e6e8eb; border-radius:6px; padding:6px 10px; font-size:12px; pointer-events:none; }
+  .big { font-size:18px; font-weight:700; }
+  .cls { display:inline-block; min-width:44px; text-align:center; border-radius:4px; padding:0 6px; margin-right:6px; font-weight:700; }
 </style>
 </head>
 <body>
-<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定はサーバの engine/ が行い、画面は表示だけ。データはすべて合成。</small></header>
+<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide"></span></header>
 
 <div id="left">
   <div class="tabs">
     <button class="on" data-step="s0">1 図面取込</button>
-    <button data-step="s1">2 停止条件</button>
-    <button data-step="s2">3 重機配置</button>
+    <button data-step="s1">2 停止範囲</button>
+    <button data-step="s2">3 重機</button>
     <button data-step="s3">4 計画確定</button>
   </div>
 
@@ -59,55 +73,66 @@
     <table id="siteSummary"></table>
     <h4>単線結線図（ベクター PDF）を取り込む</h4>
     <div class="note">導体と開閉器記号を機械的に拾い、開閉器番号で結ぶ。種別の確認と質問文は Claude（呼べなければ規則）。接続は人が確認するまで「未確認」。</div>
+    <div class="note">読むのは結線図（つながり）だけ。3D の機器の位置と高さは合成データで、配置図（平面）・断面図の取込は次の段階。取り込んだ結果は下書きとして表示し、次のタブは合成変電所のデータで動く。</div>
     <div class="row"><input type="file" id="ingestFile" accept="application/pdf"><button class="sub" id="btnIngest">取り込む</button><span class="note" id="agentState"></span></div>
     <div id="ingestBox"></div>
-    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止条件へ →</button></div>
+    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止範囲へ →</button></div>
   </section>
 
   <section class="step" id="s1">
-    <h3>停止条件</h3>
-    <h4>取り替える機器を選ぶ → 停止ステップを作る</h4>
-    <div class="row"><label class="k">対象</label><select id="targetSel"></select></div>
-    <div class="row"><button class="act" id="btnSteps">停止ステップを作る</button><span class="note">CB 開放 → DS 開放（両側）→ ES 投入。判定は engine</span></div>
+    <h3>作業日の停止範囲</h3>
+    <div class="note">その日に取り替える機器を選ぶ。作業する機器に電気が流れ込む端すべてで、最初に出会う断路器まで（途中の遮断器も）切る。送電線は相手端を切る条件、止めない母線は端子の切り離し。ほかは平常どおり。中央の結線図で、停電（緑の破線）と充電（赤）を追う。</div>
+    <div class="row"><label class="k">取り替える機器</label><select id="targetSel"></select></div>
+    <div class="row"><button class="act" id="btnSteps">停止範囲を作る</button><button class="sub" id="btnViewToggle">3D を見る</button></div>
     <div id="stepsBox"></div>
-    <h4>状態の例（手で開閉を変えることもできる）</h4>
-    <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
-    <div class="row"><label>未接地の停止区間も課電扱い（保守側）</label><input type="checkbox" id="conservative" checked></div>
-    <div class="row"><label>近づけない範囲（包絡）を表示</label><input type="checkbox" id="showEnv" checked></div>
+    <h4>結線図を押して</h4>
+    <div class="row"><label><input type="radio" name="sldMode" value="toggle" checked> 開閉器を入・切する</label><label><input type="radio" name="sldMode" value="target"> 取り替える機器に選ぶ</label></div>
     <div class="legend">
-      <span><i class="dot" style="background:var(--live)"></i> 課電</span>
-      <span><i class="dot" style="background:var(--deadg)"></i> 停電・接地あり</span>
-      <span><i class="dot" style="background:var(--deadu)"></i> 停電・未接地</span>
-      <span><i class="dot" style="background:var(--invalid)"></i> 充電部に接地（計画ミス）</span>
+      <span><i class="dot" style="background:var(--live)"></i> 充電</span>
+      <span><i class="dot" style="background:var(--deadg)"></i> 停電（全方向から切り離した区間）</span>
     </div>
     <div id="energSummary" class="note"></div>
     <div id="errors"></div>
-    <details class="bay"><summary>開閉器（チェック＝閉）</summary><div id="switchList"></div></details>
-    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s2')">重機配置へ →</button></div>
+    <details class="bay"><summary>そのほか（状態の例・開閉器の一覧）</summary>
+      <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
+      <div class="row"><label>近づけない範囲（包絡）を 3D に表示</label><input type="checkbox" id="showEnv" checked></div>
+      <div id="switchList"></div>
+    </details>
+    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s2')">重機へ →</button></div>
   </section>
 
   <section class="step" id="s2">
-    <h3>重機配置</h3>
-    <div class="note">3D の地面をクリックするとクレーンのベースがそこへ移る。諸元は 25t 級ラフテレーンの例示値。向きは x 軸から反時計回り（0°=東、90°=北）。</div>
+    <h3>重機の選定</h3>
+    <div class="note">ブームは「取り替える機器の真上」と「資材置場の真上」に来る。2 点と重さから、届いて、吊れて、充電部の離隔を保てる一番小さい（安い）クレーンと据付位置を計算で選ぶ。荷重表と重さは例示値（要確認）。</div>
+    <div class="row"><label class="k">吊る機器</label><select id="pickSel" style="flex:1"></select></div>
+    <div class="row"><label class="k">重さ t</label><input type="number" id="pickT" step="0.1" style="width:80px"><span class="note" id="pickNote"></span></div>
+    <div class="row"><label class="k">資材置場 x</label><input type="number" id="setX" step="1" style="width:70px"><label class="k">y</label><input type="number" id="setY" step="1" style="width:70px"><label><input type="checkbox" id="setByClick"> 3D の地面を押して置く</label></div>
+    <div class="row"><button class="act" id="btnSelect">一番小さいクレーンを選ぶ</button></div>
+    <div id="selectBox"></div>
+    <details class="bay" id="manualBox"><summary>手で置いて確かめる（選んだ配置の確認・修正案）</summary>
+    <div class="note">3D の地面を押すとクレーンのベースがそこへ移る。向きは x 軸から反時計回り（0°=東、90°=北）。旋回は 2° 刻みで掃引し、刻みの間の動きも含める。</div>
+    <div class="row"><label class="k">クラス</label><select id="cclass"></select></div>
     <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="88" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="72" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="0" step="5" style="width:70px"></div>
-    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="5" style="width:70px"><label class="k">フックの吊り下げ長 m</label><input type="number" id="chook" value="2" step="0.5" style="width:70px"></div>
-    <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-50" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="50" step="5" style="width:70px"><span class="note">5° 刻みで掃引</span></div>
+    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="1" style="width:70px"><label class="k">置く側°</label><input type="number" id="celev2" step="1" style="width:60px" placeholder="—"></div>
+    <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-50" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="50" step="5" style="width:70px"><label class="k">フック m</label><input type="number" id="chook" value="2" step="0.5" style="width:60px"></div>
     <div class="row"><button class="act" id="btnClear">離隔を判定する</button><button class="sub" id="btnPropose">修正案を出す</button></div>
     <div id="verdictBox"></div>
     <div id="proposeBox"></div>
+    </details>
     <div class="row" style="margin-top:10px"><button class="act" onclick="go('s3')">計画確定へ →</button></div>
   </section>
 
   <section class="step" id="s3">
     <h3>計画確定</h3>
-    <div id="planSummary" class="note">停止条件と重機配置を済ませてから。</div>
+    <div id="planSummary" class="note">停止範囲と重機を済ませてから。</div>
+    <div id="planConds"></div>
     <div class="row"><label class="k">承認者（名前でなく符号）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
-    <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に engine がもう一度判定する。不可は承認できない</span></div>
+    <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に engine がもう一度判定する。不可と、重機の無い計画は承認できない</span></div>
     <div id="approveBox"></div>
   </section>
 </div>
 
-<div id="view"><div id="hud">読み込み中…</div><div id="viewBtns" style="position:absolute;right:10px;top:10px;display:flex;gap:6px"><button class="sub" id="vAll">全体</button><button class="sub" id="vTarget">対象へ寄る</button><button class="sub" id="vCrane">クレーンへ寄る</button></div></div>
+<div id="view"><div id="hud">読み込み中…</div><div id="sldView"><div id="sldScroll"><div id="sldWrap"></div></div><div id="sldZoom"><button class="sub" data-z="1">全体</button><button class="sub" data-z="1.8">拡大</button><button class="sub" data-z="2.6">さらに拡大</button></div><div id="sldTip">結線図を押すと、開閉器の入・切（または取り替える機器の選択）。計算は engine が行う</div></div><div id="viewBtns" style="position:absolute;right:10px;top:10px;display:flex;gap:6px"><button class="sub" id="vAll">全体</button><button class="sub" id="vTarget">対象へ寄る</button><button class="sub" id="vCrane">クレーンへ寄る</button></div></div>
 
 <div id="right">
   <h4>state.json（画面 → engine）</h4><pre id="jState"></pre>
@@ -144,8 +169,9 @@ scene.add(new THREE.GridHelper(300,30,0x2c343d,0x1f262e).rotateX(Math.PI/2));
 { const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshStandardMaterial({color:0x1a1f26, roughness:1})); ground.position.z=-0.02; scene.add(ground); }
 scene.add(new THREE.HemisphereLight(0xdfe6f0, 0x2a2f36, 0.9));
 { const sun=new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(-60,80,120); scene.add(sun); }
-const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0xf5c518, invalid:0xff3cf0};
-const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup);
+// 2 形態: 充電=赤、停電=緑（計算の「停電・接地／停電・未接地」はどちらも停電）。誤り（充電部に接地）だけ紫
+const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0x39d353, invalid:0xff3cf0};
+const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(), markGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup); scene.add(markGroup);
 let condMeshes={}, switchMeshes={}; let dims=null;
 function resize(){ const w=view.clientWidth,h=view.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 addEventListener('resize',resize); resize();
@@ -176,9 +202,9 @@ function paint(energ, env, showEnv){
   const stateOf=id => st[id] ?? st[id+'.a'] ?? st[id+'.hv'];
   for (const id in condMeshes){ const s=stateOf(id); const c=COL[s] ?? 0x6b7785; condMeshes[id].mat.color.setHex(c); condMeshes[id].mat.emissive.setHex(s==='live'?0x4a0000:0x000000); }
   clearGroup(envGroup);
-  if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, COL[e.state] ?? 0xff4d4d, e.state==='dead_ungrounded'?0.05:0.09)); }
+  if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, 0xff4d4d, 0.09)); }
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
-  hud.innerHTML = `課電 ${cnt.live||0} ／ 停電・接地 ${cnt.dead_grounded||0} ／ 停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
+  hud.innerHTML = `充電 ${cnt.live||0} ／ 停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
 }
 
 // ------------------------------------------------------------ クレーンの描画
@@ -208,17 +234,23 @@ renderer.domElement.addEventListener('pointerup', e=>{
   if (!downAt || Math.hypot(e.clientX-downAt[0], e.clientY-downAt[1])>4 || e.button!==0) return;
   if (!document.getElementById('s2').classList.contains('on')) return;
   const r=renderer.domElement.getBoundingClientRect(); const nd=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
-  ray.setFromCamera(nd, camera); const hit=new THREE.Vector3(); if (ray.ray.intersectPlane(plane, hit)){ $('cx').value=hit.x.toFixed(1); $('cy').value=hit.y.toFixed(1); evaluateClearance(); }
+  ray.setFromCamera(nd, camera); const hit=new THREE.Vector3(); if (!ray.ray.intersectPlane(plane, hit)) return;
+  if ($('setByClick').checked){ $('setX').value=hit.x.toFixed(0); $('setY').value=hit.y.toFixed(0); drawMarks(); return; }
+  $('cx').value=hit.x.toFixed(1); $('cy').value=hit.y.toFixed(1); evaluateClearance();
 });
 
 // ------------------------------------------------------------ データと操作
-let site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null;
+const DEMO_TARGET='66-D1-CB1';   // 見本: 66kV 1号ダイヤの遮断器を取り替える作業日
+let site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
 const $=id=>document.getElementById(id);
-window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.step===s)); document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s)); };
+window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.step===s)); document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s));
+  showSld(s==='s1' && !view3d); guide(); };
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.step));
 
 async function loadSites(){
   dims=await (await fetch('/api/equipment')).json();
+  cranes=await (await fetch('/api/cranes')).json();
+  $('cclass').innerHTML=`<option value="">例示の 25t 級（既定）</option>`+cranes.classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   const sites=await (await fetch('/api/sites')).json();
   $('siteSel').innerHTML=sites.map(s=>`<option value="${s.site_id}">${s.site_id} ${s.name}</option>`).join('');
   $('siteSel').onchange=()=>loadSite($('siteSel').value);
@@ -229,11 +261,13 @@ async function loadSite(id){
   const t=site.topology, by=k=>t.nodes.filter(n=>n.kind===k).length;
   $('siteSummary').innerHTML=[['名前',t.name],['ノード',t.nodes.length],['辺',t.edges.length],['電源',by('source')],['遮断器／断路器',`${by('breaker')}／${by('disconnector')}`],['接地開閉器',by('earthing')],['変圧器',by('transformer')]].map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('');
   $('stateSel').innerHTML=Object.entries(site.states).map(([k,v])=>`<option value="${k}">${k} — ${v.note||''}</option>`).join('');
-  $('stateSel').onchange=()=>{ state=structuredClone(site.states[$('stateSel').value]); lastSteps=null; $('stepsBox').innerHTML=''; buildSwitchList(); update(); };
+  $('stateSel').onchange=()=>{ state=structuredClone(site.states[$('stateSel').value]); lastSteps=null; extraOutage=null; $('stepsBox').innerHTML=''; buildSwitchList(); update(); };
   state=structuredClone(site.states.normal || Object.values(site.states)[0]);
   const kindJa={transformer:'変圧器',breaker:'遮断器',disconnector:'断路器',bus:'母線',load:'調相設備'};
-  $('targetSel').innerHTML=['transformer','breaker','disconnector','bus','load'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}" ${n.id==='TR-2'?'selected':''}>${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
-  buildSite(site); buildSwitchList(); update(); drawCrane(null);
+  $('targetSel').innerHTML=['breaker','disconnector','transformer','bus','load'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}" ${n.id===DEMO_TARGET?'selected':''}>${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
+  $('pickSel').innerHTML=['breaker','disconnector'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}">${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
+  $('pickSel').value=DEMO_TARGET; pickChanged();
+  buildSite(site); buildSwitchList(); update(); drawCrane(null); guide();
 }
 
 // ---- 図面取込
@@ -270,34 +304,104 @@ $('vAll').onclick=()=>{ const f=site.layout.site?.fence||{x:0,y:0,w:135,h:125}; 
 $('vTarget').onclick=()=>{ const ids=lastSteps?lastSteps.targets:[$('targetSel').value]; const c=centerOf(ids); if (c) frameTo(c[0],c[1],c[2],-1.2); };
 $('vCrane').onclick=()=>{ const c=lastCrane||craneFromForm(); frameTo(c.base[0],c.base[1]+6,Math.max(50,c.boom_len_m*3.6),-1.3); };
 
-// ---- 停止ステップ
+// ---- 作業日の停止範囲
+const nameOf=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.number?n.number+' ':'')+(n.name||id):id; };
 $('btnSteps').onclick=async()=>{
   const targets=[$('targetSel').value];
   const r=await fetch(`/api/sites/${site.site_id}/steps`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({targets, state: site.states.normal})});
-  lastSteps=await r.json();
-  renderSteps(0); $('vTarget').onclick();
+  lastSteps=await r.json(); extraOutage=null; lastSelect=null; $('selectBox').innerHTML='';
+  if (lastSteps.state) state=structuredClone(lastSteps.state);
+  if (['breaker','disconnector'].includes(site.topology.nodes.find(n=>n.id===targets[0])?.kind)){ $('pickSel').value=targets[0]; pickChanged(); }
+  renderSteps(); buildSwitchList(); update(); guide(); if (view3d) $('vTarget').onclick();
 };
-function renderSteps(active){
+function renderSteps(){
   const st=lastSteps; if (!st) return;
-  const name=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.number?n.number+' ':'')+(n.name||id):id; };
-  let html=`<div class="note">対象: ${st.targets.map(name).join('、')} → ${st.ok?'<b style="color:var(--deadg)">接地まで通った</b>':'<b style="color:var(--live)">問題あり</b> '+st.problems.join('; ')}</div>`;
-  html+=`<div class="row">`+[0,1,2,3].map(n=>`<button class="${n===active?'act':'sub'}" data-n="${n}">段階 ${n}</button>`).join('')+`</div>`;
-  for (const s of st.steps){
-    html+=`<details class="bay" ${s.n===active?'open':''}><summary>段階 ${s.n}　${s.title}（${s.ops.length}）</summary>`+s.ops.map(o=>`<div class="sw"><span class="id">${o.number||o.id}</span><span class="note">${o.name}　→ ${o.to==='open'?'開放':'投入'}</span></div>`).join('')+`</details>`;
-  }
+  let html=`<div class="bay"><div>対象: <b>${st.targets.map(nameOf).join('、')}</b> → ${st.ok?'<b style="color:var(--deadg)">停電にできる</b>':'<b style="color:var(--live)">問題あり</b> '+st.problems.join('; ')}</div>`;
+  html+=`<h4>切る機器（${st.ops.length}）</h4>`+st.ops.map(o=>`<div class="sw"><span class="id">${o.number||o.id}</span><span class="note">${o.name}　→ 切</span></div>`).join('');
+  html+=`<h4>条件</h4>`+st.conditions.map(c=>`<div class="note">・${c}</div>`).join('')+`</div>`;
   $('stepsBox').innerHTML=html;
-  $('stepsBox').querySelectorAll('button[data-n]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.n; state=structuredClone(n===0? site.states.normal : st.steps[n-1].state); buildSwitchList(); update(); renderSteps(n); });
-  if (active===0) state=structuredClone(site.states.normal); else state=structuredClone(st.steps[active-1].state);
-  buildSwitchList(); update();
-  $('planSummary').innerHTML=`対象 ${st.targets.map(name).join('、')}、段階 ${st.steps.length}（最終段階の状態で承認する）`;
+  planSummary();
 }
 
+// ---- 結線図（停止範囲を追う画面。承認の PDF と同じ描き方の SVG）
+let sldSeq=0, sldZoom=1.8;
+document.querySelectorAll('#sldZoom button').forEach(b=>b.onclick=()=>{ sldZoom=+b.dataset.z; $('sldWrap').style.width=(sldZoom*100)+'%'; scrollToTarget(); });
+function scrollToTarget(){ const el=$('sldWrap').querySelector('.mk.tgt'); if (!el) return; const v=$('sldScroll'); v.scrollTo({left:el.offsetLeft-v.clientWidth/2, top:el.offsetTop-v.clientHeight/2, behavior:'smooth'}); }
+function showSld(on){ $('sldView').classList.toggle('on', on); $('viewBtns').style.display=on?'none':'flex'; $('hud').style.display=on?'none':'block'; $('btnViewToggle').textContent=on?'3D を見る':'結線図を見る'; if (on) refreshSld(); }
+$('btnViewToggle').onclick=()=>{ view3d=!view3d; showSld(!view3d); };
+async function refreshSld(){
+  if (!site || !$('sldView').classList.contains('on')) return;
+  const my=++sldSeq;
+  const title=lastSteps?`作業日の停止範囲（対象 ${lastSteps.targets.map(nameOf).join('、')}）`+(extraOutage?`＋追加停止 ${extraOutage.names}`:''):'平常（作業前）';
+  const r=await fetch(`/api/sites/${site.site_id}/sld`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, title})});
+  if (!r.ok || my!==sldSeq) return;
+  const j=await r.json();
+  const tgt=lastSteps?lastSteps.targets:[];
+  $('sldWrap').style.width=(sldZoom*100)+'%';
+  const first=!$('sldWrap').innerHTML;
+  $('sldWrap').innerHTML=j.svg+Object.entries(j.marks).map(([id,m])=>`<div class="mk ${tgt.includes(id)?'tgt':''}" data-id="${id}" style="left:${m.x/j.w*100}%;top:${m.y/j.h*100}%" title="${m.number} ${m.name}${m.pos?'（'+(m.pos==='open'?'切':'入')+'）':''}"></div>`).join('');
+  $('sldWrap').querySelectorAll('.mk').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id, n=site.topology.nodes.find(x=>x.id===id);
+    const mode=document.querySelector('input[name=sldMode]:checked').value;
+    if (mode==='target' || n.kind==='transformer'){ $('targetSel').value=id; $('btnSteps').onclick(); return; }
+    if (!['breaker','disconnector'].includes(n.kind)) return;
+    state.switches[id]=(state.switches[id]||'closed')==='open'?'closed':'open'; buildSwitchList(); update();
+  });
+  if (first || refreshSld.lastTarget!==tgt.join()) { refreshSld.lastTarget=tgt.join(); setTimeout(scrollToTarget, 50); }
+}
+
+// ---- 重機の選定
+function pickChanged(){
+  const id=$('pickSel').value, n=site.topology.nodes.find(x=>x.id===id); if (!n || !cranes) return;
+  const kv=n.voltage_kv || (id.startsWith('220')?220:66); const it=cranes.lift_items[`${n.kind}-${kv}`];
+  $('pickT').value=it?it.t:''; $('pickNote').textContent=it?`${it.name}の例示値（要確認）。書き換えてよい`:'例示値なし。重さを入れる';
+  if (it) lastLoad={w:it.w,d:it.d,h:it.h};
+  $('setX').value=''; $('setY').value='';
+}
+$('pickSel').onchange=pickChanged;
+function drawMarks(){
+  clearGroup(markGroup);
+  const pin=(x,y,col)=>{ markGroup.add(capsuleMesh([x,y,0],[x,y,14],0.25,col,0.9)); markGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.9,12,12), new THREE.MeshBasicMaterial({color:col})).translateX(x).translateY(y).translateZ(14)); };
+  const it=site.layout.items.find(i=>i.id===$('pickSel').value); if (it?.at) pin(it.at[0], it.at[1], 0x4ea1ff);
+  if ($('setX').value!=='' && $('setY').value!=='') pin(+$('setX').value, +$('setY').value, 0xb07cff);
+}
+const clsName=id=>cranes?.classes.find(c=>c.id===id)?.name||id;
+$('btnSelect').onclick=async()=>{
+  $('selectBox').innerHTML='<div class="note">クラスを小さい順に、据付位置を網の目で試している…</div>';
+  const body={state, pick_id:$('pickSel').value, weight_t:$('pickT').value===''?null:+$('pickT').value, set_xy:($('setX').value!==''&&$('setY').value!=='')?[+$('setX').value,+$('setY').value]:null};
+  const r=await fetch(`/api/sites/${site.site_id}/select`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json(); lastSelect=j;
+  if (!r.ok){ $('selectBox').innerHTML=`<div class="warn">選定に失敗 ${r.status}: ${j.detail||''}</div>`; return; }
+  if (j.set){ $('setX').value=j.set[0]; $('setY').value=j.set[1]; }
+  if (j.load) lastLoad=j.load;
+  drawMarks();
+  const col=v=>v==='ng'?'var(--live)':v==='conditional'?'var(--deadu)':'var(--deadg)';
+  let html='';
+  if (j.problems?.length && !j.chosen) html+=`<div class="warn">${j.problems.join('。')}</div>`;
+  if (j.chosen){ const c=j.chosen;
+    html+=`<div class="bay" style="border-color:${col(c.verdict)}"><div class="big"><span class="cls" style="background:${col(c.verdict)};color:#06121f">${c.class}</span>${c.name} で置ける（${c.verdict_ja}）</div>`+
+      `<div class="note">据付 (${c.crane.base.map(v=>v.toFixed(0)).join(', ')})、ブーム ${c.crane.boom_len_m} m、起伏角 ${c.crane.boom_elev_deg.toFixed(0)}°${c.crane.boom_elev2_deg?'／'+c.crane.boom_elev2_deg.toFixed(0)+'°':''}、旋回 ${c.crane.slew_deg.map(v=>v.toFixed(0)+'°').join('〜')}。最小離隔 ${c.min_distance_m?.toFixed(2)} m／必要 ${c.required_m?.toFixed(2)} m</div>`+
+      (j.smaller_why_not?`<div class="note">一つ下のクラスが使えない理由: ${j.smaller_why_not}</div>`:'')+
+      `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div></div>`; }
+  if (j.tried) html+=`<details class="bay"><summary>試したクラス（小さい順）</summary>`+j.tried.map(e=>`<div class="note"><span class="cls" style="background:${e.ok?'var(--deadg)':'#3a4452'};color:${e.ok?'#06121f':'var(--fg)'}">${e.class}</span>${e.ok?'置ける':e.why_not}（必要 ${e.need_t} t）</div>`).join('')+`</details>`;
+  if (j.with_outage){ const w=j.with_outage;
+    html+=`<div class="bay" style="border-color:var(--accent)"><div><b>追加で止めた場合</b>: ${w.note}</div>`+
+      `<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`+
+      (w.chosen?`<div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
+  if (j.pick) html+=`<div class="note">荷重表・重さ: ${j.table_status||'要確認'}（例示値）。吊る点 (${j.pick.slice(0,2).map(v=>v.toFixed(0)).join(', ')})、資材置場 (${j.set.map(v=>(+v).toFixed(0)).join(', ')})</div>`;
+  $('selectBox').innerHTML=html;
+  if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
+  if ($('btnAdoptOutage')) $('btnAdoptOutage').onclick=()=>{ extraOutage=j.with_outage; state=structuredClone(j.with_outage.state); craneToForm(j.with_outage.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
+  guide();
+};
+
 // ---- 離隔
-function craneFromForm(){ return {base:[+$('cx').value,+$('cy').value], heading_deg:+$('chead').value, boom_len_m:+$('clen').value, boom_elev_deg:+$('celev').value, slew_deg:[+$('cslo').value,+$('cshi').value], hook_drop_m:+$('chook').value, load:{w:2.0,d:2.0,h:2.5}}; }
-function craneToForm(c){ $('cx').value=c.base[0]; $('cy').value=c.base[1]; $('chead').value=c.heading_deg; $('clen').value=c.boom_len_m; $('celev').value=c.boom_elev_deg; $('cslo').value=c.slew_deg[0]; $('cshi').value=c.slew_deg[1]; $('chook').value=c.hook_drop_m; }
+function craneFromForm(){ const c={base:[+$('cx').value,+$('cy').value], heading_deg:+$('chead').value, boom_len_m:+$('clen').value, boom_elev_deg:+$('celev').value, slew_deg:[+$('cslo').value,+$('cshi').value], hook_drop_m:+$('chook').value, load:{...lastLoad}};
+  if ($('cclass').value) c.class=$('cclass').value; if ($('celev2').value!=='') c.boom_elev2_deg=+$('celev2').value; return c; }
+function craneToForm(c){ const r1=v=>Math.round(v*10)/10; $('cx').value=c.base[0]; $('cy').value=c.base[1]; $('chead').value=r1(c.heading_deg); $('clen').value=c.boom_len_m; $('celev').value=r1(c.boom_elev_deg); $('celev2').value=c.boom_elev2_deg!=null?r1(c.boom_elev2_deg):''; $('cslo').value=r1(c.slew_deg[0]); $('cshi').value=r1(c.slew_deg[1]); $('chook').value=c.hook_drop_m; $('cclass').value=c.class||''; if (c.load) lastLoad=c.load; }
 async function evaluateClearance(){
   lastCrane=craneFromForm();
-  const r=await fetch(`/api/sites/${site.site_id}/clearance`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane, treat_ungrounded_as_live:$('conservative').checked})});
+  const r=await fetch(`/api/sites/${site.site_id}/clearance`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane})});
   const j=await r.json(); lastClearance=j.clearance;
   paint(j.energization, j.envelope, $('showEnv').checked); drawCrane(j.clearance);
   const c=j.clearance; const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
@@ -306,19 +410,19 @@ async function evaluateClearance(){
   html+=c.reasons.map(x=>`<div class="note">根拠: ${x}</div>`).join('');
   if (c.conditions.length) html+=`<div style="margin-top:4px">条件:</div>`+c.conditions.map(x=>`<div class="note">・${x}</div>`).join('');
   html+=`<table style="margin-top:6px"><tr><th>導体</th><th>相</th><th>距離</th><th>必要</th><th>余裕</th></tr>`+c.hits.slice(0,5).map(h=>`<tr><td>${h.conductor_id}</td><td>${h.phase||''}</td><td>${h.distance_m.toFixed(2)}</td><td>${h.required_m.toFixed(2)}</td><td style="color:${h.margin_m<0?'var(--live)':h.margin_m<0.5?'var(--deadu)':'inherit'}">${h.margin_m.toFixed(2)}</td></tr>`).join('')+`</table></div>`;
-  $('verdictBox').innerHTML=html;
-  $('planSummary').innerHTML=(lastSteps?`対象 ${lastSteps.targets.join('、')}、段階 ${lastSteps.steps.length}。`:'')+`離隔: <b style="color:${col}">${c.verdict_ja}</b>`+(c.worst?`（最小 ${c.worst.distance_m.toFixed(2)} m／必要 ${c.worst.required_m.toFixed(2)} m）`:'');
+  $('verdictBox').innerHTML=html; $('manualBox').open=true;
+  planSummary(); guide();
 }
 $('btnClear').onclick=evaluateClearance;
 ['cx','cy','chead','clen','celev','chook','cslo','cshi'].forEach(id=>$(id).onchange=evaluateClearance);
 $('btnPropose').onclick=async()=>{
   if (!lastCrane) await evaluateClearance();
   $('proposeBox').innerHTML='<div class="note">候補を作って一つずつ再判定中…</div>';
-  const r=await fetch(`/api/sites/${site.site_id}/propose`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane, treat_ungrounded_as_live:$('conservative').checked})});
+  const r=await fetch(`/api/sites/${site.site_id}/propose`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state, crane:lastCrane})});
   const j=await r.json();
   if (!j.candidates.length){ $('proposeBox').innerHTML=`<div class="note">${j.note||'候補なし'}</div>`; return; }
   $('proposeBox').innerHTML=`<h4>修正案（どの案も計算で判定し直してある。採用は人が決める）</h4>`+j.candidates.map((c,i)=>{ const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
-    return `<div class="bay"><div><b style="color:${col}">${c.verdict_ja}</b>　${c.title}</div><div class="note">最小 ${c.min_distance_m?.toFixed(2)} m／余裕 ${c.margin_m?.toFixed(2)} m${c.conditions?.length?'　条件: '+c.conditions[0]:''}</div>${c.steps?`<div class="note">追加停止: ${c.steps.map(s=>s.title+' '+s.ops.map(o=>o.number||o.id).join(' ')).join(' → ')}</div>`:''}<div class="row"><button class="sub" data-i="${i}">採用</button></div></div>`; }).join('');
+    return `<div class="bay"><div><b style="color:${col}">${c.verdict_ja}</b>　${c.title}</div><div class="note">最小 ${c.min_distance_m?.toFixed(2)} m／余裕 ${c.margin_m?.toFixed(2)} m${c.conditions?.length?'　条件: '+c.conditions[0]:''}</div>${c.steps?`<div class="note">追加で切る機器: ${c.steps.map(s=>s.ops.map(o=>o.number||o.id).join(' ')).join(' ')}</div>`:''}<div class="row"><button class="sub" data-i="${i}">採用</button></div></div>`; }).join('');
   $('proposeBox').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{ const c=j.candidates[+b.dataset.i]; craneToForm(c.crane); if (c.state){ state=structuredClone(c.state); buildSwitchList(); } evaluateClearance(); });
   // 説明は後から差し込む（Claude。呼べなければ定型文）。判定値は上の engine の値のまま
   try {
@@ -329,14 +433,40 @@ $('btnPropose').onclick=async()=>{
   } catch(e){}
 };
 
-// ---- 承認
+// ---- 計画のまとめと承認
+function planConditions(){
+  const cs=[...(lastSteps?.conditions||[])];
+  if (extraOutage){ for (const c of extraOutage.conditions) if (!cs.includes(c)) cs.push(c); cs.push(`追加停止: ${extraOutage.names}（停止の調整が要る）`); }
+  for (const c of (lastClearance?.conditions||[])) if (!cs.includes(c)) cs.push(c);
+  return cs;
+}
+function planSummary(){
+  const c=lastClearance; const col=c?(c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)'):'';
+  $('planSummary').innerHTML=(lastSteps?`作業日の対象 <b>${lastSteps.targets.map(nameOf).join('、')}</b>、切る機器 ${lastSteps.ops.length}${extraOutage?`、追加停止 ${extraOutage.names}`:''}。`:'取り替える機器を選んで停止範囲を作る。')+
+    (lastCrane?`クレーン ${lastCrane.class?clsName(lastCrane.class):'（例示の 25t 級）'}。`:'')+(c?`離隔 <b style="color:${col}">${c.verdict_ja}</b>`+(c.worst?`（最小 ${c.worst.distance_m.toFixed(2)} m／必要 ${c.worst.required_m.toFixed(2)} m）`:''):'');
+  const cs=planConditions();
+  $('planConds').innerHTML=cs.length?`<div class="bay"><h4>承認の条件（書き出しにも入る）</h4>`+cs.map(x=>`<div class="note">・${x}</div>`).join('')+`</div>`:'';
+}
 $('btnApprove').onclick=async()=>{
-  const body={state, crane:lastCrane, clearance:lastClearance, steps:lastSteps, approver:$('approver').value};
+  const steps=lastSteps?{...lastSteps, conditions:planConditions()}:null;
+  const body={state, crane:lastCrane, clearance:lastClearance, steps, approver:$('approver').value};
   const r=await fetch(`/api/sites/${site.site_id}/approve`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json();
   if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; return; }
   $('approveBox').innerHTML=`<div class="bay"><div>承認ハッシュ <b>${j.approval_hash}</b></div><div class="note">${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
+  guide();
 };
+// ---- 次に何を押すか（上の帯）
+function guide(){
+  let g='';
+  if (!site) g='';
+  else if (!lastSteps) g=`例: 66kV 遮断器を取り替える作業日。<b>2 停止範囲</b>で「停止範囲を作る」`;
+  else if (!lastCrane) g=`停止範囲ができた。<b>3 重機</b>で「一番小さいクレーンを選ぶ」→ 配置を<b>採用</b>`;
+  else if (lastClearance?.verdict==='ng') g=`離隔が不可。<b>修正案</b>か<b>選定</b>からやり直す`;
+  else if (!$('approveBox').innerHTML) g=`<b>4 計画確定</b>で条件を確かめて「承認して書き出す」`;
+  else g=`承認済み。停止範囲図（PDF）と計画が書き出された`;
+  $('guide').innerHTML=g;
+}
 function buildSwitchList(){
   const bays={}; for (const n of site.topology.nodes){ if (!(n.id in state.switches)) continue; (bays[n.bay||'母線・共通'] ??= []).push(n); }
   $('switchList').innerHTML=Object.entries(bays).map(([bay,ns])=>`<details class="bay"><summary>${bay}（${ns.length}）</summary>`+ns.map(n=>
@@ -346,7 +476,7 @@ function buildSwitchList(){
 let pending=null;
 async function update(){
   $('jState').textContent=JSON.stringify(state,null,1);
-  const body={state, treat_ungrounded_as_live:$('conservative').checked};
+  const body={state};
   const r=await fetch(`/api/sites/${site.site_id}/energize`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   if (!r.ok){ $('errors').innerHTML=`<div class="warn">サーバ エラー ${r.status}</div>`; return; }
   const {energization, envelope}=await r.json();
@@ -354,11 +484,12 @@ async function update(){
   $('jEnv').textContent=JSON.stringify({...envelope, envelopes: envelope.envelopes.slice(0,8), _note:`全 ${envelope.envelopes.length} 本のうち先頭 8 本`},null,1);
   paint(energization, envelope, $('showEnv').checked);
   const cnt={}; for (const c of energization.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
-  $('energSummary').textContent=`成分 ${energization.components.length}。課電 ${cnt.live||0}、停電・接地 ${cnt.dead_grounded||0}、停電・未接地 ${cnt.dead_ungrounded||0}` + (cnt.invalid?`、充電部に接地 ${cnt.invalid}`:'');
+  $('energSummary').textContent=`充電 ${cnt.live||0}、停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?`、充電部に接地 ${cnt.invalid}`:'') + '（機器・区間の数）';
+  refreshSld();
   $('errors').innerHTML=energization.errors.map(e=>`<div class="warn"><b>${e.code}</b> ${e.message}${e.nodes?`<br><span class="note">${e.nodes.slice(0,6).join(', ')}${e.nodes.length>6?' …':''}</span>`:''}</div>`).join('');
 }
-$('conservative').onchange=update; $('showEnv').onchange=update;
-loadSites().catch(e=>{ hud.textContent='読み込みに失敗: '+e.message; });
+$('showEnv').onchange=update;
+loadSites().then(()=>go('s0')).catch(e=>{ hud.textContent='読み込みに失敗: '+e.message; });
 </script>
 </body>
 </html>
