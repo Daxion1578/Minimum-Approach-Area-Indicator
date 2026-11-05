@@ -147,6 +147,8 @@
       <label class="filebtn">モデルを選ぶ（.onnx）<input type="file" id="modelFile" hidden></label>
       <button id="btnModelDel" hidden>消す</button>
       <label><input type="checkbox" id="detOn" checked> AR 中に検出し続ける</label>
+      <label for="detConf">確からしさの下限</label>
+      <select id="detConf"><option value="0.25">0.25（標準）</option><option value="0.15">0.15</option><option value="0.10">0.10</option><option value="0.05">0.05（誤りが増える）</option></select>
     </div>
     <p class="note">検出器を使うと、がいし・ブッシングなどを端末の中で見つけ続け、横へ歩くだけで3Dの位置が決まります（充電部になりうる物は既定で充電中）。「候補を探す」では、見つけた物に番号を付けて Claude に見せ、どれが充電部らしいかを聞きます。モデルの入手と写真での点検は <a href="detector-check.html">検出器の点検</a> へ。検出は端末の中だけで動き、画像は外に出ません（Claude に聞くときの1コマを除く）。</p>
 
@@ -567,7 +569,7 @@ $('btnFind').addEventListener('click', async () => {
 async function markSnapshot(snap) {
   const small = imageToRgba(snap.canvas, snap.W, snap.H);
   const fr = makeFrame(snap.proj, snap.mat, small.W, small.H);
-  const res = await detector.detect(small.rgba, small.W, small.H);
+  const res = await detector.detect(small.rgba, small.W, small.H, detConf());
   const ids = onDets(res, fr), k = small.scale;
   const marks = res.boxes.map((b, i) => ({ id: ids[i], cls: b.cls, x1: b.x1 * k, y1: b.y1 * k, x2: b.x2 * k, y2: b.y2 * k }))
     .filter(m => !tracker.tracks.find(t => t.id === m.id)?.hidden);
@@ -735,6 +737,9 @@ $('modelFile').addEventListener('change', async e => {
 });
 $('btnModelDel').addEventListener('click', async () => { await deleteModel(); detector.close(); detState = 'off'; await showSavedModel(); });
 $('detOn').checked = store.get('maai.lab.detOn') !== '0';
+const savedConf = store.get('maai.lab.detConf'); if (savedConf && [...$('detConf').options].some(o => o.value === savedConf)) $('detConf').value = savedConf;
+$('detConf').addEventListener('change', e => store.set('maai.lab.detConf', e.target.value));
+const detConf = () => parseFloat($('detConf').value) || 0.25;   // 下げると自信の低い枠も追う（充電部になりうる物は既定で充電中なので、帯が増える側に倒れる）
 $('detOn').addEventListener('change', e => store.set('maai.lab.detOn', e.target.checked ? '1' : '0'));
 
 function runDetection(view, time) {
@@ -742,7 +747,7 @@ function runDetection(view, time) {
   try { g = grabCamera(view, 640, false); } catch (e) { detErr = e.message; return; }
   detBusy = true; lastDetAt = time;
   const fr = makeFrame(g.proj, g.mat, g.W, g.H);
-  detector.detect(g.rgba, g.W, g.H).then(res => { detErr = ''; onDets(res, fr); }).catch(e => { detErr = e.message; }).finally(() => { detBusy = false; });
+  detector.detect(g.rgba, g.W, g.H, detConf()).then(res => { detErr = ''; onDets(res, fr); }).catch(e => { detErr = e.message; }).finally(() => { detBusy = false; });
 }
 function initTrack(t) {
   const info = classInfo(t.cls);

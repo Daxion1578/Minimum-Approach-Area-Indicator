@@ -23,14 +23,16 @@ export const saveModel = (name, buf) => withStore('readwrite', s => s.put({ name
 export const loadModel = () => withStore('readonly', s => s.get(KEY)).catch(() => null);
 export const deleteModel = () => withStore('readwrite', s => s.delete(KEY));
 
-// 画像（img / canvas / video / ImageBitmap）を長辺 max 以下に縮め、左上原点の RGBA にする
-export function imageToRgba(src, sw, sh, max = INPUT) {
-  const k = Math.min(1, max / Math.max(sw, sh)), W = Math.max(1, Math.round(sw * k)), H = Math.max(1, Math.round(sh * k));
+// 画像（img / canvas / video / ImageBitmap）を長辺 max 以下に縮め、左上原点の RGBA にする。
+// rect {x, y, w, h} を渡すと、その範囲だけを切り出して縮める（分割して細かく見るとき）
+export function imageToRgba(src, sw, sh, max = INPUT, rect = null) {
+  const r = rect || { x: 0, y: 0, w: sw, h: sh };
+  const k = Math.min(1, max / Math.max(r.w, r.h)), W = Math.max(1, Math.round(r.w * k)), H = Math.max(1, Math.round(r.h * k));
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'medium';
-  g.drawImage(src, 0, 0, W, H);
+  g.drawImage(src, r.x, r.y, r.w, r.h, 0, 0, W, H);
   const d = g.getImageData(0, 0, W, H);
-  return { rgba: new Uint8Array(d.data.buffer), W, H, scale: sw / W };
+  return { rgba: new Uint8Array(d.data.buffer), W, H, scale: r.w / W };
 }
 
 // ワーカー（detector-worker.js）とのやりとり
