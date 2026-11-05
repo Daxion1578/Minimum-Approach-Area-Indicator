@@ -1,6 +1,6 @@
 # 仕組みの図
 
-時間軸が二つある。処理の順番（取込→判定→提案→承認）と、停止ステップの進行（0→3）。この文書は前者を描く。後者はアプリの画面（ステップのスライダー）で見せる。
+処理の順番（取込 → 作業日の停止範囲 → 判定・重機の選定 → 提案 → 承認）を描く。停止は作業日ごとの停止範囲で持ち、開閉器操作の途中段階は扱わない（11/6）。
 
 ## データの系譜
 
@@ -11,23 +11,28 @@ flowchart LR
   subgraph IN["入力"]
     PDF["単線結線図（ベクター PDF）"]
     TXT["作業指示文（この先）"]
-    MACH["クレーン（画面で置く）"]
+    LIFT["吊る機器・資材置場・重さ"]
+    MACH["クレーン（選定を採用、または画面で置く）"]
   end
   subgraph ST["構造"]
     T0["topology 未確認"] --> T1["topology 承認済み"]
   end
   subgraph JD["判定（エンジン）"]
-    EN["energization"] --> EV["envelope"] --> IF["clearance"]
+    SC["作業日の停止範囲（steps）"] --> EN["energization（充電・停電）"] --> EV["envelope"] --> IF["clearance"]
+    EV --> SEL["重機の選定（一番小さいクラス）"]
   end
   subgraph PR["提案（Claude）"]
     PP["候補（engine）＋ 説明（Claude）"]
   end
   subgraph OUT["承認済み成果物"]
-    AP["plan / envelope / step-N-sld.pdf"]
+    AP["plan（条件・入力のハッシュ）/ envelope / 停止範囲図 step-N-sld.pdf"]
   end
   PDF --> T0
-  T1 --> EN
-  TXT --> EN
+  T1 --> SC
+  TXT -.-> SC
+  LIFT --> SEL
+  SEL -- 採用 --> MACH
+  SEL -- 置けない／小さくしたい --> SC
   MACH --> IF
   IF -- 干渉あり --> PP -- 再検証 --> EN
   IF -- 干渉なし --> AP

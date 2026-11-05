@@ -10,3 +10,4 @@ docs/img/ui-2-steps.png
 docs/img/ui-3-clearance.png
 docs/img/ui-3-propose.png
 docs/img/ui-4-approve.png
+docs/img/ui-3-select.png
