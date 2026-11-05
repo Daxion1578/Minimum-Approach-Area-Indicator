@@ -233,7 +233,7 @@
   addEventListener('unhandledrejection', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + ((ev.reason && ev.reason.message) || ev.reason)); });
 </script>
 <script type="module">
-import { CLASSES, classInfo, Tracker, makeFrame, trackShape, segSegDist } from './detector.js';
+import { CLASSES, classInfo, namesMatch, Tracker, makeFrame, trackShape, segSegDist } from './detector.js';
 import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
 // three.js は同梱品だけを使う（このページはキーを扱うので、改ざん照合のない CDN のコードは読み込まない）
 let THREE = null;
@@ -663,20 +663,20 @@ $('btnPts').addEventListener('click', () => { $('ptPanel').hidden = !$('ptPanel'
 function renderTable() {
   const rows = points.map(p => `<tr><td class="num">${p.id}</td><td>${esc(p.label)}</td><td>${p.live ? '充電中' : '停止中'}</td><td>${esc(KV_PRESETS[p.kv].label)}</td><td class="num">${fmt(p.r, 1)}</td><td class="num">${fmt(p.q.angle, 1)}</td><td class="num">${fmt(p.q.gap)}</td><td class="num">${fmt(p.q.base, 1)}</td></tr>`).join('');
   $('ptTable').innerHTML = '<tr><th>#</th><th>部位</th><th>状態</th><th>電圧</th><th>半径 m</th><th>角度 °</th><th>すき間 m</th><th>基線 m</th></tr>' + rows;
-  const trs = tracker.tracks.filter(t => t.est && !t.hidden);
+  const trs = tracker.tracks.filter(t => t.est);
   $('trkTable').innerHTML = '<tr><th>#</th><th>検出した物</th><th>状態</th><th>電圧</th><th>半径 m</th><th>視点</th><th>開き °</th><th>奥行き± m</th><th>Claude</th></tr>' + trs.map(t => trkRow(t).map((v, i) => `<td${[4, 5, 6, 7].includes(i) ? ' class="num"' : ''}>${esc(v)}</td>`).join('')).map(r => `<tr>${r}</tr>`).join('');
   $('trkWrap').hidden = trs.length === 0;
   $('logBox').hidden = points.length === 0 && trs.length === 0;
 }
 function trkRow(t) {
   const cl = t.claude ? `${t.claude.live}${t.claude.kind ? ' ' + t.claude.kind : ''}` : '';
-  return [`T${t.id}`, classInfo(t.cls).ja, t.role === 'live' ? (t.live ? '充電中' : '停止中') : t.role === 'approach' ? `近づく物（${gapText(t.gap)}）` : 'その他',
+  return [`T${t.id}`, classInfo(t.cls).ja, t.hidden ? '誤検出として外した' : t.role === 'live' ? (t.live ? '充電中' : '停止中') : t.role === 'approach' ? `近づく物（${gapText(t.gap)}）` : 'その他',
     t.role === 'live' ? KV_PRESETS[t.kv].label : '', t.role === 'live' ? fmt(t.r, 1) : '', String(t.est.n), fmt(t.est.angle, 1), fmt(t.unc, 1), cl];
 }
 function toMarkdown() {
   const head = ['| # | 部位 | 状態 | 電圧 | 半径 m | 角度 ° | すき間 m | 基線 m |', '|---|---|---|---|---|---|---|---|'];
   const rows = points.map(p => `| ${p.id} | ${p.label} | ${p.live ? '充電中' : '停止中'} | ${KV_PRESETS[p.kv].label} | ${fmt(p.r, 1)} | ${fmt(p.q.angle, 1)} | ${fmt(p.q.gap)} | ${fmt(p.q.base, 1)} |`);
-  const trs = tracker.tracks.filter(t => t.est && !t.hidden);
+  const trs = tracker.tracks.filter(t => t.est);
   const trk = trs.length ? ['', '| # | 検出した物 | 状態 | 電圧 | 半径 m | 視点 | 開き ° | 奥行き± m | Claude |', '|---|---|---|---|---|---|---|---|---|', ...trs.map(t => `| ${trkRow(t).join(' | ')} |`)] : [];
   return [...head, ...rows, '', `つなぎ: ${links.map(l => l.join('–')).join('、') || 'なし'}`, ...trk].join('\n');
 }
@@ -710,8 +710,14 @@ async function startDetector(buf, name) {
   detState = 'loading'; detErr = ''; showDetInfo(`検出器を準備しています（${name}。初回は実行部品 約22MB を取得）…`);
   try {
     const info = await detector.init(buf);
+    // 探す語が画面と同じ順で同じでなければ使わない（違うモデルだと、がいしを「人」と読み違えて離隔帯が出ないことがある）
+    if (info.nc !== CLASSES.length || !namesMatch(info.names)) {
+      detector.close(); detState = 'error'; detErr = 'モデルの探す語が画面と合わない';
+      showDetInfo(`このモデルは使えません: 探す語が画面と合いません（モデル ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export の成果物の yoloworld-s.onnx を選んでください`, true);
+      return;
+    }
     detState = 'ready';
-    showDetInfo(`検出器: 使えます（${info.ep}・初回 ${info.warmMs} ms）` + (info.nc !== CLASSES.length ? `。種類の数が合いません（モデル ${info.nc}、画面 ${CLASSES.length}）` : '') + (info.ep === 'WASM' ? '。WebGPU が使えないため遅くなります' : ''), info.nc !== CLASSES.length);
+    showDetInfo(`検出器: 使えます（${info.ep}・初回 ${info.warmMs} ms）` + (info.ep === 'WASM' ? '。WebGPU が使えないため遅くなります' : ''));
   } catch (e) { detState = 'error'; detErr = e.message; showDetInfo('検出器を準備できません: ' + e.message, true); }
 }
 async function showSavedModel() {
@@ -757,7 +763,8 @@ function liveShapes() {
   for (const t of tracker.tracks) if (t.est && !t.hidden && t.role === 'live' && t.live) out.push({ ...trackShape(t, t.r), track: t });
   return out;
 }
-const gapText = g => !isFinite(g) ? '離隔帯なし' : g <= 0 ? '離隔帯の内側' : `離隔帯まで ${fmt(g, 1)} m`;
+const SEEN_MS = 1500;   // 動く物の距離を出すのは、この時間内に見えているときだけ
+const gapText = g => Number.isNaN(g) ? '見失った' : !isFinite(g) ? '離隔帯なし' : g <= 0 ? '離隔帯の内側' : `離隔帯まで ${fmt(g, 1)} m`;
 // 近づく物（クレーンのブームなど）から、最寄りの離隔帯の表面までの距離（参考値。物の大きさと奥行きの不確かさを差し引く）
 function approachGap(t, shapes) { const s0 = trackShape(t, 0); let best = Infinity; for (const sh of shapes) best = Math.min(best, segSegDist(s0.a, s0.b, sh.a, sh.b) - sh.r - s0.r); return best; }
 function addCapsule(group, a, b, r) {
@@ -778,7 +785,7 @@ function rebuildDet() {
       const at = (u, v) => { const r = lastDet.fr.rayOf(u, v); return V3(r.o[0] + r.d[0] * D, r.o[1] + r.d[1] * D, r.o[2] + r.d[2] * D); };
       const pts = [at(b.x1, b.y1), at(b.x2, b.y1), at(b.x2, b.y2), at(b.x1, b.y2)];
       const loop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), boxMats[t.role] || boxMats.other); loop.renderOrder = 36; detBox.add(loop);
-      if (!t.est) { const lab = cachedLabel('b' + t.id, `#${t.id} ${classInfo(t.cls).ja}（歩くと3D）`, '#ffe8a3', 'rgba(255,209,102,.6)'); lab.position.copy(pts[0]); detBox.add(lab); }
+      if (!t.est) { const lab = cachedLabel('b' + t.id, `#${t.id} ${classInfo(t.cls).ja}（歩くと3D${t.cand ? `・奥行き ±${fmt(t.cand.unc, 1)} m` : ''}）`, '#ffe8a3', 'rgba(255,209,102,.6)'); lab.position.copy(pts[0]); detBox.add(lab); }
     });
   }
   // 3D になった物の印と、充電中の物の離隔帯
@@ -793,8 +800,10 @@ function rebuildDet() {
     let text = `#${t.id} ${info.ja}`, col = '#e6e8eb', border = 'rgba(255,255,255,.3)';
     if (t.role === 'live') { text += t.live ? '' : '（停止）'; col = t.live ? '#ffd0d0' : '#c6f6cf'; }
     if (t.role === 'approach') {
-      t.gap = approachGap(t, shapes);
-      if (isFinite(t.gap)) text += ' ' + gapText(t.gap);
+      // 動く物は、いま見えているときだけ距離を出す（見失った位置で距離を出し続けない）。動いている間は誤差が大きい
+      const seen = performance.now() - t.lastSeen < SEEN_MS;
+      t.gap = seen ? approachGap(t, shapes) : NaN;
+      text += seen ? (isFinite(t.gap) ? ' ' + gapText(t.gap) + '（目安）' : '') : ' 見失った（距離は出さない）';
       col = t.gap <= 0 ? '#ffb3b3' : '#cfefff'; border = t.gap <= 0 ? 'rgba(255,77,77,.9)' : 'rgba(90,215,255,.6)';
     }
     const lab = cachedLabel('m' + t.id, `${text} ±${fmt(t.unc, 1)}m`, col, border); lab.position.copy(pos).add(V3(0, 0.45, 0)); detMark.add(lab);
@@ -815,7 +824,7 @@ function renderTrkPanel() {
   const el = $('trkPanel'), dist = t => viewerPos.distanceTo(V3(...t.est.p));
   const list = tracker.tracks.filter(t => t.est && !t.hidden).sort((a, b) => dist(a) - dist(b));
   const pending = tracker.tracks.filter(t => !t.est && !t.hidden).length, hidden = tracker.tracks.filter(t => t.hidden).length;
-  const foot = (pending ? `<p class="note">追跡中で、まだ3Dでない物 ${pending}（設備に向けたまま横へ歩くと3Dになる）</p>` : '') + (hidden ? `<div class="row"><span class="note">表示しない物 ${hidden}</span><button data-act="unhide">すべて表示に戻す</button></div>` : '');
+  const foot = (pending ? `<p class="note">追跡中で、まだ3Dでない物 ${pending}（設備に向けたまま横へ歩くと3Dになる）</p>` : '') + (hidden ? `<div class="row"><span class="note">誤検出として外した物 ${hidden}（離隔帯と距離の計算から外れている）</span><button data-act="unhide">すべて戻す</button></div>` : '');
   if (detState !== 'ready') { el.innerHTML = '<p class="note">検出器を使っていません（開始画面でモデルを選ぶ）。</p>'; return; }
   el.innerHTML = (list.length ? '' : '<p class="note">まだ3Dになった物はありません。</p>') + list.map(t => {
     const info = classInfo(t.cls), cl = t.claude;
@@ -824,14 +833,18 @@ function renderTrkPanel() {
       + (t.role === 'live' ? `・${esc(KV_PRESETS[t.kv].label)} 半径 ${fmt(t.r, 1)} m` : '') + (t.role === 'approach' ? `・${gapText(t.gap)}` : '');
     const claude = cl ? `<div class="claude">Claude: ${cl.live === 'yes' ? '充電部になりうる' : cl.live === 'no' ? '充電部ではなさそう' : '分からない'}${cl.kind ? '（' + esc(cl.kind) + '）' : ''} ${esc(cl.note)}</div>` : '';
     const acts = (t.role === 'live' ? `<button data-act="live">${t.live ? '停止中にする' : '充電中にする'}</button><select data-act="kv">${KV_PRESETS.map((k, i) => `<option value="${i}" ${i === t.kv ? 'selected' : ''}>${esc(k.label)}</option>`).join('')}</select>` : '')
-      + '<button data-act="hide" class="danger">表示しない</button>';
+      + '<button data-act="hide" class="danger">誤検出として外す</button>';
     return `<div class="pt" data-id="${t.id}"><div><b>#${t.id} ${esc(info.ja)}</b>${tag}<div class="meta">${meta}</div>${claude}</div><div></div><div class="acts">${acts}</div></div>`;
   }).join('') + foot;
   el.querySelectorAll('.pt').forEach(row => {
     const t = tracker.tracks.find(x => x.id === +row.dataset.id); if (!t) return;
     row.querySelector('[data-act=live]')?.addEventListener('click', () => { t.live = !t.live; rebuildDet(); maybeRenderTrk(true); });
     row.querySelector('[data-act=kv]')?.addEventListener('change', e => { t.kv = +e.target.value; t.r = KV_PRESETS[t.kv].r; rebuildDet(); maybeRenderTrk(true); });
-    row.querySelector('[data-act=hide]').addEventListener('click', () => { t.hidden = true; rebuildDet(); maybeRenderTrk(true); });
+    row.querySelector('[data-act=hide]').addEventListener('click', e => {   // 外すと離隔帯と距離の計算からも外れるので、2回押しで確かめる
+      const btn = e.currentTarget;
+      if (btn.dataset.armed !== '1') { btn.dataset.armed = '1'; btn.textContent = 'もう一度押すと外す（離隔帯も消える）'; setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ''; btn.textContent = '誤検出として外す'; } }, 3000); return; }
+      t.hidden = true; rebuildDet(); maybeRenderTrk(true);
+    });
   });
   el.querySelector('[data-act=unhide]')?.addEventListener('click', () => { for (const t of tracker.tracks) t.hidden = false; rebuildDet(); maybeRenderTrk(true); });
 }
@@ -877,8 +890,8 @@ function updateUI() {
     $('btnShot').textContent = '2回目（交点で決める）'; $('btnShot').disabled = !t || t.angle < 3;
   }
   $('guide').textContent = guide; $('live').textContent = live;
-  const n3 = tracker.tracks.filter(t => t.est && !t.hidden).length, nAll = tracker.tracks.filter(t => !t.hidden).length;
-  if (detState === 'ready') chip($('chipDet'), !$('detOn').checked ? '検出 停止' : detErr ? '検出 エラー' : `検出 ${detector.info.ep} ${detMs}ms・3D ${n3}/${nAll}`, !$('detOn').checked ? '' : detErr ? 'ng' : 'ok');
+  const n3 = tracker.tracks.filter(t => t.est && !t.hidden).length, nAll = tracker.tracks.filter(t => !t.hidden).length, nOut = tracker.tracks.length - nAll;
+  if (detState === 'ready') chip($('chipDet'), !$('detOn').checked ? '検出 停止' : detErr ? '検出 エラー' : `検出 ${detector.info.ep} ${detMs}ms・3D ${n3}/${nAll}${nOut ? `・外した ${nOut}` : ''}`, !$('detOn').checked ? '' : detErr ? 'ng' : nOut ? 'warn' : 'ok');
   else chip($('chipDet'), detState === 'loading' ? '検出 準備中' : detState === 'error' ? '検出 使えない' : '検出 なし', detState === 'error' ? 'warn' : '');
   if (lastDet && performance.now() - lastDet.t > 1500 && detBox.children.length) clearGroup(detBox);
   const d = nearestZone(), el = $('dist');

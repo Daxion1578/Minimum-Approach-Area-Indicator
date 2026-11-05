@@ -20,6 +20,44 @@ export const CLASSES = [
   { en: 'person', ja: '人', role: 'approach' },
 ];
 export const classInfo = cls => CLASSES[cls] || { en: `class ${cls}`, ja: `種類${cls}`, role: 'other' };
+// モデルの探す語が画面の語と同じ順で同じか（違うモデルで「がいし」を「人」と読み違えないため）
+export const namesMatch = names => Array.isArray(names) && names.length === CLASSES.length && names.every((n, i) => n === CLASSES[i].en);
+
+// ------------------------------------------------------------ ONNX の付帯情報（探す語）を読む
+// protobuf の1階層ぶんの項目を順に渡す。長さつきの項目は中を見ずに飛ばせるので、重み（数十MB）を読まずに済む
+function pbFields(u8, start, end, cb) {
+  let i = start;
+  const varint = () => { let x = 0, mul = 1, b; do { if (i >= end) throw new Error('protobuf が途中で切れている'); b = u8[i++]; x += (b & 0x7f) * mul; mul *= 128; } while (b & 0x80); return x; };
+  while (i < end) {
+    const key = varint(), field = Math.floor(key / 8), type = key % 8;
+    if (type === 0) cb(field, 'varint', varint());
+    else if (type === 1) i += 8;
+    else if (type === 5) i += 4;
+    else if (type === 2) { const n = varint(); if (i + n > end) throw new Error('protobuf の長さが合わない'); cb(field, 'bytes', i, i + n); i += n; }
+    else throw new Error('扱えない protobuf の型 ' + type);
+  }
+}
+// Ultralytics が書く "{0: 'insulator', 1: 'bushing', …}" を配列にする
+export function parseNamesString(v) {
+  const out = [], re = /(\d+)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
+  let m;
+  while ((m = re.exec(v))) out[+m[1]] = m[2] ?? m[3];
+  return out.length && !out.includes(undefined) ? out : null;
+}
+// ONNX の ModelProto の metadata_props（14番。key=1, value=2）から names を読む。読めなければ null
+export function readOnnxNames(buf) {
+  const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf), dec = new TextDecoder();
+  let names = null;
+  try {
+    pbFields(u8, 0, u8.length, (field, kind, a, b) => {
+      if (field !== 14 || kind !== 'bytes') return;
+      let k = null, v = null;
+      pbFields(u8, a, b, (f2, k2, s, e) => { if (k2 !== 'bytes') return; if (f2 === 1) k = dec.decode(u8.subarray(s, e)); else if (f2 === 2) v = dec.decode(u8.subarray(s, e)); });
+      if (k === 'names' && v != null) names = parseNamesString(v);
+    });
+  } catch (e) { return null; }
+  return names;
+}
 
 // ------------------------------------------------------------ 前処理・後処理（YOLO 系、入力 640×640）
 // RGBA（左上原点、W×H、長辺 S 以下）を S×S の中央に置き、[1,3,S,S] の 0〜1 にする（余白は灰色 114）
@@ -75,20 +113,25 @@ const len = a => Math.hypot(a[0], a[1], a[2]);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 export const v3 = { sub, add, scl, dot, len };
 
+// 4×4 の逆行列（ガウス・ジョルダン法、部分ピボット）。列優先の配列を受け取り、列優先で返す
 function invert4(m) {
-  const [a00, a01, a02, a03, a10, a11, a12, a13, a20, a21, a22, a23, a30, a31, a32, a33] = m;
-  const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11;
-  const b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30;
-  const b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
-  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-  if (!det) return null;
-  det = 1 / det;
-  return [
-    (a11 * b11 - a12 * b10 + a13 * b09) * det, (a02 * b10 - a01 * b11 - a03 * b09) * det, (a31 * b05 - a32 * b04 + a33 * b03) * det, (a22 * b04 - a21 * b05 - a23 * b03) * det,
-    (a12 * b08 - a10 * b11 - a13 * b07) * det, (a00 * b11 - a02 * b08 + a03 * b07) * det, (a32 * b02 - a30 * b05 - a33 * b01) * det, (a20 * b05 - a22 * b02 + a23 * b01) * det,
-    (a10 * b10 - a11 * b08 + a13 * b06) * det, (a01 * b08 - a00 * b10 - a03 * b06) * det, (a30 * b04 - a31 * b02 + a33 * b00) * det, (a21 * b02 - a20 * b04 - a23 * b00) * det,
-    (a11 * b07 - a10 * b09 - a12 * b06) * det, (a00 * b09 - a01 * b07 + a02 * b06) * det, (a31 * b01 - a30 * b03 - a32 * b00) * det, (a20 * b03 - a21 * b01 + a22 * b00) * det,
-  ];
+  const a = [0, 1, 2, 3].map(r => [m[r], m[4 + r], m[8 + r], m[12 + r], +(r === 0), +(r === 1), +(r === 2), +(r === 3)]);
+  for (let c = 0; c < 4; c++) {
+    let piv = c;
+    for (let r = c + 1; r < 4; r++) if (Math.abs(a[r][c]) > Math.abs(a[piv][c])) piv = r;
+    if (Math.abs(a[piv][c]) < 1e-12) return null;
+    [a[c], a[piv]] = [a[piv], a[c]];
+    const k = a[c][c];
+    for (let j = 0; j < 8; j++) a[c][j] /= k;
+    for (let r = 0; r < 4; r++) {
+      if (r === c || !a[r][c]) continue;
+      const f = a[r][c];
+      for (let j = 0; j < 8; j++) a[r][j] -= f * a[c][j];
+    }
+  }
+  const out = new Array(16);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out[c * 4 + r] = a[r][4 + c];
+  return out;
 }
 const mul4v = (m, x, y, z, w) => [m[0] * x + m[4] * y + m[8] * z + m[12] * w, m[1] * x + m[5] * y + m[9] * z + m[13] * w, m[2] * x + m[6] * y + m[10] * z + m[14] * w, m[3] * x + m[7] * y + m[11] * z + m[15] * w];
 
@@ -161,23 +204,21 @@ export function triangulateMany(obs, minAngle = 3, inlierDeg = 2) {
 }
 
 // ------------------------------------------------------------ 距離（離隔帯までの参考値）
-// 線分 p1–q1 と線分 p2–q2 の最短距離（点は p=q の線分として渡す）
+// 点 p と線分 a–b の最短距離
+function pointSegDist(p, a, b) {
+  const ab = sub(b, a), L2 = dot(ab, ab), t = L2 > 1e-12 ? clamp(dot(sub(p, a), ab) / L2, 0, 1) : 0;
+  return len(sub(p, add(a, scl(ab, t))));
+}
+// 線分 p1–q1 と線分 p2–q2 の最短距離（点は p=q の線分として渡す）。
+// 距離の2乗は (s,t) の凸関数なので、最小は「[0,1]² の内側の停留点」か「縁」にある。縁なら端点と相手の線分の距離になる
 export function segSegDist(p1, q1, p2, q2) {
-  const d1 = sub(q1, p1), d2 = sub(q2, p2), r = sub(p1, p2), a = dot(d1, d1), e = dot(d2, d2), f = dot(d2, r), EPS = 1e-12;
-  let s, t;
-  if (a <= EPS && e <= EPS) return len(r);
-  if (a <= EPS) { s = 0; t = clamp(f / e, 0, 1); }
-  else {
-    const c = dot(d1, r);
-    if (e <= EPS) { t = 0; s = clamp(-c / a, 0, 1); }
-    else {
-      const b = dot(d1, d2), den = a * e - b * b;
-      s = den > EPS ? clamp((b * f - c * e) / den, 0, 1) : 0;
-      t = (b * s + f) / e;
-      if (t < 0) { t = 0; s = clamp(-c / a, 0, 1); } else if (t > 1) { t = 1; s = clamp((b - c) / a, 0, 1); }
-    }
+  const u = sub(q1, p1), v = sub(q2, p2), w = sub(p1, p2);
+  const a = dot(u, u), b = dot(u, v), c = dot(v, v), d = dot(u, w), e = dot(v, w), den = a * c - b * b;
+  if (a > 1e-12 && c > 1e-12 && den > 1e-9 * a * c) {
+    const s = (b * e - c * d) / den, t = (a * e - b * d) / den;
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) return len(add(w, sub(scl(u, s), scl(v, t))));
   }
-  return len(sub(add(p1, scl(d1, s)), add(p2, scl(d2, t))));
+  return Math.min(pointSegDist(p1, p2, q2), pointSegDist(q1, p2, q2), pointSegDist(p2, p1, q1), pointSegDist(q2, p1, q1));
 }
 
 // 追跡の形（線分 a–b と、その周りの半径）。物の大きさと奥行きの不確かさを半径に足して保守側にする。
@@ -190,10 +231,15 @@ export function trackShape(t, r = 0) {
 
 // ------------------------------------------------------------ 検出の追跡
 // 同じ種類で、前の位置（3D が出ていれば今のコマへの投影、無ければ前の視線を仮の奥行きで投影）に近い枠を同じ物とみなす。
-// 視点が動くたびに視線を足し、3視点以上・開き 3° 以上で3Dにする。3D になった物は見えなくなっても残す
+// 視点が動くたびに視線を足し、3視点以上・開き 3° 以上・奥行きの不確かさ maxUnc m 以下で3Dにする（それまでは cand に途中の値）。
+// 止まっている物は、3D になれば見えなくなっても残す。動く物（moving。既定は近づく物の種類）は直近 movingWindowMs の視線だけで求め、
+// 求まらなければ3Dを取り消し、keepMs 見えなければ消す（古い位置を使い続けない）
 export class Tracker {
   constructor(opts = {}) {
-    this.opts = { keepMs: 4000, minMove: 0.15, maxObs: 40, minObs: 3, sigma: 0.012, assumeDepth: 10, maxUnc: 10, ...opts };
+    this.opts = {
+      keepMs: 4000, minMove: 0.15, maxObs: 40, minObs: 3, sigma: 0.012, assumeDepth: 10, maxUnc: 4, movingWindowMs: 6000,
+      moving: new Set(CLASSES.flatMap((c, i) => c.role === 'approach' ? [i] : [])), ...opts,
+    };
     this.tracks = []; this.nextId = 1;
   }
   reset() { this.tracks = []; this.nextId = 1; }
@@ -221,25 +267,29 @@ export class Tracker {
     }
     dets.forEach((d, di) => {
       if (ids[di]) return;
-      const t = { id: this.nextId++, cls: d.cls, box: d, obs: [], est: null, unc: Infinity, ext: { h: 0, w: 0, dir: null }, hits: 0, firstSeen: now, lastSeen: now, score: d.score };
+      const t = { id: this.nextId++, cls: d.cls, box: d, obs: [], est: null, cand: null, unc: Infinity, ext: { h: 0, w: 0, dir: null }, hits: 0, firstSeen: now, lastSeen: now, score: d.score };
       this.tracks.push(t); ids[di] = t.id; this.observe(t, d, frame, now);
     });
-    this.tracks = this.tracks.filter(t => t.est || now - t.lastSeen < keepMs);
+    this.tracks = this.tracks.filter(t => now - t.lastSeen < keepMs || (t.est && !this.opts.moving.has(t.cls)));
     return ids;
   }
   observe(t, d, frame, now) {
-    const o = this.opts, cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2, r = frame.rayOf(cx, cy);
-    t.box = d; t.lastSeen = now; t.hits++; t.score = d.score;
+    const o = this.opts, cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2, r = frame.rayOf(cx, cy), moving = o.moving.has(t.cls);
+    r.t = now; t.box = d; t.lastSeen = now; t.hits++; t.score = d.score;
     const last = t.obs[t.obs.length - 1];
     if (!last || len(sub(last.o, r.o)) > o.minMove) {   // 前に足した場所から minMove 以上動いたときだけ足す
       t.obs.push(r);
       if (t.obs.length > o.maxObs) t.obs.splice(1 + (t.hits % (t.obs.length - 2)), 1);   // 最初と最後の視線は残す
     }
-    if (t.obs.length >= o.minObs) {
-      const est = triangulateMany(t.obs);
-      // 奥行きの不確かさの目安: 奥行き × 角度のぶれ ÷ sin(開き)。ぶれは実測の 1.5 倍か sigma の大きい方（保守側）
-      if (est) { t.est = est; t.unc = Math.min(o.maxUnc, est.depth * Math.max(o.sigma, 1.5 * est.angRms) / Math.sin(est.angle * Math.PI / 180) + est.rms); }
-    }
+    const obs = moving ? t.obs.filter(x => now - x.t <= o.movingWindowMs) : t.obs;
+    const est = obs.length >= o.minObs ? triangulateMany(obs) : null;
+    if (est) {
+      // 奥行きの不確かさの目安: 奥行き × 角度のぶれ ÷ sin(開き) ＋ 残差。ぶれは実測の 1.5 倍か sigma の大きい方（保守側。頭打ちにしない）
+      const unc = est.depth * Math.max(o.sigma, 1.5 * est.angRms) / Math.sin(est.angle * Math.PI / 180) + est.rms;
+      t.cand = { ...est, unc };
+      if (unc <= o.maxUnc) { t.est = est; t.unc = unc; }
+      else if (moving) { t.est = null; t.unc = Infinity; }
+    } else if (moving) { t.est = null; t.unc = Infinity; t.cand = null; }
     if (t.est) {   // 枠の大きさを推定した奥行きで m に直す（なめらかにする）
       const D = len(sub(t.est.p, r.o)), at = (u, v) => { const q = frame.rayOf(u, v); return add(q.o, scl(q.d, D)); };
       const left = at(d.x1, cy), right = at(d.x2, cy), h = len(sub(at(cx, d.y1), at(cx, d.y2))) / 2, w = len(sub(left, right)) / 2;

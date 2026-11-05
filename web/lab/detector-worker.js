@@ -2,7 +2,7 @@
 // 実行部品 onnxruntime-web は jsDelivr から取り、ハッシュ（SRI）で照合できたものだけを使う。照合できなければ動かさない。
 // ハッシュは GitHub Actions（lab-yoloworld-export の ort job）が npm の配布物から計算して記録したもの。
 // ワーカーの中で動かすので、画面側のキー（sessionStorage）や DOM には触れられない。
-import { INPUT, toTensorData, decode } from './detector.js';
+import { INPUT, toTensorData, decode, readOnnxNames } from './detector.js';
 
 const ORT = {
   version: '1.20.1',
@@ -23,9 +23,11 @@ async function loadOrt() {
   if (ort) return ort;
   const [code, wasm] = await Promise.all([fetchVerified(ORT.code, 'text'), fetchVerified(ORT.wasm, 'buffer')]);
   // 照合済みの本文を blob: の URL から読み込む。blob: の URL は相対パスの基準にできず、wasm の場所を
-  // new URL('…wasm', import.meta.url) で求める処理が失敗するため、import.meta.url を配布元の URL に置き換える
-  // （wasm 本体は照合済みのものを wasmBinary で渡すので、その URL から取りに行くことはない）
-  const patched = code.replaceAll('import.meta.url', JSON.stringify(ORT.base + ORT.code.file));
+  // new URL('…wasm', import.meta.url) で求める処理が失敗するため、import.meta.url を「同じオリジンの存在しない場所」に置き換える。
+  // wasm 本体は照合済みのものを wasmBinary で渡す。もし ORT が何かをこの場所から取りに行っても 404 で止まり、
+  // 照合していないコードは動かない（CI の点検はこの場所への要求があれば失敗にする）
+  const placeholder = new URL('__ort_not_loaded__/' + ORT.code.file, self.location.href).href;
+  const patched = code.replaceAll('import.meta.url', JSON.stringify(placeholder));
   const mod = await import(URL.createObjectURL(new Blob([patched], { type: 'text/javascript' })));
   mod.env.wasm.wasmBinary = wasm;   // 照合済みの wasm を渡す（パスからは取りに行かせない）
   mod.env.wasm.numThreads = 1;      // Pages は cross-origin isolation が無く、複数スレッドは使えない
@@ -43,7 +45,7 @@ async function warm(s, inputName, outputName) {
 }
 async function init(modelBuf, prefer) {
   await loadOrt();
-  const model = new Uint8Array(modelBuf);
+  const model = new Uint8Array(modelBuf), names = readOnnxNames(model);   // 探す語（画面側で照合し、違えば使わない）
   let ep = '', gpuError = '', w = null;
   if (prefer !== 'wasm' && self.navigator && self.navigator.gpu) {
     try {
@@ -56,7 +58,7 @@ async function init(modelBuf, prefer) {
     w = await warm(session, session.inputNames[0], session.outputNames[0]); ep = 'WASM';
   }
   const dims = w.dims, nc = (dims[1] < dims[2] ? dims[1] : dims[2]) - 4;
-  info = { ep, gpuError, inputName: session.inputNames[0], outputName: session.outputNames[0], dims, nc, warmMs: Math.round(w.ms), ort: ORT.version };
+  info = { ep, gpuError, inputName: session.inputNames[0], outputName: session.outputNames[0], dims, nc, names, warmMs: Math.round(w.ms), ort: ORT.version };
   return info;
 }
 async function detect({ rgba, W, H, conf }) {

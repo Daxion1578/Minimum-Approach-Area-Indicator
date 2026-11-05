@@ -57,7 +57,7 @@
   <p class="warnbox">実験用です。検出は候補にすぎず、見落としも誤りもあります。電気が来ているかは写真では分かりません。</p>
 </main>
 <script type="module">
-import { CLASSES, classInfo } from './detector.js';
+import { CLASSES, classInfo, namesMatch } from './detector.js';
 import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
 
 const $ = id => document.getElementById(id);
@@ -72,8 +72,11 @@ async function startDetector(buf, name) {
   setStatus(`検出器を準備しています（${esc(name)}）…`);
   try {
     const info = await det.init(buf, $('wasmOnly').checked ? 'wasm' : 'webgpu');
-    const ok = info.nc === CLASSES.length;
-    setStatus(`使えます: ${info.ep}・初回 ${info.warmMs} ms・種類 ${info.nc}${ok ? '' : `（画面の語は ${CLASSES.length} 個。合わない）`}${info.ep === 'WASM' && info.gpuError ? '（WebGPU: ' + info.gpuError + '）' : ''}`, ok ? 'ok' : 'warn');
+    if (info.nc !== CLASSES.length || !namesMatch(info.names)) {   // 探す語が画面と同じ順で同じでなければ使わない
+      det.close();
+      throw new Error(`探す語が画面と合わない（モデル: ${info.names ? info.names.join(', ') : `種類 ${info.nc}・語を読めない`}）。lab-yoloworld-export の成果物の yoloworld-s.onnx を選んでください`);
+    }
+    setStatus(`使えます: ${info.ep}・初回 ${info.warmMs} ms・探す語 ${info.nc} 個（画面と一致）${info.ep === 'WASM' && info.gpuError ? '（WebGPU: ' + info.gpuError + '）' : ''}`, 'ok');
     return info;
   } catch (e) { setStatus('検出器を準備できません: ' + e.message, 'ng'); throw e; }
   finally { updateRun(); }
@@ -130,7 +133,7 @@ async function run() {
     return `<tr><td class="num">${i + 1}</td><td>${esc(info.ja)}（${esc(info.en)}）</td><td>${info.role === 'live' ? '充電部になりうる' : info.role === 'approach' ? '近づく物' : 'その他'}</td><td class="num">${b.score.toFixed(2)}</td><td class="num">${Math.round(b.x2 - b.x1)}×${Math.round(b.y2 - b.y1)}</td></tr>`;
   }).join('');
   $('tableWrap').hidden = false;
-  return { ep: det.info.ep, gpuError: det.info.gpuError, nc: det.info.nc, warmMs: det.info.warmMs, ms: res.ms, W: image.w, H: image.h, input: [small.W, small.H], boxes };
+  return { ep: det.info.ep, gpuError: det.info.gpuError, nc: det.info.nc, names: det.info.names, namesOk: namesMatch(det.info.names), warmMs: det.info.warmMs, ms: res.ms, W: image.w, H: image.h, input: [small.W, small.H], boxes };
 }
 $('btnRun').addEventListener('click', () => run().catch(e => setStatus('検出に失敗しました: ' + e.message, 'ng')));
 

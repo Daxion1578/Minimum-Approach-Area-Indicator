@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { CLASSES, INPUT, toTensorData, decode, makeFrame, triangulateMany, Tracker, segSegDist, trackShape } from '../detector.js';
+import { CLASSES, INPUT, toTensorData, decode, makeFrame, triangulateMany, Tracker, segSegDist, trackShape, readOnnxNames, namesMatch } from '../detector.js';
 
 const here = p => fileURLToPath(new URL(p, import.meta.url));
 let n = 0;
@@ -80,10 +80,38 @@ test('多視点の3D化: 外れた視線を1本外す', () => {
   assert.equal(triangulateMany([obs[0], { o: [obs[0].o[0] + 0.01, 1.5, 0], d: obs[0].d }]), null);   // 開きが足りない
 });
 
-test('距離: 線分どうし・点と線分', () => {
+test('距離: 線分どうし・点と線分（総当たりと比べる）', () => {
   near(segSegDist([0, 0, 0], [0, 2, 0], [3, 1, 0], [3, 1, 4]), 3, 1e-9, '平行でない');
   near(segSegDist([0, 0, 0], [0, 0, 0], [0, 0, 5], [0, 0, 9]), 5, 1e-9, '点と線分の端');
   near(segSegDist([0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]), 1, 1e-9, '平行');
+  let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5) * 10;
+  for (let k = 0; k < 200; k++) {
+    const P = [0, 1, 2, 3].map(() => [rnd(), rnd(), rnd()]);
+    if (k % 7 === 0) P[1] = [...P[0]];                                                        // 点と線分
+    if (k % 11 === 0) P[3] = [P[2][0] + P[1][0] - P[0][0], P[2][1] + P[1][1] - P[0][1], P[2][2] + P[1][2] - P[0][2]];   // 平行
+    let best = Infinity; const N = 120;
+    for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+      const s = i / N, t = j / N, a = P[0].map((v, c) => v + s * (P[1][c] - v)), b = P[2].map((v, c) => v + t * (P[3][c] - v));
+      best = Math.min(best, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]));
+    }
+    const d = segSegDist(P[0], P[1], P[2], P[3]);
+    assert.ok(d <= best + 1e-9 && d >= best - 0.15, `例 ${k}: ${d} と総当たり ${best}`);
+  }
+});
+
+test('ONNX の付帯情報から探す語を読む（重みの部分は読まずに飛ばす）', () => {
+  const enc = new TextEncoder(), varint = n => { const o = []; do { let b = n % 128; n = Math.floor(n / 128); if (n) b |= 0x80; o.push(b); } while (n); return o; };
+  const ld = (field, bytes) => [...varint(field * 8 + 2), ...varint(bytes.length), ...bytes];
+  const entry = (k, v) => ld(14, [...ld(1, [...enc.encode(k)]), ...ld(2, [...enc.encode(v)])]);
+  const names = `{${CLASSES.map((c, i) => `${i}: '${c.en}'`).join(', ')}}`;
+  const graph = new Uint8Array(300000).fill(7);                                            // 大きな graph（7番）の代わり
+  const buf = new Uint8Array([...varint(1 * 8), 9, ...ld(7, [...graph]), ...entry('author', 'Ultralytics'), ...entry('names', names)]);
+  const got = readOnnxNames(buf);
+  assert.ok(namesMatch(got));
+  const swapped = [...got]; [swapped[0], swapped[10]] = [swapped[10], swapped[0]];
+  assert.equal(namesMatch(swapped), false);                                                // 数が同じでも順番が違えば合わない
+  assert.equal(readOnnxNames(new Uint8Array([0x0a, 0x05, 1])), null);                       // 壊れたもの
+  assert.equal(readOnnxNames(new Uint8Array([...varint(8), 9])), null);                     // names が無い
 });
 
 // 歩きながら見る場面: 3つの物（がいし2つ、クレーンのブーム1つ）を、横へ 4 m 歩きつつ首を振って撮る
@@ -123,6 +151,29 @@ test('追跡: 歩くだけで3Dになり、番号が変わらない（急に向�
     else near(sh.a[1], sh.b[1], 1e-9, '横長は水平');
     near(t.ext.h, ob.h, 0.15, `物 ${k} の高さの半分`);
   }
+});
+
+test('追跡: 遠くて基線が短い物は、奥行きが定まるまで3Dにしない', () => {
+  const tr = new Tracker(); let now = 0;
+  for (let i = 0; i <= 6; i++) {
+    const fr = makeFrame(PROJ, pose([i * 0.42, 1.5, 0], 0, 8), W, H), q = fr.project([0, 8, -40]);   // 40 m 先を 2.5 m の基線で（開き 約3.5°）
+    now += 250; tr.update([{ x1: q.u - 3, x2: q.u + 3, y1: q.v - 8, y2: q.v + 8, score: 0.8, cls: 0 }], fr, now);
+  }
+  const t = tr.tracks[0];
+  assert.equal(t.est, null, '3D にしてはいけない');
+  assert.ok(t.cand && t.cand.unc > tr.opts.maxUnc, `途中の値の不確かさ ${t.cand && t.cand.unc}`);
+});
+
+test('追跡: 動く物は、端末が止まって古い視線だけになると3Dを取り消し、見えなくなれば消す', () => {
+  const tr = new Tracker(); let now = 0, last = null;
+  const boom = { cls: 8, c: [-3, 5, -12], h: 0.3, w: 2 };
+  const see = (fr, c) => { const q = fr.project(c); return { x1: q.u - 20, x2: q.u + 20, y1: q.v - 4, y2: q.v + 4, score: 0.8, cls: boom.cls }; };
+  for (let i = 0; i <= 12; i++) { last = makeFrame(PROJ, pose([-1.5 + i * 0.25, 1.5, 0], -8, 12), W, H); now += 250; tr.update([see(last, boom.c)], last, now); }
+  assert.ok(tr.tracks[0].est, '歩いている間は3Dになる');
+  for (let i = 0; i < 30; i++) { now += 250; tr.update([see(last, [boom.c[0] + i * 0.1, boom.c[1], boom.c[2]])], last, now); }   // 端末は止まり、ブームが動く
+  assert.equal(tr.tracks[0].est, null, '古い視線だけでは3Dを残さない');
+  now += 5000; tr.update([], last, now);
+  assert.equal(tr.tracks.length, 0, '見えなくなった動く物は消える');
 });
 
 console.log(`${n} 件 OK（入力 ${INPUT}）`);
