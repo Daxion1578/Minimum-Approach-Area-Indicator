@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MAAI ラボ 検出器の点検（実験）</title>
+<style>
+  /* 実験ブランチ（lab-camera-ar）。本線には入れない */
+  :root { --bg:#111418; --panel:#1b2026; --line:#2c343d; --fg:#e6e8eb; --mute:#8b949e; --live:#ff4d4d; --dead:#39d353; --warn:#f5c518; --accent:#4ea1ff; color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.6 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif; }
+  header { background:var(--panel); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  header b { font-size:17px; } header small { color:var(--warn); }
+  main { max-width:960px; margin:0 auto; padding:14px 16px 32px; display:grid; gap:12px; }
+  h2 { margin:6px 0 0; font-size:13px; font-weight:600; color:var(--mute); letter-spacing:.06em; }
+  p { margin:0; } a { color:var(--accent); }
+  .note { color:var(--mute); font-size:13px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  button, select, .filebtn { font:inherit; color:inherit; border-radius:10px; min-height:44px; padding:8px 14px; border:1px solid var(--line); background:#232a33; cursor:pointer; }
+  .filebtn { display:inline-flex; align-items:center; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:700; }
+  .pill { display:inline-flex; align-items:center; gap:8px; align-self:flex-start; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:#151a20; font-size:14px; }
+  .pill::before { content:""; width:9px; height:9px; border-radius:50%; background:var(--mute); }
+  .pill.ok::before { background:var(--dead); } .pill.warn::before { background:var(--warn); } .pill.ng::before { background:var(--live); }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+  #view { max-width:100%; border-radius:8px; border:1px solid var(--line); display:block; }
+  table { border-collapse:collapse; width:100%; font-size:13px; } th, td { padding:5px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  th { color:var(--mute); font-weight:500; } td.num { text-align:right; font-family:ui-monospace,Menlo,Consolas,monospace; }
+  .tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
+  .warnbox { background:#2c2208; border:1px solid #6b5212; border-radius:8px; padding:8px 10px; font-size:13px; }
+</style>
+</head>
+<body>
+<header><b>MAAI ラボ：検出器の点検</b><small>実験ブランチ・本線には入れない</small></header>
+<main>
+  <div id="status" class="pill">準備しています…</div>
+  <p>端末内の検出器（YOLO-World）が写真の中で何を見つけるかを確かめます。写真もモデルもこの端末の中だけで使い、どこにも送りません。</p>
+
+  <h2>モデル</h2>
+  <p id="modelInfo" class="note">未設定</p>
+  <div class="row">
+    <label class="filebtn">モデルを選ぶ（.onnx）<input type="file" id="modelFile" accept=".onnx" hidden></label>
+    <button id="btnModelDel" hidden>保存したモデルを消す</button>
+    <label class="note"><input type="checkbox" id="wasmOnly"> WebGPU を使わない（比べる用）</label>
+  </div>
+  <p class="note">モデルは GitHub Actions の <span class="mono">lab-yoloworld-export</span> の成果物 <span class="mono">yoloworld-onnx</span>（zip）の中の <span class="mono">yoloworld-s.onnx</span>。AGPL-3.0 のためリポジトリには置かない。選ぶとこのブラウザに保存され、<a href="camera-ar.html">カメラAR</a> でも使える。実行部品（onnxruntime-web 1.20.1、約22MB）は jsDelivr から取り、ハッシュで照合してから使う。</p>
+
+  <h2>写真</h2>
+  <div class="row">
+    <label class="filebtn">写真を選ぶ<input type="file" id="imageFile" accept="image/*" hidden></label>
+    <button id="btnRun" class="primary" disabled>検出する</button>
+    <span id="timing" class="note mono"></span>
+  </div>
+  <canvas id="view" width="16" height="9" hidden></canvas>
+  <div class="tablewrap" id="tableWrap" hidden><table id="detTable"></table></div>
+  <p class="warnbox">実験用です。検出は候補にすぎず、見落としも誤りもあります。電気が来ているかは写真では分かりません。</p>
+</main>
+<script type="module">
+import { CLASSES, classInfo } from './detector.js';
+import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MB = n => (n / 1048576).toFixed(1) + ' MB';
+const COLORS = { live: '#ffd166', approach: '#5ad7ff', other: '#b0b8c1' };
+const det = new Detector();
+let image = null;   // {el, w, h}
+function setStatus(text, cls) { const el = $('status'); el.textContent = text; el.className = 'pill ' + (cls || ''); }
+
+async function startDetector(buf, name) {
+  setStatus(`検出器を準備しています（${esc(name)}）…`);
+  try {
+    const info = await det.init(buf, $('wasmOnly').checked ? 'wasm' : 'webgpu');
+    const ok = info.nc === CLASSES.length;
+    setStatus(`使えます: ${info.ep}・初回 ${info.warmMs} ms・種類 ${info.nc}${ok ? '' : `（画面の語は ${CLASSES.length} 個。合わない）`}${info.ep === 'WASM' && info.gpuError ? '（WebGPU: ' + info.gpuError + '）' : ''}`, ok ? 'ok' : 'warn');
+    return info;
+  } catch (e) { setStatus('検出器を準備できません: ' + e.message, 'ng'); throw e; }
+  finally { updateRun(); }
+}
+function updateRun() { $('btnRun').disabled = !(det.ready && image); }
+async function showSaved() {
+  const m = await loadModel();
+  $('modelInfo').textContent = m ? `保存済み: ${m.name}（${MB(m.size)}）` : '未設定';
+  $('btnModelDel').hidden = !m;
+  return m;
+}
+$('modelFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  try { await saveModel(f.name, buf.slice(0)); } catch (err) { setStatus('このブラウザに保存できませんでした（容量など）: ' + err.message, 'warn'); }
+  await showSaved();
+  startDetector(buf, f.name).catch(() => {});
+});
+$('btnModelDel').addEventListener('click', async () => { await deleteModel(); det.close(); await showSaved(); setStatus('保存したモデルを消しました', 'warn'); updateRun(); });
+$('wasmOnly').addEventListener('change', async () => { const m = await loadModel(); if (m) startDetector(m.buf, m.name).catch(() => {}); });
+$('imageFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadImage(URL.createObjectURL(f)); });
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => { image = { el, w: el.naturalWidth, h: el.naturalHeight }; draw([]); updateRun(); resolve(image); };
+    el.onerror = () => reject(new Error('写真を読めません'));
+    el.src = url;
+  });
+}
+function draw(boxes) {
+  const c = $('view'), g = c.getContext('2d'); c.hidden = false;
+  c.width = image.w; c.height = image.h; g.drawImage(image.el, 0, 0);
+  const lw = Math.max(2, Math.round(Math.max(image.w, image.h) / 400)), fs = Math.max(14, Math.round(Math.max(image.w, image.h) / 45));
+  g.font = `700 ${fs}px system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif`; g.textBaseline = 'top';
+  boxes.forEach((b, i) => {
+    const info = classInfo(b.cls), col = COLORS[info.role];
+    g.strokeStyle = col; g.lineWidth = lw; g.strokeRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
+    const label = `${i + 1} ${info.ja} ${b.score.toFixed(2)}`, tw = g.measureText(label).width + 8;
+    g.fillStyle = col; g.fillRect(b.x1, Math.max(0, b.y1 - fs - 6), tw, fs + 6);
+    g.fillStyle = '#111'; g.fillText(label, b.x1 + 4, Math.max(0, b.y1 - fs - 6) + 3);
+  });
+}
+async function run() {
+  const small = imageToRgba(image.el, image.w, image.h);
+  const res = await det.detect(small.rgba, small.W, small.H);
+  const k = small.scale;
+  const boxes = res.boxes.map(b => ({ ...b, x1: b.x1 * k, y1: b.y1 * k, x2: b.x2 * k, y2: b.y2 * k }));
+  draw(boxes);
+  $('timing').textContent = `${det.info.ep}・推論 ${res.ms} ms・入力 ${small.W}×${small.H}`;
+  $('detTable').innerHTML = '<tr><th>#</th><th>種類</th><th>扱い</th><th>確からしさ</th><th>枠（画素）</th></tr>' + boxes.map((b, i) => {
+    const info = classInfo(b.cls);
+    return `<tr><td class="num">${i + 1}</td><td>${esc(info.ja)}（${esc(info.en)}）</td><td>${info.role === 'live' ? '充電部になりうる' : info.role === 'approach' ? '近づく物' : 'その他'}</td><td class="num">${b.score.toFixed(2)}</td><td class="num">${Math.round(b.x2 - b.x1)}×${Math.round(b.y2 - b.y1)}</td></tr>`;
+  }).join('');
+  $('tableWrap').hidden = false;
+  return { ep: det.info.ep, gpuError: det.info.gpuError, nc: det.info.nc, warmMs: det.info.warmMs, ms: res.ms, W: image.w, H: image.h, input: [small.W, small.H], boxes };
+}
+$('btnRun').addEventListener('click', () => run().catch(e => setStatus('検出に失敗しました: ' + e.message, 'ng')));
+
+// 起動。?model=…&image=…&auto=1 は自動の点検用（同じオリジンのパスだけ受け付ける）
+const q = new URLSearchParams(location.search);
+const sameOrigin = p => { const u = new URL(p, location.href); if (u.origin !== location.origin) throw new Error('別のオリジンは読まない: ' + p); return u.href; };
+(async () => {
+  try {
+    if (q.get('model') && q.get('image')) {
+      if (q.get('prefer') === 'wasm') $('wasmOnly').checked = true;
+      const r = await fetch(sameOrigin(q.get('model'))); if (!r.ok) throw new Error('モデルを読めない: HTTP ' + r.status);
+      await loadImage(sameOrigin(q.get('image')));
+      await startDetector(await r.arrayBuffer(), q.get('model'));
+      if (q.get('auto')) window.__result = await run();
+      return;
+    }
+    const m = await showSaved();
+    if (m) await startDetector(m.buf, m.name);
+    else setStatus('モデルを選んでください', 'warn');
+  } catch (e) { window.__error = String(e && e.message || e); if (!$('status').classList.contains('ng')) setStatus(window.__error, 'ng'); }
+})();
+</script>
+</body>
+</html>

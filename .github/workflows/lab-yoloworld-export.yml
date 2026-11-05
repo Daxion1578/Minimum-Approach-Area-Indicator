@@ -3,11 +3,14 @@ name: lab-yoloworld-export
 # export: YOLO-World を lab/yoloworld/classes.txt の語に固定して ONNX に書き出し、見本画像で検出を確かめて成果物（artifact）に置く。
 #         モデル（AGPL-3.0）はリポジトリにコミットしない。成果物には許諾書の全文と対応ソースの在り処を添える。
 # ort:    端末で使う onnxruntime-web を npm から取り、ファイルの大きさとハッシュ（改ざん照合用）を記録する。
+# check:  detector.js の計算のテストと、書き出したモデルを点検ページ（headless Chromium）で動かして Ultralytics の結果と照合する。
 on:
   push:
     branches: [lab-camera-ar]
     paths:
       - 'lab/yoloworld/**'
+      - 'web/lab/detector*'
+      - 'web/lab/tests/**'
       - '.github/workflows/lab-yoloworld-export.yml'
   workflow_dispatch:
 permissions:
@@ -91,3 +94,28 @@ jobs:
           name: ort-web
           path: ort-dist/
           retention-days: 30
+
+  check:
+    needs: export
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: yoloworld-onnx
+          path: _ci/model
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit tests (web/lab/detector.js)
+        run: node web/lab/tests/detector.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Browser check (onnxruntime-web from jsDelivr with SRI)
+        run: |
+          pip install "playwright==1.48.0"
+          python -m playwright install --with-deps chromium
+          curl -fsSL -o _ci/bus.jpg https://ultralytics.com/images/bus.jpg
+          python lab/yoloworld/check_browser.py --root . --model _ci/model/yoloworld-s.onnx --image _ci/bus.jpg --expect _ci/model/check-ultralytics.json
