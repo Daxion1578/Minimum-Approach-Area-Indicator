@@ -93,6 +93,9 @@
   .pt .acts button, .pt .acts select { min-height:38px; padding:4px 10px; font-size:14px; }
   .tag { display:inline-block; padding:0 8px; border-radius:999px; font-size:12px; margin-left:6px; }
   .tag.live { background:rgba(255,77,77,.25); color:#ffd0d0; } .tag.dead { background:rgba(57,211,83,.22); color:#c6f6cf; }
+  .tag.app { background:rgba(90,215,255,.22); color:#cfefff; }
+  .filebtn { display:inline-flex; align-items:center; cursor:pointer; border-radius:10px; min-height:44px; padding:8px 14px; border:1px solid var(--line); background:#232a33; }
+  .pt .claude { color:#ffe8a3; font-size:13px; }
   #toast { position:absolute; left:50%; transform:translateX(-50%); bottom:calc(46vh); max-width:92vw; background:rgba(12,15,19,.93); border:1px solid var(--glass-line);
     border-radius:10px; padding:8px 14px; font-size:15px; opacity:0; transition:opacity .25s; pointer-events:none; text-align:center; }
   #toast.show { opacity:1; } #toast.warn { border-color:rgba(245,197,24,.9); }
@@ -138,6 +141,15 @@
     </div>
     <p class="note">「候補を探す」を押したときだけ、カメラの1コマを Anthropic の API に送ります（送った画像は Anthropic の扱いに従う）。リポジトリには何も残りません。キーは「覚える」を選んだときだけ、このタブを閉じるまでブラウザに残ります。利用上限を絞った実験専用のキーを使ってください。実在の設備で撮るときは、撮影してよい場所かを先に確かめてください。</p>
 
+    <h2>端末内の検出器（任意・試験）</h2>
+    <p id="detInfo" class="note">モデル未設定（無くても Claude と照準で使える）</p>
+    <div class="row">
+      <label class="filebtn">モデルを選ぶ（.onnx）<input type="file" id="modelFile" accept=".onnx" hidden></label>
+      <button id="btnModelDel" hidden>消す</button>
+      <label><input type="checkbox" id="detOn" checked> AR 中に検出し続ける</label>
+    </div>
+    <p class="note">検出器を使うと、がいし・ブッシングなどを端末の中で見つけ続け、横へ歩くだけで3Dの位置が決まります（充電部になりうる物は既定で充電中）。「候補を探す」では、見つけた物に番号を付けて Claude に見せ、どれが充電部らしいかを聞きます。モデルの入手と写真での点検は <a href="detector-check.html">検出器の点検</a> へ。検出は端末の中だけで動き、画像は外に出ません（Claude に聞くときの1コマを除く）。</p>
+
     <h2>新しい点の電圧と離隔（目安・要確認）</h2>
     <div class="row">
       <select id="kvSel"></select>
@@ -157,12 +169,14 @@
         <li>横へ 2〜5 m 歩き、水色の線の上にある同じ部位に照準を合わせて「2回目」。点が決まり、離隔帯（赤）が出る。</li>
         <li>「点の一覧」で充電中／停止中、電圧、導体としてつなぐ相手を直す。</li>
         <li>Claude を使わずに「照準で点を追加」から同じ手順で点を足すこともできる。</li>
+        <li>検出器があれば、設備に向けたまま横へゆっくり歩くだけで、見つけた物が3Dになり離隔帯が出る。「検出の一覧」で充電中／停止中・電圧を直す。</li>
       </ol>
     </details>
 
     <section id="logBox" hidden>
       <h2>決めた点</h2>
       <div class="tablewrap"><table id="ptTable"></table></div>
+      <div class="tablewrap" id="trkWrap" hidden style="margin-top:8px"><table id="trkTable"></table></div>
       <div class="row" style="margin-top:8px"><button id="btnCopy">表をコピー</button><span id="copyMsg" class="note"></span></div>
       <textarea id="copyArea" readonly hidden></textarea>
     </section>
@@ -178,6 +192,7 @@
       <span class="chip" id="chipTrack">追跡 —</span>
       <span class="chip" id="chipCam">カメラ画像 —</span>
       <span class="chip" id="chipPts">点 0</span>
+      <span class="chip" id="chipDet">検出 —</span>
     </div>
     <div id="banner">実験・目安表示（検電・監視の代わりにはならない）</div>
   </div>
@@ -197,9 +212,11 @@
     </div>
     <div class="row small">
       <button id="btnPts">点の一覧</button>
+      <button id="btnTrk">検出の一覧</button>
       <button id="btnEnd">AR を終了</button>
     </div>
     <div id="ptPanel" class="panel2" hidden></div>
+    <div id="trkPanel" class="panel2" hidden></div>
   </div>
   <div id="snapPanel" hidden>
     <div id="snapHead"><p id="snapMsg">Claude に問い合わせています…</p><button id="snapClose">閉じる</button></div>
@@ -216,6 +233,8 @@
   addEventListener('unhandledrejection', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + ((ev.reason && ev.reason.message) || ev.reason)); });
 </script>
 <script type="module">
+import { CLASSES, classInfo, Tracker, makeFrame, trackShape, segSegDist } from './detector.js';
+import { Detector, saveModel, loadModel, deleteModel, imageToRgba } from './detector-client.js';
 // three.js は同梱品だけを使う（このページはキーを扱うので、改ざん照合のない CDN のコードは読み込まない）
 let THREE = null;
 try { THREE = await import('../vendor/three/three.module.js'); } catch (e) { window.__fail('three.js を読み込めませんでした。'); throw e; }
@@ -255,17 +274,17 @@ function pixelRay(projArr, matArr, u, v, W, H) {
   const dir = pv.normalize().transformDirection(M);
   return { o: V3().setFromMatrixPosition(M), d: dir };
 }
-// 点と線分の距離（離隔帯までの距離表示に使う。参考値）
-function distPointSeg(p, a, b) { const ab = b.clone().sub(a), t = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / Math.max(ab.lengthSq(), 1e-12))); return p.distanceTo(a.clone().addScaledVector(ab, t)); }
-// Claude の返答（JSON）を読む。範囲外の座標は捨てる
-function parseCandidates(text, W, H) {
+// Claude の返答（JSON）を読む。範囲外の座標と、画像に描いていない番号の評価は捨てる
+function parseCandidates(text, W, H, markIds = null) {
   const i = text.indexOf('{'), j = text.lastIndexOf('}');
   if (i < 0 || j <= i) throw new Error('返答に JSON がありません');
   const obj = JSON.parse(text.slice(i, j + 1));
   const cands = (obj.candidates || []).map((c, k) => ({ id: Number(c.id ?? k + 1), x: Number(c.x), y: Number(c.y), kind: String(c.kind || '候補'), note: String(c.note || ''), conf: Number(c.confidence ?? NaN) }))
     .filter(c => isFinite(c.x) && isFinite(c.y) && c.x >= 0 && c.y >= 0 && c.x < W && c.y < H);
   const links = (obj.links || []).filter(l => Array.isArray(l) && l.length === 2).map(l => [Number(l[0]), Number(l[1])]);
-  return { cands, links, caution: String(obj.caution || '') };
+  const marks = (obj.marks || []).map(m => ({ id: Number(m.id), live: ['yes', 'no', 'unsure'].includes(m.live_part) ? m.live_part : 'unsure', kind: String(m.kind || ''), note: String(m.note || '') }))
+    .filter(m => Number.isInteger(m.id) && (!markIds || markIds.has(m.id)));
+  return { cands, links, marks, caution: String(obj.caution || '') };
 }
 
 // ------------------------------------------------------------ 3D の土台
@@ -393,6 +412,7 @@ async function startAR() {
     refSpace = renderer.xr.getReferenceSpace();
     scene.background = null; grid.visible = false; example.visible = false;
     points.length = 0; links.length = 0; nextId = 1;   // 前回の AR の座標は使えないので、点は毎回作り直す
+    tracker.reset(); lastDet = null; detErr = ''; dropDet(); $('trkPanel').hidden = true;
     mode = 'idle'; aim = null; clearGroup(rays); rebuild(); updateUI();
     try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (e) { wakeLock = null; }
   } catch (e) {
@@ -405,7 +425,7 @@ function onSessionEnd() {
   wakeLock = null; session = null; refSpace = null; camAccess = false; snapRequest = null;
   overlay.classList.remove('on'); $('snapPanel').hidden = true;
   scene.background = BG; grid.visible = true; example.visible = true;
-  clearGroup(zones); clearGroup(marks); clearGroup(rays);
+  clearGroup(zones); clearGroup(marks); clearGroup(rays); dropDet(); $('trkPanel').hidden = true;
   renderTable(); setTimeout(resizePreview, 60);
 }
 $('btnStart').addEventListener('click', startAR);
@@ -414,41 +434,47 @@ $('btnEnd').addEventListener('click', () => session && session.end());
 // ------------------------------------------------------------ カメラの1コマを読む（WebXR Raw Camera Access）
 function makeBlit(gl) {
   const vs = 'attribute vec2 aPos; varying vec2 vUv; void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }';
-  const fs = 'precision mediump float; uniform sampler2D uTex; varying vec2 vUv; void main(){ gl_FragColor = texture2D(uTex, vUv); }';
+  // 縮めるときのちらつきを抑えるため、出力1画素の中の4か所を平均する
+  const fs = 'precision mediump float; uniform sampler2D uTex; uniform vec2 uStep; varying vec2 vUv; void main(){ gl_FragColor = 0.25 * (texture2D(uTex, vUv + vec2(-uStep.x, -uStep.y)) + texture2D(uTex, vUv + vec2(uStep.x, -uStep.y)) + texture2D(uTex, vUv + vec2(-uStep.x, uStep.y)) + texture2D(uTex, vUv + uStep)); }';
   const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
   const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog);
   const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  return { prog, vbo, aPos: gl.getAttribLocation(prog, 'aPos'), uTex: gl.getUniformLocation(prog, 'uTex'), fbo: null, tex: null, W: 0, H: 0 };
+  return { prog, vbo, aPos: gl.getAttribLocation(prog, 'aPos'), uTex: gl.getUniformLocation(prog, 'uTex'), uStep: gl.getUniformLocation(prog, 'uStep'), targets: new Map() };
 }
-function grabCamera(view) {
+// カメラの1コマを長辺 maxSide 画素以下で読む。asCanvas=false なら左上原点の RGBA（検出器に渡す）
+function grabCamera(view, maxSide = 1280, asCanvas = true) {
   const binding = renderer.xr.getBinding();
   const camTex = binding.getCameraImage(view.camera);
-  const cw = view.camera.width, ch = view.camera.height, k = Math.min(1, 1280 / Math.max(cw, ch));
+  const cw = view.camera.width, ch = view.camera.height, k = Math.min(1, maxSide / Math.max(cw, ch));
   const W = Math.round(cw * k), H = Math.round(ch * k);
   const gl = renderer.getContext();
   if (!blit) blit = makeBlit(gl);
-  if (blit.W !== W || blit.H !== H) {
-    if (blit.tex) gl.deleteTexture(blit.tex); if (blit.fbo) gl.deleteFramebuffer(blit.fbo);
-    blit.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, blit.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  let tgt = blit.targets.get(W + 'x' + H);
+  if (!tgt) {
+    tgt = { tex: gl.createTexture(), fbo: gl.createFramebuffer() };
+    gl.bindTexture(gl.TEXTURE_2D, tgt.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    blit.fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, blit.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blit.tex, 0);
-    blit.W = W; blit.H = H;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tgt.tex, 0);
+    blit.targets.set(W + 'x' + H, tgt);
   }
   if (gl.bindVertexArray) gl.bindVertexArray(null);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, blit.fbo); gl.viewport(0, 0, W, H);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fbo); gl.viewport(0, 0, W, H);
   gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE); gl.disable(gl.SCISSOR_TEST); gl.colorMask(true, true, true, true);
   gl.useProgram(blit.prog); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, camTex);
   try { gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); } catch (e) { /* 変更できない実装もある */ }
-  gl.uniform1i(blit.uTex, 0);
+  gl.uniform1i(blit.uTex, 0); gl.uniform2f(blit.uStep, 0.25 / W, 0.25 / H);
   gl.bindBuffer(gl.ARRAY_BUFFER, blit.vbo); gl.enableVertexAttribArray(blit.aPos); gl.vertexAttribPointer(blit.aPos, 2, gl.FLOAT, false, 0, 0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
   gl.disableVertexAttribArray(blit.aPos); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   renderer.resetState();
-  const c = document.createElement('canvas'); c.width = W; c.height = H; const ctx = c.getContext('2d'); const img = ctx.createImageData(W, H);
-  for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);   // GL は下から上なので上下を入れ替える
-  ctx.putImageData(img, 0, 0);
-  return { canvas: c, W, H, proj: Array.from(view.projectionMatrix), mat: Array.from(view.transform.matrix) };
+  const rgba = new Uint8Array(W * H * 4);
+  for (let y = 0; y < H; y++) rgba.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);   // GL は下から上なので上下を入れ替える
+  const out = { W, H, proj: Array.from(view.projectionMatrix), mat: Array.from(view.transform.matrix) };
+  if (!asCanvas) return { ...out, rgba };
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer), W, H), 0, 0);
+  return { ...out, canvas: c };
 }
 function requestSnapshot() {
   return new Promise((resolve, reject) => {
@@ -458,7 +484,15 @@ function requestSnapshot() {
 }
 
 // ------------------------------------------------------------ Claude に候補を聞く（Anthropic Messages API を端末から直接呼ぶ）
-function prompt(W, H) {
+function prompt(W, H, marks = []) {
+  if (marks.length) return `この画像は屋外の変電所（または送電設備）をスマートフォンで撮ったものです。画像の大きさは幅${W}×高さ${H}画素で、原点は左上です。
+色の付いた枠と「#番号」は、端末の検出器が見つけた物です（番号は追跡の番号）。検出器の分類: ${marks.map(m => `#${m.id}=${classInfo(m.cls).en}`).join(', ')}。
+1) 枠ごとに、充電部になりうる物か（yes / no / unsure）と、物の名前・根拠を短く答えてください。
+2) 枠の外にも、充電部になりうる部位（がいし・ブッシングの上端の金具や端子、導体を支える金具やクランプ、断路器・遮断器などの端子）があれば、最大8個まで挙げてください。
+対象外: 鉄構（架台・鉄塔・柱）、地面、フェンス、建物、空。電気が来ているかどうかは画像から判断しないこと（充電部とするかは人が決める）。
+次の JSON だけを返してください。説明文は書かないでください。
+{"marks":[{"id":3,"live_part":"yes","kind":"物の名前（短く）","note":"根拠（短く）"}],"candidates":[{"id":1,"x":0,"y":0,"kind":"部位の名前（短く）","note":"見分けた根拠（短く）","confidence":0.0}],"links":[[1,2]],"caution":"画像から言える注意（なければ空）"}
+x と y は、その部位の中心の画素座標（整数）。links は、同じ導体でつながっていると見える候補 id の組。`;
   return `この画像は屋外の変電所（または送電設備）をスマートフォンで撮ったものです。画像の大きさは幅${W}×高さ${H}画素で、原点は左上です。
 感電防止のため、充電部になりうる部位の候補を最大12個挙げてください。
 対象: がいし・ブッシング（がい管）の上端の金具や端子、導体（母線・引き下げ線・ジャンパ線）を支える金具やクランプ、スペーサ、断路器・遮断器・計器用変成器などの端子。
@@ -467,20 +501,20 @@ function prompt(W, H) {
 {"candidates":[{"id":1,"x":0,"y":0,"kind":"部位の名前（短く）","note":"見分けた根拠（短く）","confidence":0.0}],"links":[[1,2]],"caution":"画像から言える注意（なければ空）"}
 x と y は、その部位の中心の画素座標（整数）。links は、同じ導体でつながっていると見える候補 id の組。`;
 }
-async function askClaude(snap) {
+async function askClaude(snap, marks = []) {
   const key = $('apiKey').value.trim();
   if (!key) throw new Error('API キーが入っていません（開始画面で入れてください）');
   const b64 = snap.canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
   const body = { model: $('model').value, max_tokens: 1500, messages: [{ role: 'user', content: [
     { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
-    { type: 'text', text: prompt(snap.W, snap.H) },
+    { type: 'text', text: prompt(snap.W, snap.H, marks) },
   ] }] };
   const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', body: JSON.stringify(body), headers: {
     'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } });
   if (!r.ok) throw new Error(`API ${r.status}: ${(await r.text()).slice(0, 180)}`);
   const j = await r.json();
   const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
-  return parseCandidates(text, snap.W, snap.H);
+  return parseCandidates(text, snap.W, snap.H, marks.length ? new Set(marks.map(m => m.id)) : null);
 }
 
 // ------------------------------------------------------------ 候補の選択画面
@@ -500,7 +534,8 @@ function renderCands() {
     const b = document.createElement('button'); b.className = 'cand' + (snapState.sel === c.id ? ' sel' : ''); b.textContent = String(c.id);
     b.style.left = (c.x * k) + 'px'; b.style.top = (c.y * k) + 'px'; b.addEventListener('click', () => selectCand(c.id)); box.appendChild(b);
   }
-  $('candList').innerHTML = res.cands.map(c => `<button data-id="${c.id}" class="${snapState.sel === c.id ? 'sel' : ''}">${c.id}. ${esc(c.kind)}<span class="note">　${esc(c.note)}${isFinite(c.conf) ? '（確からしさ ' + c.conf.toFixed(2) + '）' : ''}</span></button>`).join('')
+  const markRows = (res.marks || []).map(m => { const t = tracker.tracks.find(x => x.id === m.id); return `<p class="note">#${m.id} ${esc(t ? classInfo(t.cls).ja : '')} → Claude: ${m.live === 'yes' ? '充電部になりうる' : m.live === 'no' ? '充電部ではなさそう' : '分からない'}${m.kind ? '（' + esc(m.kind) + '）' : ''}　${esc(m.note)}</p>`; }).join('');
+  $('candList').innerHTML = markRows + res.cands.map(c => `<button data-id="${c.id}" class="${snapState.sel === c.id ? 'sel' : ''}">${c.id}. ${esc(c.kind)}<span class="note">　${esc(c.note)}${isFinite(c.conf) ? '（確からしさ ' + c.conf.toFixed(2) + '）' : ''}</span></button>`).join('')
     + (res.caution ? `<p class="note">Claude の注意: ${esc(res.caution)}</p>` : '');
   $('candList').querySelectorAll('button').forEach(b => b.addEventListener('click', () => selectCand(+b.dataset.id)));
   $('btnAimCand').disabled = snapState.sel == null;
@@ -515,12 +550,38 @@ $('btnAimCand').addEventListener('click', () => {
 });
 $('btnFind').addEventListener('click', async () => {
   if (!camAccess) { toast('この端末ではカメラ画像を読めません（Chrome の camera-access が必要）。「照準で点を追加」を使ってください', 'warn'); return; }
-  let snap;
+  let snap, marked = null;
   try { snap = await requestSnapshot(); } catch (e) { toast(e.message, 'warn'); return; }
-  showSnap(snap);
-  try { snapState.res = await askClaude(snap); $('snapMsg').textContent = snapState.res.cands.length ? `候補 ${snapState.res.cands.length} 個。充電部にしたい候補を選ぶ` : '候補が見つかりませんでした。向きを変えてもう一度'; renderCands(); }
-  catch (e) { $('snapMsg').textContent = '問い合わせに失敗しました: ' + e.message; }
+  if (detState === 'ready') { try { marked = await markSnapshot(snap); } catch (e) { toast('検出器で番号を付けられませんでした: ' + e.message, 'warn'); } }
+  const sent = marked ? { ...snap, canvas: marked.canvas } : snap;
+  showSnap(sent);
+  try {
+    snapState.res = await askClaude(sent, marked ? marked.marks : []);
+    for (const m of snapState.res.marks) { const t = tracker.tracks.find(x => x.id === m.id); if (t) t.claude = m; }
+    const nm = snapState.res.marks.length, nc = snapState.res.cands.length;
+    $('snapMsg').textContent = nc ? `${nm ? `番号の物 ${nm} 個を評価、` : ''}候補 ${nc} 個。狙う候補を選ぶ` : nm ? `番号の物 ${nm} 個を評価しました（枠の外の候補はなし）。充電中／停止中は「検出の一覧」で決める` : '候補が見つかりませんでした。向きを変えてもう一度';
+    renderCands(); rebuildDet();
+  } catch (e) { $('snapMsg').textContent = '問い合わせに失敗しました: ' + e.message; }
 });
+// 撮った1コマを検出器にかけ、追跡番号つきの枠を描いた画像を作る（Claude に番号で答えてもらうため）
+async function markSnapshot(snap) {
+  const small = imageToRgba(snap.canvas, snap.W, snap.H);
+  const fr = makeFrame(snap.proj, snap.mat, small.W, small.H);
+  const res = await detector.detect(small.rgba, small.W, small.H);
+  const ids = onDets(res, fr), k = small.scale;
+  const marks = res.boxes.map((b, i) => ({ id: ids[i], cls: b.cls, x1: b.x1 * k, y1: b.y1 * k, x2: b.x2 * k, y2: b.y2 * k }))
+    .filter(m => !tracker.tracks.find(t => t.id === m.id)?.hidden);
+  if (!marks.length) return null;
+  const c = document.createElement('canvas'); c.width = snap.W; c.height = snap.H;
+  const g = c.getContext('2d'), fs = Math.max(18, Math.round(snap.W / 36)), lw = Math.max(3, Math.round(snap.W / 320));
+  g.drawImage(snap.canvas, 0, 0); g.font = `700 ${fs}px system-ui, sans-serif`; g.textBaseline = 'top';
+  for (const m of marks) {
+    const col = ROLE_CSS[classInfo(m.cls).role] || ROLE_CSS.other, label = `#${m.id}`, tw = g.measureText(label).width + 10, ty = Math.max(0, m.y1 - fs - 8);
+    g.strokeStyle = col; g.lineWidth = lw; g.strokeRect(m.x1, m.y1, m.x2 - m.x1, m.y2 - m.y1);
+    g.fillStyle = col; g.fillRect(m.x1, ty, tw, fs + 8); g.fillStyle = '#111'; g.fillText(label, m.x1 + 5, ty + 4);
+  }
+  return { canvas: c, marks };
+}
 
 // ------------------------------------------------------------ 照準で2回狙って3D化
 function lineMesh(o, d, len, color, dashed) {
@@ -568,6 +629,7 @@ function rebuild() {
     lab.position.copy(p.pos).add(V3(0, 0.5, 0)); marks.add(lab);
   }
   renderPtPanel(); renderTable(); $('chipPts').textContent = `点 ${points.length}`;
+  rebuildDet();   // 近づく物から離隔帯までの距離に、照準で決めた点の帯も入る
 }
 
 // ------------------------------------------------------------ 点の一覧（充電中／停止中・電圧・つなぐ）
@@ -597,22 +659,179 @@ function renderPtPanel() {
     });
   });
 }
-$('btnPts').addEventListener('click', () => { $('ptPanel').hidden = !$('ptPanel').hidden; renderPtPanel(); });
+$('btnPts').addEventListener('click', () => { $('ptPanel').hidden = !$('ptPanel').hidden; if (!$('ptPanel').hidden) $('trkPanel').hidden = true; renderPtPanel(); });
 function renderTable() {
   const rows = points.map(p => `<tr><td class="num">${p.id}</td><td>${esc(p.label)}</td><td>${p.live ? '充電中' : '停止中'}</td><td>${esc(KV_PRESETS[p.kv].label)}</td><td class="num">${fmt(p.r, 1)}</td><td class="num">${fmt(p.q.angle, 1)}</td><td class="num">${fmt(p.q.gap)}</td><td class="num">${fmt(p.q.base, 1)}</td></tr>`).join('');
   $('ptTable').innerHTML = '<tr><th>#</th><th>部位</th><th>状態</th><th>電圧</th><th>半径 m</th><th>角度 °</th><th>すき間 m</th><th>基線 m</th></tr>' + rows;
-  $('logBox').hidden = points.length === 0;
+  const trs = tracker.tracks.filter(t => t.est && !t.hidden);
+  $('trkTable').innerHTML = '<tr><th>#</th><th>検出した物</th><th>状態</th><th>電圧</th><th>半径 m</th><th>視点</th><th>開き °</th><th>奥行き± m</th><th>Claude</th></tr>' + trs.map(t => trkRow(t).map((v, i) => `<td${[4, 5, 6, 7].includes(i) ? ' class="num"' : ''}>${esc(v)}</td>`).join('')).map(r => `<tr>${r}</tr>`).join('');
+  $('trkWrap').hidden = trs.length === 0;
+  $('logBox').hidden = points.length === 0 && trs.length === 0;
+}
+function trkRow(t) {
+  const cl = t.claude ? `${t.claude.live}${t.claude.kind ? ' ' + t.claude.kind : ''}` : '';
+  return [`T${t.id}`, classInfo(t.cls).ja, t.role === 'live' ? (t.live ? '充電中' : '停止中') : t.role === 'approach' ? `近づく物（${gapText(t.gap)}）` : 'その他',
+    t.role === 'live' ? KV_PRESETS[t.kv].label : '', t.role === 'live' ? fmt(t.r, 1) : '', String(t.est.n), fmt(t.est.angle, 1), fmt(t.unc, 1), cl];
 }
 function toMarkdown() {
   const head = ['| # | 部位 | 状態 | 電圧 | 半径 m | 角度 ° | すき間 m | 基線 m |', '|---|---|---|---|---|---|---|---|'];
   const rows = points.map(p => `| ${p.id} | ${p.label} | ${p.live ? '充電中' : '停止中'} | ${KV_PRESETS[p.kv].label} | ${fmt(p.r, 1)} | ${fmt(p.q.angle, 1)} | ${fmt(p.q.gap)} | ${fmt(p.q.base, 1)} |`);
-  return [...head, ...rows, '', `つなぎ: ${links.map(l => l.join('–')).join('、') || 'なし'}`].join('\n');
+  const trs = tracker.tracks.filter(t => t.est && !t.hidden);
+  const trk = trs.length ? ['', '| # | 検出した物 | 状態 | 電圧 | 半径 m | 視点 | 開き ° | 奥行き± m | Claude |', '|---|---|---|---|---|---|---|---|---|', ...trs.map(t => `| ${trkRow(t).join(' | ')} |`)] : [];
+  return [...head, ...rows, '', `つなぎ: ${links.map(l => l.join('–')).join('、') || 'なし'}`, ...trk].join('\n');
 }
 $('btnCopy').addEventListener('click', async () => {
   const text = toMarkdown();
   try { await navigator.clipboard.writeText(text); $('copyMsg').textContent = 'コピーしました'; }
   catch (e) { const ta = $('copyArea'); ta.hidden = false; ta.value = text; ta.select(); $('copyMsg').textContent = '下に表示しました。長押しでコピー'; }
 });
+
+// ------------------------------------------------------------ 端末内の検出器（任意）。見つけた物を追跡し、歩くだけで3Dにする
+const detector = new Detector(), tracker = new Tracker();
+let detState = 'off', detErr = '', detBusy = false, lastDetAt = -1e9, lastDet = null, detMs = 0, trkRenderedAt = 0;
+const DET_GAP_MS = 120;   // 検出の最短間隔（推論が速くてもこれより詰めない）
+const detBox = new THREE.Group(), detMark = new THREE.Group(), detZone = new THREE.Group();
+scene.add(detBox, detMark, detZone);
+const ROLE_CSS = { live: '#ffd166', approach: '#5ad7ff', other: '#b0b8c1' };
+const boxMats = Object.fromEntries(Object.entries(ROLE_CSS).map(([k, c]) => [k, new THREE.LineBasicMaterial({ color: c, depthTest: false, transparent: true, opacity: 0.95 })]));
+const markGeo = new THREE.SphereGeometry(0.12, 14, 8); markGeo.userData.shared = true;
+const markMats = Object.fromEntries([['live', 0xffd166], ['dead', 0x39d353], ['approach', 0x5ad7ff], ['other', 0xb0b8c1]].map(([k, c]) => [k, new THREE.MeshBasicMaterial({ color: c, depthTest: false })]));
+const labelCache = new Map();
+function cachedLabel(key, text, color, border) {
+  let sp = labelCache.get(key);
+  if (sp && sp.userData.text === text) return sp;
+  if (sp) { sp.material.map.dispose(); sp.material.dispose(); }
+  sp = makeLabel(text, color, border); sp.userData.ownMaterial = false; sp.userData.text = text; labelCache.set(key, sp);
+  return sp;
+}
+function dropDet() { clearGroup(detBox); clearGroup(detMark); clearGroup(detZone); for (const sp of labelCache.values()) { sp.material.map.dispose(); sp.material.dispose(); } labelCache.clear(); }
+function showDetInfo(text, bad) { const el = $('detInfo'); el.textContent = text; el.className = bad ? 'err' : 'note'; }
+async function startDetector(buf, name) {
+  detState = 'loading'; detErr = ''; showDetInfo(`検出器を準備しています（${name}。初回は実行部品 約22MB を取得）…`);
+  try {
+    const info = await detector.init(buf);
+    detState = 'ready';
+    showDetInfo(`検出器: 使えます（${info.ep}・初回 ${info.warmMs} ms）` + (info.nc !== CLASSES.length ? `。種類の数が合いません（モデル ${info.nc}、画面 ${CLASSES.length}）` : '') + (info.ep === 'WASM' ? '。WebGPU が使えないため遅くなります' : ''), info.nc !== CLASSES.length);
+  } catch (e) { detState = 'error'; detErr = e.message; showDetInfo('検出器を準備できません: ' + e.message, true); }
+}
+async function showSavedModel() {
+  const m = await loadModel();
+  $('btnModelDel').hidden = !m;
+  if (!m) showDetInfo('モデル未設定（無くても Claude と照準で使える）');
+  return m;
+}
+$('modelFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  try { await saveModel(f.name, buf.slice(0)); } catch (err) { toast('このブラウザに保存できませんでした: ' + err.message, 'warn'); }
+  $('btnModelDel').hidden = false; startDetector(buf, f.name);
+});
+$('btnModelDel').addEventListener('click', async () => { await deleteModel(); detector.close(); detState = 'off'; await showSavedModel(); });
+$('detOn').checked = store.get('maai.lab.detOn') !== '0';
+$('detOn').addEventListener('change', e => store.set('maai.lab.detOn', e.target.checked ? '1' : '0'));
+
+function runDetection(view, time) {
+  let g;
+  try { g = grabCamera(view, 640, false); } catch (e) { detErr = e.message; return; }
+  detBusy = true; lastDetAt = time;
+  const fr = makeFrame(g.proj, g.mat, g.W, g.H);
+  detector.detect(g.rgba, g.W, g.H).then(res => { detErr = ''; onDets(res, fr); }).catch(e => { detErr = e.message; }).finally(() => { detBusy = false; });
+}
+function initTrack(t) {
+  const info = classInfo(t.cls);
+  t.role = info.role; t.live = info.role === 'live'; t.kv = settings.kv; t.r = settings.r; t.hidden = false; t.claude = null; t.gap = Infinity;
+}
+function onDets(res, fr) {
+  const now = performance.now(), ids = tracker.update(res.boxes, fr, now);
+  for (const t of tracker.tracks) if (t.role === undefined) initTrack(t);
+  lastDet = { fr, boxes: res.boxes, ids, t: now }; detMs = res.ms;
+  rebuildDet();
+  return ids;
+}
+// 離隔帯の形（線分と半径）をすべて集める: 照準で決めた点（球）、つないだ導体（筒）、検出して3Dになった充電中の物
+function liveShapes() {
+  const out = [];
+  for (const p of points) if (p.live) { const a = p.pos.toArray(); out.push({ a, b: a, r: p.r }); }
+  for (const [ia, ib] of links) { const a = points.find(p => p.id === ia), b = points.find(p => p.id === ib); if (a && b && a.live && b.live) out.push({ a: a.pos.toArray(), b: b.pos.toArray(), r: Math.max(a.r, b.r) }); }
+  for (const t of tracker.tracks) if (t.est && !t.hidden && t.role === 'live' && t.live) out.push({ ...trackShape(t, t.r), track: t });
+  return out;
+}
+const gapText = g => !isFinite(g) ? '離隔帯なし' : g <= 0 ? '離隔帯の内側' : `離隔帯まで ${fmt(g, 1)} m`;
+// 近づく物（クレーンのブームなど）から、最寄りの離隔帯の表面までの距離（参考値。物の大きさと奥行きの不確かさを差し引く）
+function approachGap(t, shapes) { const s0 = trackShape(t, 0); let best = Infinity; for (const sh of shapes) best = Math.min(best, segSegDist(s0.a, s0.b, sh.a, sh.b) - sh.r - s0.r); return best; }
+function addCapsule(group, a, b, r) {
+  const A = V3(...a), B = V3(...b), dir = B.clone().sub(A), L = dir.length();
+  addZoneMesh(group, SPH, A, null, V3(r, r, r));
+  if (L > 1e-3) {
+    addZoneMesh(group, SPH, B, null, V3(r, r, r));
+    addZoneMesh(group, CYL, A.clone().add(B).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(YAXIS, dir.normalize()), V3(r, L, r));
+  }
+}
+function rebuildDet() {
+  // 直近の検出の枠。撮ったときの向きで空間に置くので、首を振っても物からずれにくい
+  clearGroup(detBox);
+  if (lastDet && performance.now() - lastDet.t < 1500) {
+    lastDet.boxes.forEach((b, i) => {
+      const t = tracker.tracks.find(x => x.id === lastDet.ids[i]); if (!t || t.hidden) return;
+      const o = lastDet.fr.o, D = t.est ? Math.hypot(t.est.p[0] - o[0], t.est.p[1] - o[1], t.est.p[2] - o[2]) : 10;
+      const at = (u, v) => { const r = lastDet.fr.rayOf(u, v); return V3(r.o[0] + r.d[0] * D, r.o[1] + r.d[1] * D, r.o[2] + r.d[2] * D); };
+      const pts = [at(b.x1, b.y1), at(b.x2, b.y1), at(b.x2, b.y2), at(b.x1, b.y2)];
+      const loop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), boxMats[t.role] || boxMats.other); loop.renderOrder = 36; detBox.add(loop);
+      if (!t.est) { const lab = cachedLabel('b' + t.id, `#${t.id} ${classInfo(t.cls).ja}（歩くと3D）`, '#ffe8a3', 'rgba(255,209,102,.6)'); lab.position.copy(pts[0]); detBox.add(lab); }
+    });
+  }
+  // 3D になった物の印と、充電中の物の離隔帯
+  clearGroup(detMark); clearGroup(detZone);
+  const shapes = liveShapes();
+  for (const sh of shapes) if (sh.track) addCapsule(detZone, sh.a, sh.b, sh.r);
+  for (const t of tracker.tracks) {
+    if (!t.est || t.hidden) continue;
+    const pos = V3(...t.est.p), info = classInfo(t.cls);
+    const m = new THREE.Mesh(markGeo, t.role === 'live' ? (t.live ? markMats.live : markMats.dead) : (markMats[t.role] || markMats.other));
+    m.position.copy(pos); m.renderOrder = 35; detMark.add(m);
+    let text = `#${t.id} ${info.ja}`, col = '#e6e8eb', border = 'rgba(255,255,255,.3)';
+    if (t.role === 'live') { text += t.live ? '' : '（停止）'; col = t.live ? '#ffd0d0' : '#c6f6cf'; }
+    if (t.role === 'approach') {
+      t.gap = approachGap(t, shapes);
+      if (isFinite(t.gap)) text += ' ' + gapText(t.gap);
+      col = t.gap <= 0 ? '#ffb3b3' : '#cfefff'; border = t.gap <= 0 ? 'rgba(255,77,77,.9)' : 'rgba(90,215,255,.6)';
+    }
+    const lab = cachedLabel('m' + t.id, `${text} ±${fmt(t.unc, 1)}m`, col, border); lab.position.copy(pos).add(V3(0, 0.45, 0)); detMark.add(lab);
+  }
+  if (!$('trkPanel').hidden) maybeRenderTrk(false);
+}
+
+// 検出の一覧（充電中／停止中・電圧・表示しない）
+function maybeRenderTrk(force) {
+  const el = $('trkPanel');
+  if (!force && (performance.now() - trkRenderedAt < 1500 || el.contains(document.activeElement))) return;
+  trkRenderedAt = performance.now(); renderTrkPanel();
+}
+function renderTrkPanel() {
+  const el = $('trkPanel'), dist = t => viewerPos.distanceTo(V3(...t.est.p));
+  const list = tracker.tracks.filter(t => t.est && !t.hidden).sort((a, b) => dist(a) - dist(b));
+  const pending = tracker.tracks.filter(t => !t.est && !t.hidden).length, hidden = tracker.tracks.filter(t => t.hidden).length;
+  const foot = (pending ? `<p class="note">追跡中で、まだ3Dでない物 ${pending}（設備に向けたまま横へ歩くと3Dになる）</p>` : '') + (hidden ? `<div class="row"><span class="note">表示しない物 ${hidden}</span><button data-act="unhide">すべて表示に戻す</button></div>` : '');
+  if (detState !== 'ready') { el.innerHTML = '<p class="note">検出器を使っていません（開始画面でモデルを選ぶ）。</p>'; return; }
+  el.innerHTML = (list.length ? '' : '<p class="note">まだ3Dになった物はありません。</p>') + list.map(t => {
+    const info = classInfo(t.cls), cl = t.claude;
+    const tag = t.role === 'live' ? `<span class="tag ${t.live ? 'live' : 'dead'}">${t.live ? '充電中' : '停止中'}</span>` : t.role === 'approach' ? '<span class="tag app">近づく物</span>' : '';
+    const meta = `${t.est.n}視点・開き ${fmt(t.est.angle, 1)}°・奥行き ±${fmt(t.unc, 1)} m・端末から ${fmt(dist(t), 1)} m`
+      + (t.role === 'live' ? `・${esc(KV_PRESETS[t.kv].label)} 半径 ${fmt(t.r, 1)} m` : '') + (t.role === 'approach' ? `・${gapText(t.gap)}` : '');
+    const claude = cl ? `<div class="claude">Claude: ${cl.live === 'yes' ? '充電部になりうる' : cl.live === 'no' ? '充電部ではなさそう' : '分からない'}${cl.kind ? '（' + esc(cl.kind) + '）' : ''} ${esc(cl.note)}</div>` : '';
+    const acts = (t.role === 'live' ? `<button data-act="live">${t.live ? '停止中にする' : '充電中にする'}</button><select data-act="kv">${KV_PRESETS.map((k, i) => `<option value="${i}" ${i === t.kv ? 'selected' : ''}>${esc(k.label)}</option>`).join('')}</select>` : '')
+      + '<button data-act="hide" class="danger">表示しない</button>';
+    return `<div class="pt" data-id="${t.id}"><div><b>#${t.id} ${esc(info.ja)}</b>${tag}<div class="meta">${meta}</div>${claude}</div><div></div><div class="acts">${acts}</div></div>`;
+  }).join('') + foot;
+  el.querySelectorAll('.pt').forEach(row => {
+    const t = tracker.tracks.find(x => x.id === +row.dataset.id); if (!t) return;
+    row.querySelector('[data-act=live]')?.addEventListener('click', () => { t.live = !t.live; rebuildDet(); maybeRenderTrk(true); });
+    row.querySelector('[data-act=kv]')?.addEventListener('change', e => { t.kv = +e.target.value; t.r = KV_PRESETS[t.kv].r; rebuildDet(); maybeRenderTrk(true); });
+    row.querySelector('[data-act=hide]').addEventListener('click', () => { t.hidden = true; rebuildDet(); maybeRenderTrk(true); });
+  });
+  el.querySelector('[data-act=unhide]')?.addEventListener('click', () => { for (const t of tracker.tracks) t.hidden = false; rebuildDet(); maybeRenderTrk(true); });
+}
+$('btnTrk').addEventListener('click', () => { const el = $('trkPanel'); el.hidden = !el.hidden; if (!el.hidden) { $('ptPanel').hidden = true; maybeRenderTrk(true); } });
 
 // ------------------------------------------------------------ 毎フレームの処理
 let lastUi = 0;
@@ -625,6 +844,7 @@ function xrFrame(time, frame) {
     centerRay = pixelRay(Array.from(view.projectionMatrix), Array.from(view.transform.matrix), 0.5, 0.5, 2, 2);   // 画面の真ん中を通る視線
     camAccess = !!view.camera;
     if (snapRequest) { const req = snapRequest; snapRequest = null; try { if (!view.camera) throw new Error('カメラ画像がありません'); req.resolve(grabCamera(view)); } catch (e) { req.reject(e); } }
+    else if (detState === 'ready' && $('detOn').checked && view.camera && !detBusy && $('snapPanel').hidden && time - lastDetAt > DET_GAP_MS) runDetection(view, time);
     if (mode === 'aim2' && aim && aim.ray1 && previewMark) {
       const t = triangulate(aim.ray1.o, aim.ray1.d, centerRay.o, centerRay.d);
       if (t && t.s > 0 && t.t > 0) { previewMark.visible = true; previewMark.position.copy(t.p); aim.preview = t; } else { previewMark.visible = false; aim.preview = null; }
@@ -633,9 +853,8 @@ function xrFrame(time, frame) {
   if (time - lastUi > 150) { lastUi = time; updateUI(); }
 }
 function nearestZone() {
-  let best = Infinity;
-  for (const p of points) if (p.live) best = Math.min(best, viewerPos.distanceTo(p.pos) - p.r);
-  for (const [ia, ib] of links) { const a = points.find(p => p.id === ia), b = points.find(p => p.id === ib); if (a && b && a.live && b.live) best = Math.min(best, distPointSeg(viewerPos, a.pos, b.pos) - Math.max(a.r, b.r)); }
+  const v = viewerPos.toArray(); let best = Infinity;
+  for (const sh of liveShapes()) best = Math.min(best, segSegDist(v, v, sh.a, sh.b) - sh.r);
   return best;
 }
 function chip(el, text, cls) { el.textContent = text; el.className = 'chip ' + (cls || ''); }
@@ -644,7 +863,8 @@ function updateUI() {
   chip($('chipCam'), camAccess ? 'カメラ画像 可' : 'カメラ画像 不可', camAccess ? 'ok' : 'warn');
   $('rowIdle').hidden = mode !== 'idle'; $('rowAim').hidden = mode === 'idle';
   let guide = '', live = '';
-  if (mode === 'idle') guide = points.length ? '点を足すときは「候補を探す」か「照準で点を追加」' : '設備にカメラを向けて「候補を探す」';
+  const detRun = detState === 'ready' && $('detOn').checked, pending = detRun && tracker.tracks.some(t => !t.est && !t.hidden);
+  if (mode === 'idle') guide = pending ? '設備に向けたまま横へゆっくり歩くと、見つけた物が3Dになります' : points.length || tracker.tracks.some(t => t.est) ? '点を足すときは「候補を探す」か「照準で点を追加」' : '設備にカメラを向けて「候補を探す」';
   else if (mode === 'aim1') { guide = `「${aim.label}」の真ん中に照準を合わせて「1回目」` + (aim.hint ? '（黄色の線が候補の方向）' : ''); $('btnShot').textContent = '1回目'; $('btnShot').disabled = !centerRay; }
   else {
     guide = `横へ 2〜5 m 動き、水色の線の上の同じ部位に照準を合わせて「2回目」`;
@@ -653,6 +873,10 @@ function updateUI() {
     $('btnShot').textContent = '2回目（交点で決める）'; $('btnShot').disabled = !t || t.angle < 3;
   }
   $('guide').textContent = guide; $('live').textContent = live;
+  const n3 = tracker.tracks.filter(t => t.est && !t.hidden).length, nAll = tracker.tracks.filter(t => !t.hidden).length;
+  if (detState === 'ready') chip($('chipDet'), !$('detOn').checked ? '検出 停止' : detErr ? '検出 エラー' : `検出 ${detector.info.ep} ${detMs}ms・3D ${n3}/${nAll}`, !$('detOn').checked ? '' : detErr ? 'ng' : 'ok');
+  else chip($('chipDet'), detState === 'loading' ? '検出 準備中' : detState === 'error' ? '検出 使えない' : '検出 なし', detState === 'error' ? 'warn' : '');
+  if (lastDet && performance.now() - lastDet.t > 1500 && detBox.children.length) clearGroup(detBox);
   const d = nearestZone(), el = $('dist');
   if (!isFinite(d)) { el.textContent = ''; el.className = 'mono'; }
   else if (d <= 0) { el.textContent = '端末は離隔帯の内側です（参考）'; el.className = 'mono inside'; }
@@ -677,6 +901,7 @@ else {
 }
 $('btnStart').disabled = !xrSupported;
 window.__ready = true;
+showSavedModel().then(m => { if (m) startDetector(m.buf, m.name); });
 
 // 動作確認用（自動テストから呼ぶ。画面からは使わない）
 window.__lab = {
@@ -695,6 +920,12 @@ window.__lab = {
     }
     return errs;
   },
+  // 検出の追跡を合成の枠で動かす（proj・mat はそのコマの射影と姿勢、boxes は decode() と同じ形）
+  feedDets(proj, mat, W, H, boxes) { if (detState !== 'ready') { detState = 'ready'; detector.info = { ep: 'テスト' }; } return onDets({ boxes, ms: 0 }, makeFrame(proj, mat, W, H)); },
+  tracks: () => tracker.tracks.map(t => ({ id: t.id, cls: t.cls, role: t.role, live: t.live, est: t.est && t.est.p, unc: t.unc, gap: t.gap, ext: t.ext })),
+  detZoneCount: () => detZone.children.length,
+  setTrack(id, patch) { Object.assign(tracker.tracks.find(t => t.id === id), patch); rebuildDet(); },
+  renderTable: () => renderTable(),
   addPointAt(x, y, z, label, live = true) { const p = addPoint(V3(x, y, z), label, { angle: 10, gap: 0.05, base: 3 }); p.live = live; rebuild(); return p.id; },
   link(a, b) { links.push([a, b]); rebuild(); },
   zoneCount: () => zones.children.length,
