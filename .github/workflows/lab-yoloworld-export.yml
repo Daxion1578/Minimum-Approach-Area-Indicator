@@ -1,0 +1,40 @@
+name: lab-yoloworld-export
+# 実験ブランチ lab-camera-ar 専用。YOLO-World を lab/yoloworld/classes.txt の語に固定して ONNX に書き出し、
+# 成果物（artifact）として置く。モデル（AGPL-3.0）はリポジトリにコミットしない。
+on:
+  push:
+    branches: [lab-camera-ar]
+    paths:
+      - 'lab/yoloworld/**'
+      - '.github/workflows/lab-yoloworld-export.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install (CPU)
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install "ultralytics==8.3.40" onnx onnxslim "git+https://github.com/ultralytics/CLIP.git"
+      - name: Export ONNX
+        working-directory: lab/yoloworld
+        run: python export.py
+      - name: License note
+        run: |
+          printf '%s\n' \
+            "yoloworld-s.onnx は Ultralytics YOLO-World（AGPL-3.0）から書き出したモデル。" \
+            "https://github.com/ultralytics/ultralytics/blob/main/LICENSE" \
+            "MAAI リポジトリ（Apache-2.0）には入れない。実験用に端末へ読み込んで使う。" > lab/yoloworld/dist/LICENSE-NOTE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yoloworld-onnx
+          path: lab/yoloworld/dist/
+          retention-days: 30

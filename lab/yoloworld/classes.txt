@@ -1,0 +1,12 @@
+# YOLO-World に探させる語（1行に1つ・英語）。このファイルを変えて push すると、GitHub Actions がモデルを書き出し直す
+insulator
+bushing
+overhead power line
+disconnect switch
+circuit breaker
+transformer
+lattice steel tower
+mobile crane
+crane boom
+aerial work platform
+person
