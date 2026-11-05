@@ -11,6 +11,11 @@ logs/
 *.xdw
 *.xbd
 
+# ラボ（lab-camera-ar）: モデルの重みと書き出し（AGPL-3.0。リポジトリに入れない）
+*.pt
+*.onnx
+lab/yoloworld/dist/
+
 # Python
 __pycache__/
 *.py[cod]

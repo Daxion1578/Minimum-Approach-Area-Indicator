@@ -128,7 +128,7 @@
     <h2>Claude（候補を探すときだけ使う）</h2>
     <div class="row"><input type="password" id="apiKey" placeholder="Anthropic の API キー（sk-ant-…）" autocomplete="off"></div>
     <div class="row">
-      <label><input type="checkbox" id="saveKey"> この端末に保存</label>
+      <label><input type="checkbox" id="saveKey"> このタブを閉じるまで覚える</label>
       <label for="model">モデル</label>
       <select id="model">
         <option value="claude-sonnet-5-5">Sonnet 5.5（標準）</option>
@@ -136,14 +136,14 @@
         <option value="claude-opus-5-5">Opus 5.5（丁寧）</option>
       </select>
     </div>
-    <p class="note">「候補を探す」を押したときだけ、カメラの1コマを Anthropic の API に送ります。リポジトリには何も残りません。キーは保存を選んだときだけ、この端末のブラウザに残ります。</p>
+    <p class="note">「候補を探す」を押したときだけ、カメラの1コマを Anthropic の API に送ります（送った画像は Anthropic の扱いに従う）。リポジトリには何も残りません。キーは「覚える」を選んだときだけ、このタブを閉じるまでブラウザに残ります。利用上限を絞った実験専用のキーを使ってください。実在の設備で撮るときは、撮影してよい場所かを先に確かめてください。</p>
 
     <h2>新しい点の電圧と離隔（目安・要確認）</h2>
     <div class="row">
       <select id="kvSel"></select>
       <label for="rIn">半径</label><input type="number" id="rIn" min="0.5" max="20" step="0.1"><span class="note">m</span>
     </div>
-    <p class="note">既定値はクレーン作業の目標値として公開されている値（MAAI の離隔表 default-jp）。現場では社内基準の値を入れる。</p>
+    <p class="note">既定値は MAAI 本線の離隔表 default-jp（クレーン作業の目標値として公開されている値）を写したもの。現場では社内基準の値を入れる。</p>
 
     <button id="btnStart" class="primary" disabled>ARを開始</button>
 
@@ -216,18 +216,22 @@
   addEventListener('unhandledrejection', function (ev) { if (!window.__ready) window.__fail('読み込み中にエラー: ' + ((ev.reason && ev.reason.message) || ev.reason)); });
 </script>
 <script type="module">
-const SOURCES = ['../vendor/three/three.module.js', 'https://unpkg.com/three@0.160.0/build/three.module.js', 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'];
-let THREE = null, loadErr = null;
-for (const u of SOURCES) { try { THREE = await import(u); break; } catch (e) { loadErr = e; } }
-if (!THREE) { window.__fail('three.js を読み込めませんでした。'); throw loadErr; }
+// three.js は同梱品だけを使う（このページはキーを扱うので、改ざん照合のない CDN のコードは読み込まない）
+let THREE = null;
+try { THREE = await import('../vendor/three/three.module.js'); } catch (e) { window.__fail('three.js を読み込めませんでした。'); throw e; }
 
 const $ = id => document.getElementById(id);
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? '—' : v.toFixed(d);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 使えない環境 */ } }, del(k) { try { localStorage.removeItem(k); } catch (e) { /* 同上 */ } } };
+// 保存先。モデル名などはブラウザに残す（localStorage）。キーはタブを閉じると消える領域（sessionStorage）にだけ置く。
+// localStorage は Pages では <所有者>.github.io の全リポジトリで共有されるため、キーを置かない
+const mkStore = area => ({ get(k) { try { return area().getItem(k); } catch (e) { return null; } }, set(k, v) { try { area().setItem(k, v); } catch (e) { /* 使えない環境 */ } }, del(k) { try { area().removeItem(k); } catch (e) { /* 同上 */ } } });
+const store = mkStore(() => localStorage), keyStore = mkStore(() => sessionStorage);
+store.del('maai.lab.key');   // 以前の版が localStorage に残したキーを消す
 
-// 離隔の目安（MAAI の data/tables/clearance.csv の default-jp と同じ値。要確認）
+// 離隔の目安。本線（main）の data/tables/clearance.csv（コミット 968f9d9）の default-jp を写した値。要確認。
+// このブランチの clearance.csv は分岐前の古い版（低圧 1.0m、66kV 2.2m など）で、値が違う。画面は表を読まずこの値を使う
 const KV_PRESETS = [
   { label: '低圧', r: 2.0 }, { label: '6.6kV', r: 2.0 }, { label: '22kV', r: 3.0 }, { label: '66kV', r: 4.0 },
   { label: '154kV', r: 5.0 }, { label: '275kV', r: 7.0 }, { label: '500kV', r: 11.0 },
@@ -364,11 +368,11 @@ $('kvSel').innerHTML = KV_PRESETS.map((k, i) => `<option value="${i}">${esc(k.la
 $('kvSel').value = String(settings.kv); $('rIn').value = String(settings.r);
 $('kvSel').addEventListener('change', e => { settings.kv = +e.target.value; settings.r = KV_PRESETS[settings.kv].r; $('rIn').value = String(settings.r); });
 $('rIn').addEventListener('change', e => { const v = parseFloat(e.target.value); if (v > 0) settings.r = v; });
-const savedKey = store.get('maai.lab.key'); if (savedKey) { $('apiKey').value = savedKey; $('saveKey').checked = true; }
+const savedKey = keyStore.get('maai.lab.key'); if (savedKey) { $('apiKey').value = savedKey; $('saveKey').checked = true; }
 const savedModel = store.get('maai.lab.model'); if (savedModel) $('model').value = savedModel;
 $('model').addEventListener('change', e => store.set('maai.lab.model', e.target.value));
-$('saveKey').addEventListener('change', e => { if (!e.target.checked) store.del('maai.lab.key'); else if ($('apiKey').value) store.set('maai.lab.key', $('apiKey').value.trim()); });
-$('apiKey').addEventListener('change', e => { if ($('saveKey').checked) store.set('maai.lab.key', e.target.value.trim()); });
+$('saveKey').addEventListener('change', e => { if (!e.target.checked) keyStore.del('maai.lab.key'); else if ($('apiKey').value) keyStore.set('maai.lab.key', $('apiKey').value.trim()); });
+$('apiKey').addEventListener('change', e => { if ($('saveKey').checked) keyStore.set('maai.lab.key', e.target.value.trim()); });
 function setStatus(text, cls) { const el = $('support'); el.textContent = text; el.className = 'pill ' + (cls || ''); }
 
 // ------------------------------------------------------------ AR の状態

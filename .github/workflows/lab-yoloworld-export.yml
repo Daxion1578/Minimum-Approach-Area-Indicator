@@ -1,6 +1,8 @@
 name: lab-yoloworld-export
-# 実験ブランチ lab-camera-ar 専用。YOLO-World を lab/yoloworld/classes.txt の語に固定して ONNX に書き出し、
-# 成果物（artifact）として置く。モデル（AGPL-3.0）はリポジトリにコミットしない。
+# 実験ブランチ lab-camera-ar 専用。
+# export: YOLO-World を lab/yoloworld/classes.txt の語に固定して ONNX に書き出し、見本画像で検出を確かめて成果物（artifact）に置く。
+#         モデル（AGPL-3.0）はリポジトリにコミットしない。成果物には許諾書の全文と対応ソースの在り処を添える。
+# ort:    端末で使う onnxruntime-web を npm から取り、ファイルの大きさとハッシュ（改ざん照合用）を記録する。
 on:
   push:
     branches: [lab-camera-ar]
@@ -10,6 +12,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  ORT_VERSION: '1.20.1'
 jobs:
   export:
     runs-on: ubuntu-latest
@@ -22,20 +26,68 @@ jobs:
       - name: Install (CPU)
         run: |
           python -m pip install --upgrade pip
-          # ultralytics 8.3.40 と同時期の torch に固定（新しい torch は ONNX 書き出しに onnxscript を要求し、旧来の書き出しと合わない）
-          pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
-          pip install "ultralytics==8.3.40" onnx onnxslim "git+https://github.com/ultralytics/CLIP.git"
+          # torch（CPU 版）と、torch 2.5.1 が固定している sympy を制約にする。制約が無いと、後から入る物の要求で
+          # torch が新しい版に上がり、ONNX 書き出しが onnxscript を要求して失敗する（1回目・2回目の失敗の原因）
+          printf '%s\n' 'torch==2.5.1+cpu' 'torchvision==0.20.1+cpu' 'sympy==1.13.1' > /tmp/constraints.txt
+          pip install -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu \
+            torch torchvision "ultralytics==8.3.40" onnx onnxslim onnxruntime \
+            "clip @ git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40"
+          pip list 2>/dev/null | grep -iE '^(torch|torchvision|ultralytics|onnx|onnxslim|onnxruntime|numpy|sympy|clip) '
       - name: Export ONNX
         working-directory: lab/yoloworld
         run: python export.py
-      - name: License note
+      - name: Check with Ultralytics (sample image)
+        working-directory: lab/yoloworld
         run: |
+          curl -fsSL -o /tmp/bus.jpg https://ultralytics.com/images/bus.jpg
+          python check_ultralytics.py /tmp/bus.jpg dist/check-ultralytics.json
+      - name: License and source
+        run: |
+          curl -fsSL -o lab/yoloworld/dist/LICENSE-AGPL-3.0.txt https://raw.githubusercontent.com/ultralytics/ultralytics/v8.3.40/LICENSE \
+            || curl -fsSL -o lab/yoloworld/dist/LICENSE-AGPL-3.0.txt https://www.gnu.org/licenses/agpl-3.0.txt
           printf '%s\n' \
-            "yoloworld-s.onnx は Ultralytics YOLO-World（AGPL-3.0）から書き出したモデル。" \
-            "https://github.com/ultralytics/ultralytics/blob/main/LICENSE" \
+            "yoloworld-s.onnx は Ultralytics YOLO-World（yolov8s-worldv2.pt、AGPL-3.0）を、探す語を固定して ONNX に書き出したもの。" \
+            "許諾書の全文: LICENSE-AGPL-3.0.txt" \
+            "対応するソース:" \
+            "  Ultralytics 8.3.40: https://github.com/ultralytics/ultralytics/tree/v8.3.40" \
+            "  書き出しの手順と探す語: https://github.com/${{ github.repository }}/tree/${{ github.sha }}/lab/yoloworld" \
+            "  語の埋め込みに使った CLIP（MIT）: https://github.com/ultralytics/CLIP/tree/7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40" \
             "MAAI リポジトリ（Apache-2.0）には入れない。実験用に端末へ読み込んで使う。" > lab/yoloworld/dist/LICENSE-NOTE.txt
+          ls -la lab/yoloworld/dist
       - uses: actions/upload-artifact@v4
         with:
           name: yoloworld-onnx
           path: lab/yoloworld/dist/
+          retention-days: 30
+
+  ort:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch onnxruntime-web
+        run: |
+          mkdir -p /tmp/ort && cd /tmp/ort
+          npm view onnxruntime-web time --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const t=JSON.parse(s);Object.entries(t).filter(([k])=>/^\d+\.\d+\.\d+$/.test(k)).sort((a,b)=>a[1]<b[1]?-1:1).slice(-15).forEach(([k,v])=>console.log("version",k,v.slice(0,10)))})'
+          npm pack "onnxruntime-web@${ORT_VERSION}" --silent
+          tar xzf onnxruntime-web-*.tgz
+          mkdir -p "$GITHUB_WORKSPACE/ort-dist"
+          cd package/dist
+          for f in $(ls | grep -vE '\.(map|d\.ts)$'); do
+            echo "$f $(stat -c %s "$f") sha256-$(openssl dgst -sha256 -binary "$f" | base64 -w0) sha384-$(openssl dgst -sha384 -binary "$f" | base64 -w0)"
+          done | tee "$GITHUB_WORKSPACE/ort-dist/hashes.txt"
+          for f in ort.webgpu.bundle.min.mjs ort.webgpu.min.mjs ort.wasm.bundle.min.mjs; do
+            if [ -f "$f" ]; then
+              for w in wasmBinary wasmPaths import.meta.url; do echo "$f $w $( (grep -o "$w" "$f" || true) | wc -l)"; done
+            fi
+          done
+          cp ../LICENSE ../package.json ../README.md "$GITHUB_WORKSPACE/ort-dist/" 2>/dev/null || true
+          for f in $(ls | grep -E '^ort\.(webgpu|wasm)\.bundle\.min\.mjs$|^ort-wasm-simd-threaded\.(jsep\.)?(mjs|wasm)$' || true); do cp "$f" "$GITHUB_WORKSPACE/ort-dist/"; done
+          ls -la "$GITHUB_WORKSPACE/ort-dist"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ort-web
+          path: ort-dist/
           retention-days: 30
