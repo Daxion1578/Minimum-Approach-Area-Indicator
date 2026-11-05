@@ -1,7 +1,7 @@
 """ブラウザ版（サーバ無し）を GitHub Pages 用のフォルダに組む。
 
     python scripts/build_pages.py                       # _site/ に組む
-    python scripts/build_pages.py --keep-web DIR        # 先に DIR の中身を _site/web/ に置く（既存の公開ページを残す）
+    python scripts/build_pages.py --keep-web DIR        # 先に DIR の中身を _site/web/ に置く（AR の試作を残す。lab/ は載せない）
 
 中身: index.html（ブラウザ版の印つき）、web/（画面と three.js）、web/py.zip（Python のコードと合成データ）、
 web/sample/SITE-01_sld.pdf（取込の見本）。Pyodide 本体は配信サイトから読む。
@@ -32,7 +32,9 @@ def build(out: Path, keep_web: Path | None = None) -> Path:
         shutil.rmtree(p) if p.is_dir() else p.unlink()
     (out / "web").mkdir()
     if keep_web and keep_web.is_dir():
-        shutil.copytree(keep_web, out / "web", dirs_exist_ok=True)
+        # 別ブランチの web/ は AR（計算済みの包絡を重ねるだけ）を残す。lab/（カメラ映像から充電部の候補を探す実験）は
+        # 設計原則を外した実験なので、作品と同じ公開 URL には載せない
+        shutil.copytree(keep_web, out / "web", dirs_exist_ok=True, ignore=shutil.ignore_patterns("lab", "*.local.*"))
     shutil.copytree(ROOT / "web", out / "web", dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("*.local.*", "__pycache__"))
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")

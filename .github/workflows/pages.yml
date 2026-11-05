@@ -1,6 +1,7 @@
 # ブラウザ版（サーバ無し）を GitHub Pages に公開する。main に push するたびに組み直す。
 # 計算は見る人のブラウザの中（Pyodide）で、サーバ版と同じ Python コードが行う。Claude は呼ばない。
-# lab-camera-ar ブランチの web/（AR の試作ページ）も同じサイトの /web/ の下に残す。
+# lab-camera-ar ブランチの web/ から AR の試作ページ（ar.html）を同じサイトの /web/ の下に残す。
+# web/lab/（カメラ映像から充電部の候補を探す実験）は設計原則を外した実験なので載せない。
 # lab-camera-ar だけを更新したときは、Actions の「pages」→「Run workflow」で組み直す。
 name: pages
 
