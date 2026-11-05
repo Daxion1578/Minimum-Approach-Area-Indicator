@@ -40,7 +40,7 @@
   <h2>モデル</h2>
   <p id="modelInfo" class="note">未設定</p>
   <div class="row">
-    <label class="filebtn">モデルを選ぶ（.onnx）<input type="file" id="modelFile" accept=".onnx" hidden></label>
+    <label class="filebtn">モデルを選ぶ（.onnx）<input type="file" id="modelFile" hidden></label>
     <button id="btnModelDel" hidden>保存したモデルを消す</button>
     <label class="note"><input type="checkbox" id="wasmOnly"> WebGPU を使わない（比べる用）</label>
   </div>
@@ -87,6 +87,7 @@ async function showSaved() {
 }
 $('modelFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
+  if (!/\.onnx$/i.test(f.name)) setStatus(`「${f.name}」は .onnx ではありません。読めなければ yoloworld-s.onnx を選んでください`, 'warn');
   const buf = await f.arrayBuffer();
   try { await saveModel(f.name, buf.slice(0)); } catch (err) { setStatus('このブラウザに保存できませんでした（容量など）: ' + err.message, 'warn'); }
   await showSaved();
