@@ -210,6 +210,7 @@ function screenBoxes() {
 const ov = $('ov').getContext('2d');
 function drawBoxes(boxes, t, { numbers, dim }) {
   ov.clearRect(0, 0, W, H);
+  $('ov').style.visibility = boxes.length ? 'visible' : 'hidden';   // 枠が無いコマで、消した絵が残らないように
   ov.lineWidth = 4; ov.font = '700 24px "Noto Sans CJK JP", sans-serif';
   boxes.forEach((b, i) => {
     const k = b.k == null ? 1 : b.k; if (k <= 0) return;
@@ -225,6 +226,7 @@ function drawBoxes(boxes, t, { numbers, dim }) {
     ov.fillStyle = '#0b1218'; ov.fillText(label, b.x0 + 10, b.y0 - 9);
   });
   ov.globalAlpha = 1;
+  ov.getImageData(0, 0, 1, 1);   // 描いた内容を確定させる（連続で撮るとき、前のコマの枠が残ることがあった）
 }
 
 // ------------------------------------------------------------ HUD

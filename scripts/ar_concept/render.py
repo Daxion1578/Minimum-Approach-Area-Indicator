@@ -40,6 +40,8 @@ def main() -> int:
     ap.add_argument("--outdir", help="--sample の PNG の置き場")
     ap.add_argument("--card", choices=["title", "closing"], help="題・締めの札を 1 枚の PNG にする")
     ap.add_argument("--crf", type=int, default=18)
+    ap.add_argument("--shard", help="並列に撮るとき: i/n（i 番目のコマから n 本おきに撮り、--frames-dir に置く。動画にはしない）")
+    ap.add_argument("--frames-dir", help="--shard のコマの置き場。全部そろったら: ffmpeg -framerate 30 -i DIR/f%05d.png ...")
     a = ap.parse_args()
 
     from playwright.sync_api import sync_playwright
@@ -78,6 +80,14 @@ def main() -> int:
                 return 0
 
             n = int(round(duration * a.fps))
+            if a.shard:
+                k, m = (int(x) for x in a.shard.split("/"))
+                d = Path(a.frames_dir or "."); d.mkdir(parents=True, exist_ok=True)
+                for i in range(k, n, m):
+                    page.evaluate(f"renderAt({i / a.fps})")
+                    page.screenshot(path=str(d / f"f{i:05d}.png"), clip={"x": 0, "y": 0, "width": 1920, "height": 1080})
+                print("コマ:", a.shard, d)
+                return 0
             tmp = Path(tempfile.mkdtemp(prefix="arc-"))
             try:
                 for i in range(n):
