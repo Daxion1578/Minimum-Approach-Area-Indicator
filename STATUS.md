@@ -41,6 +41,6 @@ gantt
 
 ## 次の一手
 
-1. 本人: 公式の案内で締切（11/8 20:00 か 11/10 14:00 か）を確かめる。`.forbidden-terms.local.txt`（公開しない語のリスト）を書いて `python scripts/public_safety_check.py --all`
+1. 締切は 11/8 20:00（本人が確認済み）。本人: `.forbidden-terms.local.txt`（公開しない語のリスト）を書いて `python scripts/public_safety_check.py --all`
 2. 本人: ブラウザ版 https://daxion1578.github.io/Minimum-Approach-Area-Indicator/ を開き、上の帯の案内どおりに 4 タブを押してみる（台本 `docs/demo-plan.md` と同じ流れ）
 3. 11/7 収録。言い回しで直したい所があれば CLI に言う
