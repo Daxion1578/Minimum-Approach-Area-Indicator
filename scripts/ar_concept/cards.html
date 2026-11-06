@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>MAAI 動画の札（題・締め）</title>
+<!-- 動画の最初と最後に映す札。?card=title か ?card=closing。render.py --card で PNG にする。収録ではブラウザで開いて全画面にする -->
+<style>
+  html, body { margin: 0; background: #0b1016; font-family: "Noto Sans CJK JP", "Noto Sans JP", "Hiragino Sans", sans-serif; color: #f2f4f7; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: radial-gradient(ellipse at 50% 60%, #15202b 0%, #0b1016 70%); }
+  [hidden] { display: none !important; }
+  .wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; text-align: center; }
+  .name { font-size: 150px; font-weight: 700; letter-spacing: 0.08em; line-height: 1; }
+  .name small { font-size: 46px; font-weight: 400; letter-spacing: 0.2em; opacity: 0.85; display: block; margin-top: 18px; }
+  .line { font-size: 54px; font-weight: 700; letter-spacing: 0.06em; margin-top: 30px; }
+  .sub { font-size: 30px; opacity: 0.82; line-height: 1.6; }
+  .rule { width: 120px; height: 4px; background: #ff4d4d; border-radius: 2px; margin: 10px 0; }
+  .url { font-size: 34px; margin-top: 26px; padding: 14px 34px; border: 2px solid rgba(255,255,255,0.35); border-radius: 999px; letter-spacing: 0.02em; }
+  .foot { position: absolute; bottom: 36px; left: 0; right: 0; text-align: center; font-size: 24px; opacity: 0.6; }
+  .legend { display: flex; gap: 40px; font-size: 30px; margin-top: 14px; }
+  .legend span::before { content: ""; display: inline-block; width: 26px; height: 26px; border-radius: 6px; margin-right: 12px; vertical-align: -3px; }
+  .legend .live::before { background: #ff4d4d; } .legend .dead::before { background: #39d353; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="wrap" id="title" hidden>
+    <div class="name">MAAI<small>間合い ／ Minimum Approach Area Indicator</small></div>
+    <div class="rule"></div>
+    <div class="line">見えない間合いを、見えるように</div>
+    <div class="sub">変電所の機器を取り替える日に、どこを止め、どのクレーンをどこに据えれば<br>残った充電部に近づかずに済むかを、図面から計算で出す道具</div>
+    <div class="legend"><span class="live">充電</span><span class="dead">停電</span></div>
+  </div>
+  <div class="wrap" id="closing" hidden>
+    <div class="line" style="font-size:72px">見えない間合いを、見えるように</div>
+    <div class="rule"></div>
+    <div class="sub">安全の判断は計算で、説明は Claude で。採否は人が決める。<br>迷ったら出さない。間違ったものを見せない。</div>
+    <div class="url">daxion1578.github.io/Minimum-Approach-Area-Indicator</div>
+    <div class="foot">ブラウザで開くだけで、同じ計算を試せます（図面・名称はすべて合成データ）</div>
+  </div>
+</div>
+<script>
+  const card = new URLSearchParams(location.search).get('card') || 'title';
+  document.getElementById(card === 'closing' ? 'closing' : 'title').hidden = false;
+  document.fonts.ready.then(() => { window.__ready = true; });
+</script>
+</body>
+</html>

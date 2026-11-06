@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>MAAI 現地表示の構想（動画の素材）</title>
+<!--
+  現地表示（AR）の構想を、合成変電所の 3D を人の目線で描いて見せる。実装ではない（画面にもそう出す）。
+  課電・離隔の範囲・クレーンの配置と距離は concept.json（engine の出力）をそのまま描くだけで、ここでは何も決めない。
+  ?t=秒 で 1 コマを描く（render.py が連番で撮って動画にする）。?play=1 で再生して確かめる。
+-->
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; font-family: "Noto Sans CJK JP", "Noto Sans JP", "Hiragino Sans", sans-serif; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  #gl, #ov { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  #hud { position: absolute; inset: 0; pointer-events: none; color: #fff; }
+  .panel { position: absolute; z-index: 3; background: rgba(12, 16, 22, 0.72); border: 1px solid rgba(255,255,255,0.18); border-radius: 14px; padding: 14px 20px; backdrop-filter: blur(6px); }
+  #plan { left: 36px; top: 32px; font-size: 24px; line-height: 1.5; }
+  #plan b { font-size: 28px; }
+  #tag { right: 36px; top: 32px; font-size: 24px; background: rgba(255, 196, 0, 0.92); color: #1a1400; border-color: transparent; font-weight: 700; }
+  #status { left: 50%; top: 205px; transform: translateX(-50%); font-size: 30px; font-weight: 700; padding: 12px 28px; border-radius: 999px; white-space: nowrap; }
+  #status.wait { background: rgba(12,16,22,0.72); }
+  #status.ok { background: rgba(28, 150, 80, 0.92); }
+  #status.ng { background: rgba(214, 120, 0, 0.94); }
+  #caption { left: 50%; bottom: 44px; transform: translateX(-50%); font-size: 40px; font-weight: 700; padding: 18px 40px; border-radius: 16px; white-space: nowrap; background: rgba(12,16,22,0.78); letter-spacing: 0.02em; }
+  #prompt { left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 30px; padding: 26px 34px; text-align: center; background: rgba(12,16,22,0.9); }
+  #prompt .btns { display: flex; gap: 14px; justify-content: center; margin-top: 18px; }
+  #prompt .btn { border: 2px solid rgba(255,255,255,0.5); border-radius: 12px; padding: 10px 26px; font-size: 28px; white-space: nowrap; }
+  #prompt .btn.sel { background: #ffc400; color: #1a1400; border-color: #ffc400; font-weight: 700; }
+  .lbl { position: absolute; z-index: 1; transform: translate(-50%, -100%); font-size: 22px; font-weight: 700; padding: 4px 12px; border-radius: 8px; white-space: nowrap; background: rgba(12,16,22,0.8); }
+  .lbl.live { color: #ff8a8a; border: 1px solid #ff5a5a; }
+  .lbl.dead { color: #9cf0b5; border: 1px solid #39d353; }
+  .lbl.dist { font-size: 26px; background: rgba(255,255,255,0.94); color: #111; border: 2px solid #111; transform: translate(-50%, 24px); }
+  .lbl.crane { color: #ffd34d; border: 1px solid #e3b320; }
+  #fade { position: absolute; inset: 0; background: #000; z-index: 11; }
+  #tagline { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 22px; background: rgba(6, 9, 14, 0.88); }
+  #tagline .big { font-size: 72px; font-weight: 700; letter-spacing: 0.06em; }
+  #tagline .small { font-size: 30px; opacity: 0.85; }
+  #foot { position: absolute; left: 36px; bottom: 8px; font-size: 18px; opacity: 0.7; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <canvas id="ov" width="1920" height="1080"></canvas>
+  <div id="hud">
+    <div id="plan" class="panel"></div>
+    <div id="tag" class="panel">構想のイメージ（合成変電所の 3D・未実装）</div>
+    <div id="status" class="panel wait"></div>
+    <div id="prompt" class="panel"><div class="q">同じ並びが続き、位置が一通りに決まりません。<br>どの回線の前にいますか？</div><div class="btns"></div></div>
+    <div id="labels"></div>
+    <div id="caption" class="panel"></div>
+    <div id="foot">合成変電所 SITE-01 ／ 課電・離隔・配置は engine の出力をそのまま表示（暦日は入れない）</div>
+    <div id="tagline"><div class="big">見えない間合いを、見えるように</div><div class="small">課電はカメラで当てない。図面と開閉器の状態から計算する。カメラは位置合わせだけ。</div></div>
+    <div id="fade"></div>
+  </div>
+</div>
+<script type="module">
+import * as THREE from '../../web/vendor/three/three.module.js';
+import { buildEquipment, buildConductors } from '../../web/equipment3d.js';
+
+const W = 1920, H = 1080;
+const q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+const ramp = (t, a, b) => smooth((t - a) / (b - a));
+const KIND_JA = { breaker: '遮断器', disconnector: '断路器', transformer: '変圧器' };
+const BAY_JA = b => b ? b.replace(/^D(\d)$/, '66kV $1号ダイヤ').replace(/^T(\d)$/, '$1号変圧器') : '';
+
+// ------------------------------------------------------------ 時間割（秒）。語りは台本（docs/demo-plan.md）
+const T = {
+  fadeIn: [0, 0.8], boxes: [1.2, 5.0], aligned: 5.6, env: [6.0, 7.5],
+  turn: [13.0, 15.5], amb: 14.6, promptIn: 17.0, pick: 18.6, reshow: 19.6,
+  crane: [20.0, 23.0], dist: 23.4, summary: 27.0, tagline: 28.2, fadeOut: [29.2, 30.0], end: 30.0,
+};
+const ERR_M = 0.3;   // 位置合わせの後に残る誤差（構想の例示値）。離隔の範囲はこの分だけ太らせて描く
+
+// ------------------------------------------------------------ カメラの道筋（人の目線 1.6 m）
+const KEYS = [
+  { t: 0,    eye: [43.5, 54.0, 1.7], look: [35, 37, 3.5] },
+  { t: 7,    eye: [42.0, 51.5, 1.7], look: [35, 37, 3.5] },
+  { t: 13,   eye: [41.5, 50.0, 1.7], look: [35, 37, 3.5] },
+  { t: 15.5, eye: [41.5, 50.0, 1.7], look: [68, 36, 3] },
+  { t: 20,   eye: [41.5, 50.0, 1.7], look: [68, 36, 3] },
+  { t: 23,   eye: [24.5, 47.5, 1.8], look: [27.5, 31, 3] },
+  { t: 27,   eye: [24.0, 47.0, 1.8], look: [28, 31.5, 4] },
+  { t: 30,   eye: [23.8, 46.8, 1.8], look: [28.5, 32, 5] },
+];
+function pose(t) {
+  let a = KEYS[0], b = KEYS[KEYS.length - 1];
+  for (let i = 0; i < KEYS.length - 1; i++) if (t >= KEYS[i].t && t <= KEYS[i + 1].t) { a = KEYS[i]; b = KEYS[i + 1]; break; }
+  const k = a === b ? 0 : smooth((t - a.t) / (b.t - a.t));
+  const mix = (p, r) => p.map((v, i) => v + (r[i] - v) * k);
+  const eye = mix(a.eye, b.eye), look = mix(a.look, b.look);
+  // 手持ちの揺れ（小さく、決まった形）
+  eye[0] += 0.03 * Math.sin(1.3 * t); eye[1] += 0.03 * Math.cos(1.7 * t); eye[2] += 0.02 * Math.sin(2.1 * t);
+  look[2] += 0.08 * Math.sin(0.9 * t);
+  return { eye, look };
+}
+
+// ------------------------------------------------------------ 3D
+const renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd9e7f3); scene.fog = new THREE.Fog(0xd9e7f3, 70, 260);
+const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 600); camera.up.set(0, 0, 1);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x7d7a70, 0.95));
+{ const sun = new THREE.DirectionalLight(0xfff4e0, 1.05); sun.position.set(-60, 80, 120); scene.add(sun); }
+{ // 砂利の地面（ノイズの模様）
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) { const v = 128 + Math.floor((rnd() - 0.5) * 46); g.fillStyle = `rgb(${v + 8},${v + 6},${v})`; g.fillRect(x, y, 1, 1); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(160, 160);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ map: tex, roughness: 1 }));
+  ground.position.set(60, 60, -0.01); scene.add(ground);
+}
+
+const data = await (await fetch('./concept.json')).json();
+const s = data.scenario;
+const site = data.site, nodes = Object.fromEntries(site.topology.nodes.map(n => [n.id, n]));
+const eq = buildEquipment(site, data.dims); scene.add(eq.group);
+const cond = buildConductors(site); scene.add(cond.group);
+
+// 課電の状態（engine の出力）。導体の色を塗り分ける
+const state = {};
+for (const c of data.energization.components) for (const n of c.nodes) state[n] = c.state;
+const isLive = id => (state[id] || 'live') === 'live';
+for (const [id, c] of Object.entries(cond.byId)) c.mat.color.set(isLive(id) ? 0xff4d4d : 0x39d353);
+
+// 離隔の範囲（包絡）: engine の半径にずれの分を足して描く。停電の区間は細い緑で「停電」と示す
+function capsule(a, b, r, color, opacity) {
+  const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b); const len = va.distanceTo(vb);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 18), new THREE.MeshStandardMaterial({ color, transparent: true, opacity, depthWrite: false, roughness: 0.9 }));
+  m.position.copy(va.clone().add(vb).multiplyScalar(0.5)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize());
+  return m;
+}
+// 離隔の範囲（包絡）: 薄い膜と格子の線で描く（赤い霧にしない）。半径は engine の値にずれの分を足す
+function zone(a, b, r, color, live) {
+  const m = capsule(a, b, r, color, 1);
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 1), new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1, depthWrite: false }));
+  edges.position.copy(m.position); edges.quaternion.copy(m.quaternion);
+  const g = new THREE.Group(); g.add(m, edges); g.userData = { a, b, live, fill: m.material, line: edges.material };
+  return g;
+}
+const envGroup = new THREE.Group(); scene.add(envGroup);
+const ENVS = [];
+for (const e of data.envelope.envelopes) {
+  const p = e.primitive; if (p.type !== 'capsule') continue;
+  const g = zone(p.a, p.b, p.r + ERR_M, 0xff3b3b, true); envGroup.add(g); ENVS.push(g);
+}
+for (const it of site.layout.items) {
+  if (isLive(it.id)) continue;
+  for (const p of it.primitives) { const g = zone(p.a, p.b, 0.5, 0x2eff7a, false); envGroup.add(g); ENVS.push(g); }
+}
+
+// 計画のクレーン（承認した配置）: 車体・上部・ブーム・ロープ・吊荷。位置と向きは engine の配置（crane_capsules）から
+const craneGroup = new THREE.Group(); scene.add(craneGroup);
+{
+  const Y = new THREE.MeshStandardMaterial({ color: 0xe3b320, roughness: 0.55, metalness: 0.2 });
+  const D = new THREE.MeshStandardMaterial({ color: 0x3a3f46, roughness: 0.8 });
+  const cc = data.clearance.crane_capsules; const car = cc.find(c => c.part === 'carrier'); const boom = cc.find(c => c.part === 'boom');
+  const rope = cc.find(c => c.part === 'rope' && c.slew_deg === boom.slew_deg); const load = cc.find(c => c.part === 'load' && c.slew_deg === boom.slew_deg);
+  const a = new THREE.Vector3(...car.a), b = new THREE.Vector3(...car.b); const len = a.distanceTo(b) + 2 * car.r, wid = 2 * car.r;
+  const yaw = Math.atan2(b.y - a.y, b.x - a.x); const mid = a.clone().add(b).multiplyScalar(0.5);
+  const body = new THREE.Group(); body.position.set(mid.x, mid.y, 0); body.rotation.z = yaw; craneGroup.add(body);
+  const bx = (w, d, h, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, d, h), m); o.position.set(x, y, z); body.add(o); return o; };
+  bx(len, wid, 0.9, Y, 0, 0, 0.95);                       // 車体
+  bx(len * 0.3, wid * 0.9, 1.3, Y, -len * 0.2, 0, 2.0);   // 上部旋回体
+  bx(1.6, 1.2, 1.4, D, len * 0.15, wid * 0.25, 2.1);       // 運転席
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.5, 14), D); w.rotation.x = Math.PI / 2; w.position.set(sx * len * 0.3, sy * (wid / 2 + 0.05), 0.55); body.add(w); }
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) { bx(0.3, 2.6, 0.3, Y, sx * len * 0.33, sy * 1.8, 0.5); bx(0.5, 0.5, 0.5, D, sx * len * 0.33, sy * 3.0, 0.25); }   // アウトリガ
+  const ba = new THREE.Vector3(...boom.a), bb = new THREE.Vector3(...boom.b); const bl = ba.distanceTo(bb);
+  const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.55, bl, 10), Y); bm.position.copy(ba.clone().add(bb).multiplyScalar(0.5)); bm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bb.clone().sub(ba).normalize()); craneGroup.add(bm);
+  const rl = new THREE.Vector3(...rope.a).distanceTo(new THREE.Vector3(...rope.b));
+  const rp = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, rl, 6), D); rp.position.set(rope.a[0], rope.a[1], (rope.a[2] + rope.b[2]) / 2); rp.rotation.x = Math.PI / 2; craneGroup.add(rp);
+  const L = data.crane.load; const lb = new THREE.Mesh(new THREE.BoxGeometry(L.w, L.d, L.h), new THREE.MeshStandardMaterial({ color: 0x8e9aa6, roughness: 0.6 })); lb.position.set(load.a[0], load.a[1], (load.a[2] + load.b[2]) / 2); lb.rotation.z = yaw; craneGroup.add(lb);
+}
+
+// 機器の枠（検出のイメージ）: 機器ごとの 3D の囲いを画面に投影して描く
+const ITEMS = [];
+for (const [id, g] of Object.entries(eq.byId)) {
+  const n = nodes[id]; if (!n || !KIND_JA[n.kind]) continue;
+  const box = new THREE.Box3().setFromObject(g); if (box.isEmpty()) continue;
+  const c = []; for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) c.push(new THREE.Vector3(x, y, z));
+  ITEMS.push({ id, kind: KIND_JA[n.kind], number: n.number || '', bay: n.bay || '', corners: c, center: box.getCenter(new THREE.Vector3()) });
+}
+const project = v => { const p = v.clone().project(camera); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, z: p.z }; };
+function screenBoxes() {
+  const out = [];
+  for (const it of ITEMS) {
+    const d = it.center.distanceTo(camera.position); if (d > 40) continue;
+    const dir = it.center.clone().sub(camera.position).normalize(); const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+    if (dir.dot(fwd) < 0.45) continue;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true;
+    for (const c of it.corners) { const p = project(c); if (p.z > 1) { ok = false; break; } x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    if (!ok || x1 < 0 || y1 < 0 || x0 > W || y0 > H || (x1 - x0) < 60 || (y1 - y0) < 40) continue;
+    out.push({ it, d, x0: clamp(x0, 0, W), y0: clamp(y0, 0, H), x1: clamp(x1, 0, W), y1: clamp(y1, 0, H) });
+  }
+  out.sort((a, b) => (b.it.id === s.target) - (a.it.id === s.target) || a.d - b.d);   // 対象の機器を最優先
+  const kept = [];   // 札が重なるものは出さない（近い順）
+  for (const b of out) {
+    const lw = 24 * (b.it.kind.length + (b.it.number ? b.it.number.length * 0.6 + 1 : 0)) + 20;
+    const r = { x0: b.x0, y0: b.y0 - 34, x1: b.x0 + lw, y1: b.y0 };
+    if (kept.some(k => !(r.x1 < k.r.x0 || r.x0 > k.r.x1 || r.y1 < k.r.y0 || r.y0 > k.r.y1))) continue;
+    b.r = r; kept.push(b); if (kept.length >= 7) break;
+  }
+  return kept;
+}
+
+const ov = $('ov').getContext('2d');
+function drawBoxes(boxes, t, { numbers, dim }) {
+  ov.clearRect(0, 0, W, H);
+  ov.lineWidth = 4; ov.font = '700 24px "Noto Sans CJK JP", sans-serif';
+  boxes.forEach((b, i) => {
+    const k = b.k == null ? 1 : b.k; if (k <= 0) return;
+    ov.globalAlpha = k * (dim ? 0.55 : 1);
+    ov.strokeStyle = dim ? '#ffc400' : '#58d9ff';
+    const w = b.x1 - b.x0, h = b.y1 - b.y0, L = Math.min(28, w / 3, h / 3);
+    for (const [x, y, sx, sy] of [[b.x0, b.y0, 1, 1], [b.x1, b.y0, -1, 1], [b.x0, b.y1, 1, -1], [b.x1, b.y1, -1, -1]]) {
+      ov.beginPath(); ov.moveTo(x, y + sy * L); ov.lineTo(x, y); ov.lineTo(x + sx * L, y); ov.stroke();
+    }
+    const label = b.it.kind + (numbers && b.it.number ? ' ' + b.it.number : '');
+    const tw = ov.measureText(label).width + 20;
+    ov.fillStyle = dim ? 'rgba(255,196,0,0.9)' : 'rgba(88,217,255,0.92)'; ov.fillRect(b.x0, b.y0 - 34, tw, 32);
+    ov.fillStyle = '#0b1218'; ov.fillText(label, b.x0 + 10, b.y0 - 9);
+  });
+  ov.globalAlpha = 1;
+}
+
+// ------------------------------------------------------------ HUD
+$('plan').innerHTML = `<b>MAAI 現地表示</b><br>承認した計画: 作業日の停止範囲（${s.ops.join('・')} を切る）＋ ${s.crane_name}<br>対象 ${s.target_name === s.target ? '66kV 遮断器 ' + (nodes[s.target]?.number || '') : s.target_name}`;
+const bays = ['D1', 'D2', 'D3', 'D4', 'D5'];
+$('prompt').querySelector('.btns').innerHTML = bays.map(b => `<div class="btn" data-bay="${b}">${BAY_JA(b).replace('66kV ', '')}</div>`).join('');
+const labelsEl = $('labels');
+function setLabel(id, cls, text, p, alpha) {
+  let el = document.getElementById('L-' + id);
+  if (!el) { el = document.createElement('div'); el.id = 'L-' + id; labelsEl.appendChild(el); }
+  el.className = 'lbl ' + cls; el.textContent = text; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; el.style.opacity = alpha;
+  el.style.display = (alpha <= 0 || p.z > 1 || p.x < -200 || p.x > W + 200 || p.y < -100 || p.y > H + 100) ? 'none' : '';
+}
+function setStatus(cls, text, alpha = 1) { const e = $('status'); e.className = 'panel ' + cls; e.textContent = text; e.style.opacity = alpha; e.style.display = text ? '' : 'none'; }
+function setCaption(text, alpha = 1) { const e = $('caption'); e.textContent = text; e.style.opacity = alpha; e.style.display = text ? '' : 'none'; }
+
+const boxState = new Map();   // id → 出た時刻（枠は順に現れる）
+function boxesAt(t, from, to) {
+  const list = screenBoxes();
+  list.forEach((b, i) => {
+    const key = b.it.id + '@' + from; if (!boxState.has(key)) boxState.set(key, from + (to - from) * i / Math.max(1, list.length - 1));
+    b.k = ramp(t, boxState.get(key), boxState.get(key) + 0.35);
+  });
+  return list;
+}
+
+// 包絡の見せ方: 近いものだけ。場面で出す／消す
+function setEnvelopes(alpha, maxDist = 45) {
+  for (const g of ENVS) {
+    const mid = new THREE.Vector3((g.userData.a[0] + g.userData.b[0]) / 2, (g.userData.a[1] + g.userData.b[1]) / 2, (g.userData.a[2] + g.userData.b[2]) / 2);
+    const d = mid.distanceTo(camera.position);
+    const near = d < maxDist; const k = alpha * clamp(1.5 - d / maxDist, 0.25, 1);
+    g.visible = alpha > 0.01 && near;
+    g.userData.fill.opacity = (g.userData.live ? 0.05 : 0.55) * k;
+    g.userData.line.opacity = (g.userData.live ? 0.2 : 0.7) * k;
+  }
+}
+
+const worst = data.clearance.worst;
+const distMid = new THREE.Vector3((worst.p_crane[0] + worst.p_conductor[0]) / 2, (worst.p_crane[1] + worst.p_conductor[1]) / 2, (worst.p_crane[2] + worst.p_conductor[2]) / 2 + 0.2);
+const distLine = capsule(worst.p_crane, worst.p_conductor, 0.05, 0xffffff, 1); distLine.material.depthWrite = true;
+const distDots = [worst.p_crane, worst.p_conductor].map(p => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), new THREE.MeshBasicMaterial({ color: 0x111111 })); m.position.set(...p); return m; });
+scene.add(distLine, ...distDots);
+
+// 場面ごとの表示。t 秒のコマを描く
+const nearest = (list, p) => list.map(m => ({ m, d: new THREE.Vector3(...m.userData.a).lerp(new THREE.Vector3(...m.userData.b), 0.5).distanceTo(p) })).sort((x, y) => x.d - y.d)[0]?.m;
+const anchorLive = nearest(ENVS.filter(m => m.userData.live), new THREE.Vector3(32.5, 30.5, 3.2));   // 1号ダイヤの充電区間（対象の隣）
+const anchorDead = nearest(ENVS.filter(m => !m.userData.live), new THREE.Vector3(32.5, 39.5, 3.2));  // 対象まわりの停電区間
+const craneTop = data.clearance.crane_capsules.find(c => c.part === 'boom');
+
+window.renderAt = function (t) {
+  const { eye, look } = pose(t);
+  camera.position.set(...eye); camera.lookAt(new THREE.Vector3(...look)); camera.updateMatrixWorld();
+
+  // 場面
+  const aligned = t >= T.aligned && t < T.turn[0] + 0.8;
+  const ambiguous = t >= T.amb && t < T.reshow;
+  const picked = t >= T.pick;
+  const envAlpha = t < T.env[0] ? 0 : t < T.env[1] ? ramp(t, T.env[0], T.env[1]) : t < T.amb ? 1
+    : t < T.reshow ? 1 - ramp(t, T.amb, T.amb + 0.4) : t < T.reshow + 0.6 ? ramp(t, T.reshow, T.reshow + 0.6) : 1;
+  setEnvelopes(envAlpha);
+  const showDist = t >= T.dist;
+  distLine.visible = showDist; distDots.forEach(m => m.visible = showDist);
+  craneGroup.visible = true;
+
+  renderer.render(scene, camera);
+
+  // 枠
+  let boxes = [];
+  if (t >= T.boxes[0] && t < T.turn[0]) boxes = boxesAt(t, T.boxes[0], T.boxes[1]);
+  else if (t >= T.turn[0] + 0.6 && t < T.crane[0]) boxes = boxesAt(t, T.turn[0] + 0.8, T.amb + 0.6);
+  drawBoxes(boxes, t, { numbers: t >= T.aligned && !ambiguous, dim: ambiguous && !picked });
+
+  // 状態の帯
+  if (t < T.boxes[0]) setStatus('wait', '', 0);
+  else if (t < T.aligned) setStatus('wait', `映った機器を図面の 3D と照合中 … ${boxes.filter(b => b.k > 0.5).length} 台`);
+  else if (t < T.turn[0] + 0.8) setStatus('ok', `位置が一通りに決まった ／ 残る誤差 ${ERR_M.toFixed(1)} m`);
+  else if (t < T.amb) setStatus('wait', '映った機器を図面の 3D と照合中 …');
+  else if (t < T.reshow) setStatus('ng', '同じ並びが 5 列 ／ 位置が一通りに決まらない → 表示しない');
+  else setStatus('ok', `${BAY_JA('D1')} の前 ／ 残る誤差 ${ERR_M.toFixed(1)} m`);
+
+  // 問いかけの札
+  const pr = $('prompt'); const prAlpha = t < T.promptIn ? 0 : t < T.reshow ? ramp(t, T.promptIn, T.promptIn + 0.3) : 1 - ramp(t, T.reshow, T.reshow + 0.3);
+  pr.style.opacity = prAlpha; pr.style.display = prAlpha > 0.01 ? '' : 'none';
+  pr.querySelectorAll('.btn').forEach(b => b.classList.toggle('sel', picked && b.dataset.bay === 'D1'));
+
+  // 字幕
+  const cap = t < 1.0 ? ['', 0]
+    : t < T.aligned ? ['かざすだけ。映った機器を、図面の 3D と照らし合わせる', ramp(t, 1.0, 1.4)]
+    : t < T.turn[0] ? ['合った分だけ重ねる。ずれの分は太らせる（赤＝充電、緑＝停電）', ramp(t, T.aligned, T.aligned + 0.4)]
+    : t < T.crane[0] ? ['決まらないときは出さない。取り違えが一番の危険', ramp(t, T.turn[0], T.turn[0] + 0.4)]
+    : t < T.summary ? ['承認した配置の間合いを、その場で確かめる', ramp(t, T.crane[0], T.crane[0] + 0.4)]
+    : ['課電はカメラで当てない。図面と開閉器の状態から計算する', ramp(t, T.summary, T.summary + 0.4)];
+  setCaption(cap[0], cap[1]);
+
+  // 3D に付く札
+  const la = envAlpha * (t < T.turn[0] ? ramp(t, T.env[1], T.env[1] + 0.4) : t >= T.reshow && t < T.crane[0] ? 1 : 0);
+  if (anchorLive) { const p = project(new THREE.Vector3(...anchorLive.userData.a).lerp(new THREE.Vector3(...anchorLive.userData.b), 0.5).add(new THREE.Vector3(0, 0, 4.6))); setLabel('live', 'live', `66kV 充電 ／ 離隔 4.0 m ＋ ずれ ${ERR_M.toFixed(1)} m`, p, la); }
+  if (anchorDead) { const p = project(new THREE.Vector3(...anchorDead.userData.a).lerp(new THREE.Vector3(...anchorDead.userData.b), 0.5).add(new THREE.Vector3(0, 0, 0.9))); setLabel('dead', 'dead', '停電（接地は手順で）', p, la); }
+  const ca = t >= T.crane[1] ? ramp(t, T.crane[1], T.crane[1] + 0.4) : 0;
+  if (craneTop) { const p = project(new THREE.Vector3(...craneTop.a).lerp(new THREE.Vector3(...craneTop.b), 0.3)); setLabel('crane', 'crane', `計画のクレーン ${s.crane_name}`, p, ca); }
+  const da = showDist ? ramp(t, T.dist, T.dist + 0.4) : 0;
+  setLabel('dist', 'dist', `車体 ↔ 充電部 ${worst.distance_m.toFixed(2)} m（必要 ${worst.required_m.toFixed(2)} m）${s.verdict_ja}`, project(distMid), da);
+
+  // 締めの一言と、暗転
+  const tg = t < T.tagline ? 0 : ramp(t, T.tagline, T.tagline + 0.6);
+  $('tagline').style.opacity = tg; $('tagline').style.display = tg > 0.01 ? '' : 'none';
+  for (const id of ['plan', 'tag', 'status', 'labels', 'caption', 'foot']) $(id).style.opacity = String((1 - tg) * (id === 'status' || id === 'caption' ? parseFloat($(id).style.opacity || '1') : 1));
+  $('ov').style.opacity = String(1 - tg);
+  const fo = t < T.fadeIn[1] ? 1 - ramp(t, T.fadeIn[0], T.fadeIn[1]) : t >= T.fadeOut[0] ? ramp(t, T.fadeOut[0], T.fadeOut[1]) : 0;
+  $('fade').style.opacity = fo; $('fade').style.display = fo > 0.001 ? '' : 'none';
+  return true;
+};
+window.DURATION = T.end;
+
+await document.fonts.ready;
+if (q.get('play')) {
+  const t0 = performance.now();
+  const loop = () => { const t = ((performance.now() - t0) / 1000) % T.end; renderAt(t); requestAnimationFrame(loop); };
+  loop();
+} else {
+  renderAt(parseFloat(q.get('t') || '0'));
+}
+window.__ready = true;
+</script>
+</body>
+</html>
