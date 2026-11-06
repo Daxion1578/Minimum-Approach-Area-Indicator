@@ -141,3 +141,14 @@ def test_marginal_clearance_is_conditional_with_conditions(topo, site, states):
     assert out["verdict"] == OK and out["conditions"] == [] and m > 0.5
     strict = evaluate(env, c, {**load_rules(), "margin_m": m + 0.5})
     assert strict["verdict"] == CONDITIONAL and strict["conditions"] and strict["reasons"][0].startswith("R6")
+
+
+def test_transformer_target_stops_its_own_bay_up_to_the_bus(topo, states):
+    """変圧器を取り替える: 専用ベイ（遮断器 1 台）は母線の手前まで止める。共有の遮断器（1・1/2 母線）は平常どおり。"""
+    r = generate(topo, states["normal"], ["TR-2"])
+    assert r["ok"], r["problems"]
+    assert _opened(r) == {"220-T2-CB", "220-T2-LS", "220-T2-BLS", "66-TR-2-LS"}
+    res = energize(topo, r["state"])
+    assert res.state_of("220-T2-CB.a") != LIVE and res.state_of("220-T2-CB.b") != LIVE   # 遮断器まわりも停電
+    assert res.state_of("220-BUS-B") == LIVE                                              # 母線は運転継続
+    assert r["state"]["switches"].get("66-D2-CB1", "closed") == "closed"                  # 共有の遮断器は入ったまま

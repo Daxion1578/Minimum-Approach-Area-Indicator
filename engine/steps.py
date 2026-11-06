@@ -8,6 +8,8 @@
     例: 遮断器が対象 → 両隣の断路器。線路側断路器が対象 → 構内側は遮断器と母線側断路器。
   - 送電線（構外の電源）に出る道は、相手端の遮断器・断路器を切ることを「相手端の条件」に書き、その電源を停電として扱う。
   - 開閉器を挟まずに母線へ行き当たる端は、母線を止めず「端子の切り離し」を条件に書く（母線は充電のまま）。
+  - 変圧器が対象のときは、変圧器専用のベイ（遮断器が 1 台だけのベイ）を母線の手前まで止める（遮断器と母線側断路器も切る）。
+    ほかの回線と遮断器を共有するベイ（1・1/2 母線など）は、変圧器の隣の断路器で止め、共有の遮断器は平常どおり（11/6 本人）。
   - 切り離された作業対象以外は平常どおり運用する（最小の停止範囲）。
   - 接地は流入端すべてに作業手順で取る前提（線路側は ELS、その他はアース棒）。条件の先頭に書く。
 状態は充電・停電の 2 形態で見る（停電＝全方向から切り離された区間）。判定はすべて決定論。Claude は関与しない。
@@ -59,8 +61,15 @@ def outage_scope(topo: Topology, targets: list[str]) -> dict:
         if nid not in lst:
             lst.append(nid)
 
-    # (端子, 直前の機器ID, 出発した対象の端子)
+    breakers_in_bay: dict[str, int] = {}
+    for n in topo.nodes.values():
+        if n.kind == "breaker" and n.bay:
+            breakers_in_bay[n.bay] = breakers_in_bay.get(n.bay, 0) + 1
+    tr_targets = {t for t in targets if topo.nodes[t].kind == "transformer"}
+
+    # (端子, 直前の機器ID, 出発した対象の端子)。変圧器の専用ベイをたどる間は lock にそのベイ名を持つ
     q: deque[tuple[str, str, str]] = deque()
+    lock_of: dict[str, str] = {}
     for t in targets:
         n = topo.nodes[t]
         for term in n.terminals:
@@ -75,9 +84,34 @@ def outage_scope(topo: Topology, targets: list[str]) -> dict:
         node = topo.node_of(term)
         if node.kind == "earthing":
             continue
+        lock = lock_of.get(term)
+        if lock:
+            # 変圧器の専用ベイの中: 母線の手前まで、ベイの開閉器をすべて切る
+            if node.kind == "bus" or node.bay != lock:
+                continue
+            if node.kind in SWITCH_KINDS:
+                note_open(node.id)
+            zone.add(term)
+            o = _other_terminal(term) if node.kind in SWITCH_KINDS else None
+            for t2 in ([o] if o else []) + ([] if o else adj.get(term, [])):
+                if t2 not in seen:
+                    lock_of[t2] = lock; q.append((t2, node.id, origin))
+            if o:
+                seen.add(o)
+                for nxt in adj.get(o, []):
+                    if nxt not in seen:
+                        lock_of[nxt] = lock; q.append((nxt, node.id, origin))
+            continue
         if node.id not in tset:
             if node.kind == "disconnector":
                 note_open(node.id)       # 目に見える切れ目。ここで止まる
+                if prev in tr_targets or (origin.split(".", 1)[0] in tr_targets):
+                    if node.bay and breakers_in_bay.get(node.bay) == 1:
+                        # 変圧器専用のベイ: この先の遮断器・母線側断路器まで切る
+                        o = _other_terminal(term)
+                        seen.add(o)
+                        for nxt in adj.get(o, []):
+                            lock_of[nxt] = node.bay; q.append((nxt, node.id, origin))
                 continue
             if node.kind == "breaker":
                 note_open(node.id)       # 遮断器は切って、その先の断路器まで進む
