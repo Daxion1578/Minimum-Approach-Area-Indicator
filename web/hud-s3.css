@@ -1,0 +1,29 @@
+/* 計画確定の段（STEP 04）の見た目。枠の位置と共通の見た目は hud.css、ここは答えの板の中身・承認者の入力・書き出しのタイルだけ */
+body.hud[data-stage="s3"] #hudRight { width:400px; }
+#hudAnswer .s3 .hash { display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--line); padding-top:8px; }
+#hudAnswer .s3 .hash .lbl { font-size:12px; color:var(--mute); }
+#hudAnswer .s3 .hash .n { font-size:13px; color:var(--deadg); word-break:break-all; }
+#hudAnswer .s3 .facts { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:0; font-size:13px; border-top:1px solid var(--line); padding-top:8px; }
+#hudAnswer .s3 .facts dt { color:var(--mute); font-size:12px; }
+#hudAnswer .s3 .facts dd { margin:0; min-width:0; }
+#hudAnswer .s3 .facts b { font-weight:500; }
+#hudAnswer .s3 .vt.ok { color:var(--deadg); } #hudAnswer .s3 .vt.cond { color:var(--deadu); } #hudAnswer .s3 .vt.ng { color:var(--live); }
+#hudAnswer .s3 .conds { border-top:1px solid var(--line); padding-top:8px; display:flex; flex-direction:column; gap:4px; }
+#hudAnswer .s3 .conds ol { margin:0; padding-left:18px; font-size:12px; color:#c9d3de; max-height:38vh; overflow:auto; display:flex; flex-direction:column; gap:3px; }
+#hudAnswer .s3 .conds li::marker { color:var(--mute); font-family:var(--mono); }
+#hudAnswer .s3 .files { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; border-top:1px solid var(--line); padding-top:8px; }
+#hudAnswer .s3 .files a { color:var(--accent); font-family:var(--mono); }
+#hudAnswer .s3 .btnrow { display:flex; gap:8px; }
+
+/* 承認者の入力（#hudSide の中） */
+#hudSide .s3ap { display:flex; flex-direction:column; gap:6px; }
+#hudSide .s3ap .lbl { font-size:13px; }
+#hudSide .s3ap input { font:500 14px/1.4 var(--mono); background:rgba(6,9,12,.9); color:var(--fg); border:1px solid var(--line2); border-radius:0; padding:6px 8px; width:100%; box-sizing:border-box; }
+#hudSide .s3ap input:focus { outline:none; border-color:var(--accent); }
+#hudSide .s3ap .dim { font-size:11px; color:var(--mute); }
+
+/* 書き出したファイルのタイル（リンク） */
+#hudBar a.tile.s3f { text-decoration:none; color:var(--fg); }
+#hudBar a.tile.s3f .n { font-size:18px; color:var(--deadg); }
+#hudBar a.tile.s3f small { max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#hudBar a.tile.s3f:hover { border-color:var(--accent); }

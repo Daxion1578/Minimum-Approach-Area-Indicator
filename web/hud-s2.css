@@ -1,0 +1,16 @@
+/* 重機の段（STEP 03）の部品。枠の位置と共通の見た目は hud.css、ここは 3D 上のクレーンのカードと資材置場のタイルだけ */
+#hudCard .crane .head { display:flex; align-items:baseline; gap:10px; }
+#hudCard .crane .cls { font-size:26px; font-weight:700; color:var(--accent); line-height:1; }
+#hudCard .crane .nm { font-size:15px; font-weight:700; }
+#hudCard .crane .ex { margin-left:auto; font-size:11px; color:var(--mute); white-space:nowrap; }
+#hudCard .crane .g4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; font-size:11px; color:var(--mute); }
+#hudCard .crane .g4 b { display:block; font-size:17px; font-weight:500; color:var(--fg); white-space:nowrap; }
+#hudCard .crane .g4 small { font-size:11px; color:var(--mute); }
+#hudCard .crane .btns { display:flex; gap:6px; }
+#hudCard .crane .btns button { flex:1; padding:6px 0; background:transparent; border:1px solid var(--line2); color:var(--fg); font-size:12px; }
+#hudCard .crane .btns button kbd { margin-right:4px; color:var(--mute); }
+#hudCard .crane .btns button:hover { border-color:var(--accent); }
+#hudCard .crane .btns button[aria-pressed="true"] { background:rgba(95,208,255,.12); border-color:var(--accent); }
+#hudCard .crane .btns button[aria-pressed="true"] kbd { color:var(--accent); }
+#hudBar .tile .mark { width:22px; height:22px; border:2px solid #b48cff; }
+#hudBar .tile[aria-pressed="true"] .mark { background:rgba(180,140,255,.3); }

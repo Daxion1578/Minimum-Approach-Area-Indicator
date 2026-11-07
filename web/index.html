@@ -55,6 +55,11 @@
 </style>
 <link rel="stylesheet" href="./web/onboarding.css">
 <link rel="stylesheet" href="./web/theme.css">
+<link rel="stylesheet" href="./web/hud.css">
+<link rel="stylesheet" href="./web/hud-s0.css">
+<link rel="stylesheet" href="./web/hud-s1.css">
+<link rel="stylesheet" href="./web/hud-s2.css">
+<link rel="stylesheet" href="./web/hud-s3.css">
 </head>
 <body>
 <header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide" style="display:none"></span>
@@ -226,10 +231,12 @@ function paint(energ, env, showEnv){
   const st={}; for (const c of energ.components){ for (const n of c.nodes) st[n]=c.state; for (const e of c.edges) st[e]=c.state; }
   const stateOf=id => st[id] ?? st[id+'.a'] ?? st[id+'.hv'];
   for (const id in condMeshes){ const s=stateOf(id); const c=COL[s] ?? 0x6b7785; condMeshes[id].mat.color.setHex(c); condMeshes[id].mat.emissive.setHex(s==='live'?0x4a0000:0x000000); }
-  clearGroup(envGroup);
-  if (showEnv) envGroup.add(envelopeShell(env.envelopes.map(e=>e.primitive)));   // 重なっても濃くならない殻
+  // 重なっても濃くならない殻。包絡が前と同じなら作り直さない（作り直しは重い）
+  const envKey=showEnv ? (site?.layout_source||'')+'|'+env.envelopes.map(e=>e.conductor_id+':'+e.primitive.r+':'+e.primitive.a.join('/')+':'+e.primitive.b.join('/')).join(',') : '';
+  if (envKey!==paint.envKey){ clearGroup(envGroup); if (showEnv) envGroup.add(envelopeShell(env.envelopes.map(e=>e.primitive))); paint.envKey=envKey; }
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
   hud.innerHTML = `充電 ${cnt.live||0} ／ 停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>${layoutBadge()}<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
+  lastCounts={live:cnt.live||0, dead:(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0), invalid:cnt.invalid||0, env:env.envelopes.length}; emit('paint');
 }
 
 // 3D の元（合成データ／図面から起こした配置）。切り替えは人の操作だけ
@@ -260,13 +267,14 @@ function drawCrane(out){
 // 据えてよい範囲（engine の選定がます目ごとに出した判定を塗るだけ。目安で、置いたら承認と同じ判定をやり直す）
 let zoneCells=null;
 function drawZone(cells){
-  clearGroup(zoneGroup); zoneCells=cells||null; if (!cells) return;
+  clearGroup(zoneGroup); zoneCells=cells||null; if (!cells){ emit('zone'); return; }
   const geo=new THREE.PlaneGeometry(2.7,2.7), m4=new THREE.Matrix4();
   for (const [want,color,op] of [[true,0x3ddc6a,0.42],[false,0xff4d4d,0.16]]){
     const list=cells.filter(c=> want ? c.ok : c.why==='clearance'); if (!list.length) continue;
     const im=new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({color, transparent:true, opacity:op, depthWrite:false, toneMapped:false}), list.length);
     list.forEach((c,i)=>{ m4.makeTranslation(c.x,c.y,0.05); im.setMatrixAt(i,m4); }); im.renderOrder=1; zoneGroup.add(im);
   }
+  emit('zone');
 }
 // 範囲を見るクラスの切り替え（選んだクラスと、一つ上・二つ上）。小さいクラスほど置ける場所が狭い
 let zoneSets=[];
@@ -292,6 +300,16 @@ renderer.domElement.addEventListener('pointerup', e=>{
 const DEMO_TARGET='66-D1-CB1';   // 見本: 66kV 1号ダイヤの遮断器を取り替える作業日
 let lastDraft=null, site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
 const $=id=>document.getElementById(id);
+// HUD（web/hud.js）が読む内部の値と関数。読むだけで、判定・距離・配置の値はここでは決めない
+let lastIngest=null, lastIntake=null, lastApprove=null, lastCounts=null;
+const emit=kind=>window.dispatchEvent(new CustomEvent('maai-update',{detail:{kind}}));
+window.maai={ THREE, camera, renderer, controls, scene,
+  get site(){return site}, get state(){return state}, get lastSteps(){return lastSteps}, get lastSelect(){return lastSelect},
+  get lastClearance(){return lastClearance}, get lastCrane(){return lastCrane}, get extraOutage(){return extraOutage},
+  get lastDraft(){return lastDraft}, get lastIngest(){return lastIngest}, get lastIntake(){return lastIntake}, get lastApprove(){return lastApprove},
+  get lastCounts(){return lastCounts}, get unstoppable(){return unstoppable}, get zoneSets(){return zoneSets}, get zoneCells(){return zoneCells},
+  get view3d(){return view3d}, get lastLoad(){return lastLoad}, get cranes(){return cranes}, get nameOf(){return nameOf}, get clsName(){return clsName},
+  craneFromForm, craneToForm, evaluateClearance, drawZone, zoneCellAt, showSld, update, frameTo, planConditions, $ };
 window.go = s => { document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s));
   showSld(s==='s1' && !view3d); guide(); window.dispatchEvent(new Event('maai-go')); };
 
@@ -315,7 +333,7 @@ async function loadSite(id){
   $('targetSel').innerHTML=['breaker','disconnector','transformer','bus','load'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}" ${n.id===DEMO_TARGET?'selected':''}>${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
   $('pickSel').innerHTML=['breaker','disconnector'].map(k=>`<optgroup label="${kindJa[k]}">`+t.nodes.filter(n=>n.kind===k).map(n=>`<option value="${n.id}">${n.number?n.number+' ':''}${n.name||n.id}</option>`).join('')+`</optgroup>`).join('');
   $('pickSel').value=DEMO_TARGET; pickChanged();
-  buildSite(site); buildSwitchList(); update(); drawCrane(null); guide();
+  buildSite(site); buildSwitchList(); update(); drawCrane(null); guide(); emit('site');
 }
 
 // ---- 図面取込
@@ -326,7 +344,7 @@ $('btnIngest').onclick=async()=>{
   const fd=new FormData(); fd.append('file', f);
   const r=await fetch('/api/ingest',{method:'POST',body:fd});
   if (!r.ok){ $('ingestBox').innerHTML=`<div class="warn">取込に失敗 ${r.status}</div>`; return; }
-  const j=await r.json(); const c=j.candidate, a=j.annotation, ev=j.eval;
+  const j=await r.json(); lastIngest=j; const c=j.candidate, a=j.annotation, ev=j.eval;
   const kindJa={breaker:'遮断器',disconnector:'断路器',earthing:'接地'};
   const kindOf=Object.fromEntries((a.labels||[]).map(l=>[l.number,l.kind]));
   const sw=[...c.switches].sort((x,y)=>x.number.localeCompare(y.number));
@@ -340,7 +358,7 @@ $('btnIngest').onclick=async()=>{
   const count=()=>{ const all=[...$('ingestSw').querySelectorAll('input')]; $('ingestCount').textContent=`確認済 ${all.filter(i=>i.checked).length} / ${all.length}`; };
   $('ingestSw').querySelectorAll('input').forEach(i=>i.onchange=count);
   $('btnConfirmAll').onclick=()=>{ $('ingestSw').querySelectorAll('input').forEach(i=>{ if(!qs.some(q=>q.startsWith(i.dataset.n+' '))) i.checked=true; }); count(); };
-  count();
+  count(); emit('ingest');
 };
 
 // ---- 装置図から起こした 3D の下書き（取込タブ内。上の 3D とは別の renderer・scene。ここが失敗しても他は動く）
@@ -373,6 +391,7 @@ async function runLayoutDraft(sample){
       +`<div class="bay"><h4>要確認（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
     miniView($('miniL'), {topology:truth.topology, layout:truth.layout});
     miniView($('miniR'), {topology:truth.topology, layout:j.layout});
+    emit('layout');
   }catch(err){ box.innerHTML=`<div class="warn">下書きを描けなかった: ${err.message||err}</div>`; }
 }
 function setUseBtn(){
@@ -383,7 +402,7 @@ function resetResults(){   // 配置が変わったら、古い停止範囲・�
   lastSteps=null; lastClearance=null; lastCrane=null; lastSelect=null; extraOutage=null;
   for (const id of ['stepsBox','selectBox','verdictBox','proposeBox','approveBox']) $(id).innerHTML=''; drawZone(null);
   $('stepsBox').innerHTML='<div class="note">配置を切り替えた。停止範囲とクレーンは作り直してください。</div>';
-  drawCrane(null);
+  drawCrane(null); emit('reset');
 }
 async function switchLayout(toDraft){
   const msg=$('useMsg'); msg.textContent='切り替えている…';
@@ -420,6 +439,7 @@ $('btnSteps').onclick=async()=>{
   if (lastSteps.state) state=structuredClone(lastSteps.state);
   if (['breaker','disconnector'].includes(site.topology.nodes.find(n=>n.id===targets[0])?.kind)){ $('pickSel').value=targets[0]; pickChanged(); }
   renderSteps(); buildSwitchList(); update(); guide(); if (view3d) $('vTarget').onclick();
+  emit('steps');
 };
 function renderSteps(){
   const st=lastSteps; if (!st) return;
@@ -462,8 +482,8 @@ let unstoppable=[];
 $('btnIntake').onclick=async()=>{
   $('intakeBox').innerHTML='<div class="note">依頼文を読んでいる…（Claude に送る前に、名前と定格値を符号に置き換える）</div>';
   const r=await fetch(`/api/sites/${site.site_id}/intake`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:$('reqText').value})});
-  const j=await r.json();
-  if (!r.ok){ $('intakeBox').innerHTML=`<div class="warn">読み取りに失敗 ${r.status}: ${j.detail||''}</div>`; return; }
+  const j=await r.json(); lastIntake=j;
+  if (!r.ok){ $('intakeBox').innerHTML=`<div class="warn">読み取りに失敗 ${r.status}: ${j.detail||''}</div>`; emit('intake'); return; }
   const e=j.extracted, c=j.checked, L=id=>c.labels[id]||id, q=k=>e.quotes?.[k]?`<div class="note" style="margin-left:8px">「${e.quotes[k]}」</div>`:'';
   $('intakeSrc').textContent=e.source==='claude'?'読み取り: Claude':'読み取り: 規則（Claude 未接続。番号だけ）';
   let html=`<div class="bay" style="border-color:${c.ok?'var(--accent)':'var(--live)'}">`+
@@ -474,7 +494,7 @@ $('btnIntake').onclick=async()=>{
     (c.problems.length?`<h4>計算で確かめた問題</h4>`+c.problems.map(x=>`<div class="warn">${x}</div>`).join(''):'<div class="note" style="color:var(--deadg)">番号はすべて構内に実在し、矛盾なし（計算で確認）</div>')+
     ((e.questions||[]).length?`<h4>人に確かめてほしいこと</h4>`+e.questions.map(x=>`<div class="note">・${x}</div>`).join(''):'')+
     `<div class="row"><button class="act" id="btnIntakeUse" ${c.ok?'':'disabled'}>この内容で入れる</button></div></div>`;
-  $('intakeBox').innerHTML=html;
+  $('intakeBox').innerHTML=html; emit('intake');
   $('btnIntakeUse').onclick=async()=>{
     unstoppable=[...c.unstoppable];
     const t=c.targets[0]; $('targetSel').value=t;
@@ -482,6 +502,7 @@ $('btnIntake').onclick=async()=>{
     if (c.weight_t!=null) $('pickT').value=c.weight_t;   // そのあと依頼文の値を入れる（既定値で上書きしない）
     if (c.laydown_xy){ $('setX').value=c.laydown_xy[0]; $('setY').value=c.laydown_xy[1]; }
     $('intakeBox').insertAdjacentHTML('beforeend','<div class="note" style="color:var(--deadg)">入れた: 取り替える機器・止められない設備・資材置場・重さ。次は停止範囲を確かめ、重機へ</div>');
+    emit('intake-used');
   };
 };
 
@@ -506,7 +527,7 @@ $('btnSelect').onclick=async()=>{
   const body={state, unstoppable, pick_id:$('pickSel').value, weight_t:$('pickT').value===''?null:+$('pickT').value, set_xy:($('setX').value!==''&&$('setY').value!=='')?[+$('setX').value,+$('setY').value]:null};
   const r=await fetch(`/api/sites/${site.site_id}/select`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json(); lastSelect=j;
-  if (!r.ok){ $('selectBox').innerHTML=`<div class="warn">選定に失敗 ${r.status}: ${j.detail||''}</div>`; return; }
+  if (!r.ok){ $('selectBox').innerHTML=`<div class="warn">選定に失敗 ${r.status}: ${j.detail||''}</div>`; emit('select'); return; }
   if (j.set){ $('setX').value=j.set[0]; $('setY').value=j.set[1]; }
   if (j.load) lastLoad=j.load;
   drawMarks(); drawZone(j.chosen?.cells);
@@ -526,9 +547,9 @@ $('btnSelect').onclick=async()=>{
       (w.ops.length?`<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`:'')+
       (w.chosen?`<div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
   if (j.pick) html+=`<div class="note">荷重表・重さ: ${j.table_status||'要確認'}（例示値）。吊る点 (${j.pick.slice(0,2).map(v=>v.toFixed(0)).join(', ')})、資材置場 (${j.set.map(v=>(+v).toFixed(0)).join(', ')})</div>`;
-  $('selectBox').innerHTML=html; bindZoneButtons();
-  if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; document.querySelector('#zoneBox .zbtn')?.click(); if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
-  if ($('btnAdoptOutage')) $('btnAdoptOutage').onclick=()=>{ extraOutage=j.with_outage; state=structuredClone(j.with_outage.state); drawZone(j.with_outage.chosen.cells); craneToForm(j.with_outage.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
+  $('selectBox').innerHTML=html; bindZoneButtons(); emit('select');
+  if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; document.querySelector('#zoneBox .zbtn')?.click(); if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); emit('adopt'); };
+  if ($('btnAdoptOutage')) $('btnAdoptOutage').onclick=()=>{ extraOutage=j.with_outage; state=structuredClone(j.with_outage.state); drawZone(j.with_outage.chosen.cells); craneToForm(j.with_outage.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); emit('adopt'); };
   guide();
 };
 
@@ -548,7 +569,7 @@ async function evaluateClearance(){
   if (c.conditions.length) html+=`<div style="margin-top:4px">条件:</div>`+c.conditions.map(x=>`<div class="note">・${x}</div>`).join('');
   html+=`<table style="margin-top:6px"><tr><th>導体</th><th>相</th><th>距離</th><th>必要</th><th>余裕</th></tr>`+c.hits.slice(0,5).map(h=>`<tr><td>${h.conductor_id}</td><td>${h.phase||''}</td><td>${h.distance_m.toFixed(2)}</td><td>${h.required_m.toFixed(2)}</td><td style="color:${h.margin_m<0?'var(--live)':h.margin_m<0.5?'var(--deadu)':'inherit'}">${h.margin_m.toFixed(2)}</td></tr>`).join('')+`</table></div>`;
   $('verdictBox').innerHTML=html; $('manualBox').open=true;
-  planSummary(); guide();
+  planSummary(); guide(); emit('clearance');
 }
 $('btnClear').onclick=evaluateClearance;
 ['cx','cy','chead','clen','celev','chook','cslo','cshi'].forEach(id=>$(id).onchange=evaluateClearance);
@@ -587,11 +608,13 @@ function planSummary(){
 $('btnApprove').onclick=async()=>{
   const steps=lastSteps?{...lastSteps, conditions:planConditions()}:null;
   const body={state, crane:lastCrane, clearance:lastClearance, steps, approver:$('approver').value, lift:(lastSelect&&lastSelect.pick_id)?{pick_id:lastSelect.pick_id,set:lastSelect.set}:null};
-  const r=await fetch(`/api/sites/${site.site_id}/approve`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-  const j=await r.json();
-  if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; return; }
+  let r, j;
+  try { r=await fetch(`/api/sites/${site.site_id}/approve`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); j=await r.json(); }
+  catch(e){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${e.message||e}</div>`; emit('approve'); return; }
+  lastApprove=j;
+  if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; emit('approve'); return; }
   $('approveBox').innerHTML=`<div class="bay"><div>承認ハッシュ <b>${j.approval_hash}</b></div><div class="note">${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
-  guide();
+  guide(); emit('approve');
 };
 // ---- 次に何を押すか（上の帯）
 function guide(){
@@ -629,5 +652,6 @@ $('showEnv').onchange=update;
 loadSites().then(()=>go('s0')).catch(e=>{ hud.textContent='読み込みに失敗: '+e.message; });
 </script>
 <script type="module" src="./web/onboarding.js"></script>
+<script type="module" src="./web/hud.js"></script>
 </body>
 </html>

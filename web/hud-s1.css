@@ -1,0 +1,77 @@
+/* 停止範囲の段（STEP 02）の見た目。結線図の小窓 .sld-mini（右上、見るだけ）／全面 .sld-full（押せる）、
+   依頼文のカード、答えの札、充電・停電のタイル、3D 上のカード。枠の共通の見た目と位置は hud.css */
+
+/* ---- 右上の列: 小窓（52〜312px）の下に答えの板を置く。幅は小窓に合わせる */
+body.hud[data-stage=s1] #hudRight { top:calc(324px + var(--boot-h,0px)); width:440px; }
+body.hud[data-stage=s1] #hudLegend > span:not(.dim) { display:none; }   /* 充電・停電の数は下のタイルに出す */
+body.hud[data-stage=s1] #hudCard { width:260px; }
+
+/* ---- 結線図の小窓 */
+#sldMiniCap, #sldClose { display:none; }
+body.hud #sldView.sld-mini { position:fixed; inset:auto; right:28px; top:calc(52px + var(--boot-h,0px)); width:440px; height:260px;
+  box-sizing:border-box; border:1px solid var(--line2); background:#f4f5f6; overflow:hidden; cursor:zoom-in; z-index:1; }
+body.hud #sldView.sld-mini #sldScroll { top:26px; overflow:hidden; }
+body.hud #sldView.sld-mini #sldWrap { width:100% !important; }
+body.hud #sldView.sld-mini .mk { pointer-events:none; }
+body.hud #sldView.sld-mini .mk.tgt { border-width:2px; }
+body.hud #sldView.sld-mini :is(#sldZoom, #sldTip) { display:none; }
+body.hud #sldView.sld-mini #sldMiniCap { display:flex; position:absolute; left:0; right:0; top:0; height:26px; align-items:center; gap:8px;
+  padding:0 10px; background:rgba(9,13,18,.92); border-bottom:1px solid var(--line2); font-size:12px; color:var(--mute); }
+body.hud #sldView.sld-mini #sldMiniCap kbd { margin-left:auto; font:500 11px/1.4 var(--mono); border:1px solid var(--dim); padding:0 5px; color:#c9d3de; }
+body.hud #sldView.sld-mini:hover { border-color:var(--accent); }
+body.hud #sldView.sld-mini:hover #sldMiniCap { color:var(--fg); }
+
+/* ---- 結線図の全面: 今までの表示に「3D に戻る」 */
+body.hud #sldView.sld-full #sldClose { display:flex; align-items:center; gap:8px; position:absolute; left:16px; top:12px; z-index:2;
+  padding:7px 14px; font-size:13px; font-weight:600; background:rgba(9,13,18,.92); color:var(--fg); border:1px solid var(--accent); }
+body.hud #sldView.sld-full #sldClose:hover { background:rgba(22,54,74,.95); }
+body.hud #sldView.sld-full #sldClose kbd { font:500 11px/1.4 var(--mono); border:1px solid var(--dim); padding:0 5px; color:#c9d3de; }
+body.hud #sldView.sld-full #sldTip { bottom:22px; left:16px; }
+
+/* ---- 左: 依頼文のカード（2×2） */
+#hudSide .s1in { display:flex; flex-direction:column; gap:8px; }
+#hudSide .s1in .hd { display:flex; align-items:center; gap:8px; font-size:12px; }
+#hudSide .s1in .ttl { color:#b48cff; }
+#hudSide .s1in[data-tone=act] .ttl { color:var(--accent); }
+#hudSide .s1in .src { margin-left:auto; font:500 10px/1.5 var(--mono); letter-spacing:.08em; color:var(--mute); border:1px solid var(--line2); padding:0 6px; }
+#hudSide .s1in .lead { font-size:13px; color:#c9d3de; line-height:1.6; }
+#hudSide .s1in .g2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); }
+#hudSide .s1in .g2 > div { background:rgba(9,13,18,.92); padding:6px 9px; display:flex; flex-direction:column; gap:1px; min-width:0; }
+#hudSide .s1in .g2 span { font-size:11px; color:var(--mute); }
+#hudSide .s1in .g2 > div > b { font-size:13px; font-weight:500; color:var(--fg); overflow-wrap:anywhere; }
+#hudSide .s1in .warn1 { font-size:12px; color:var(--deadu); }
+#hudSide .s1in .okline { font-size:12px; color:var(--deadg); }
+#hudSide .s1in button { align-self:flex-start; font-size:12px; padding:4px 12px; }
+#hudSide .s1in button:disabled { opacity:.45; cursor:default; }
+
+/* ---- 右上: 答え（停電にできる・切る開閉器・札・条件） */
+#hudAnswer .s1ans .v { font-size:22px; }
+#hudAnswer .s1ans .nops { margin-left:auto; font-size:12px; color:var(--mute); white-space:nowrap; }
+#hudAnswer .s1ans .nops .n { font-size:18px; color:var(--fg); margin-left:4px; }
+#hudAnswer .s1ans .tag.more { color:var(--mute); font-family:inherit; font-size:12px; }
+
+/* ---- 下: 充電・停電（表示のみ）と、近づけない範囲の入切 */
+#hudBar .tile.s1cnt { cursor:default; gap:3px; }
+#hudBar .tile.s1cnt i { width:28px; height:4px; }
+#hudBar .tile.s1cnt.live { border-color:rgba(255,77,77,.7); } #hudBar .tile.s1cnt.live i { background:var(--live); }
+#hudBar .tile.s1cnt.dead { border-color:rgba(61,220,106,.7); } #hudBar .tile.s1cnt.dead i { background:var(--deadg); }
+#hudBar .tile.s1cnt:hover { border-color:inherit; }
+#hudBar .tile.s1cnt.live:hover { border-color:rgba(255,77,77,.7); } #hudBar .tile.s1cnt.dead:hover { border-color:rgba(61,220,106,.7); }
+#hudBar .tile .envmk { width:24px; height:16px; border:1px dashed var(--mute); border-radius:8px; }
+#hudBar .tile[aria-pressed="true"] .envmk { border-color:var(--accent); background:rgba(95,208,255,.2); }
+
+/* ---- 3D 上のカード: 取り替える機器 */
+#hudCard .s1card { display:flex; flex-direction:column; gap:4px; }
+#hudCard .s1card .head { display:flex; align-items:baseline; gap:8px; }
+#hudCard .s1card .num { font-size:18px; font-weight:700; }
+#hudCard .s1card .nm { font-size:12px; color:var(--mute); }
+#hudCard .s1card .st { font-size:12px; } #hudCard .s1card .st.ok { color:var(--deadg); } #hudCard .s1card .st.ng { color:var(--live); }
+
+/* 狭い画面（700〜1000px）: 小窓を小さく */
+@media (max-width:1000px) {
+  body.hud #sldView.sld-mini { width:320px; height:200px; }
+  body.hud[data-stage=s1] #hudRight { top:calc(264px + var(--boot-h,0px)); width:320px; }
+}
+
+/* 全面の結線図: 右下の切り替え・次へと重ならないよう、図の下と右に余白を取ってスクロールで逃がす */
+body.hud #sldView.sld-full #sldWrap { margin-bottom:170px; margin-right:230px; }

@@ -1,0 +1,175 @@
+/* HUD の殻（案2「3D を全面に、操作を浮かべる」）。web/hud.js が幅 700px 以上で body.hud を付けたときだけ効く。
+   幅 699px 以下では何も変わらない（body.hud が付かない）。配置・ID・計算は変えず、色は theme.css の変数を使う。
+   枠の ID: #hudTitle #hudGoals #hudSide #hudAnswer #hudLegend #hudDetail #hudCam #hudHints #hudBar #hudModes #hudNext #hudTop #hudCard #hudCardLine #hudDrawer */
+
+/* ---- 全面 3D: 上の帯と左の列を隠し、#view を画面いっぱいに（DOM は残す） */
+body.hud { display:block; height:100vh; overflow:hidden; }
+body.hud header, body.hud #prog { display:none; }
+body.hud #view { position:fixed; left:0; right:0; bottom:0; top:var(--boot-h,0px); }
+body.hud #hud { left:-9999px !important; }            /* 数は #hudLegend に出す。画面外に出すだけ（#srcBadge を待つ録画スクリプトのため DOM と可視性は残す） */
+body.hud #view::after { box-shadow:none; }            /* 周辺減光は #hudRoot::before のグラデーションに替える */
+body.hud #tourCap { bottom:152px; }                   /* 下のタイルと重ねない */
+#hudRoot, #hudDrawer { display:none; }
+body.hud #hudRoot { display:block; }
+body.hud #hudDrawer { display:flex; }
+
+/* ---- 枠の共通: 枠そのものは押せない（3D のドラッグを邪魔しない）。ボタン・入力・板だけ押せる */
+#hudRoot { position:fixed; inset:0; z-index:500; pointer-events:none; color:var(--fg); font-size:13px; line-height:1.5; }
+#hudRoot::before { content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg,rgba(6,9,12,.78) 0,rgba(6,9,12,0) 34%),linear-gradient(0deg,rgba(6,9,12,.7) 0,rgba(6,9,12,0) 26%); }
+#hudRoot > * { position:fixed; pointer-events:none; }
+#hudRoot button, #hudRoot input, #hudRoot select, #hudRoot textarea, #hudRoot a, #hudRoot label,
+#hudAnswer, #hudSide, #hudCard { pointer-events:auto; }
+#hudRoot [hidden] { display:none !important; }
+#hudRoot button { font:inherit; cursor:pointer; }
+/* 板の外に置く文字は、明るい 3D に重なっても読めるように影を付ける */
+#hudTitle, #hudGoals, #hudLegend, #hudHints { text-shadow:0 0 4px #000, 0 1px 2px rgba(0,0,0,.9); }
+#hudRoot .n, #hudRoot kbd { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+#hudRoot .plate { background:rgba(9,13,18,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line2); }
+#hudRoot .cap { font:500 11px/1.2 var(--mono); letter-spacing:.2em; color:var(--mute); }
+#hudRoot .k { font:500 11px/1 var(--mono); letter-spacing:.24em; color:var(--mute); }
+/* 結線図を全面で見ている間は、白い紙に重なる枠をしまう（残すのは右下の切り替えと次へ。s1 係が hud-s1.css で上書きしてよい） */
+body.hud:has(#sldView.on:not(.sld-mini)) #hudRoot::before,
+body.hud:has(#sldView.on:not(.sld-mini)) :is(#hudTitle,#hudLeft,#hudRight,#hudTop,#hudHints,#hudBar,#hudCam,#hudCard,#hudCardLine) { display:none; }
+
+/* ---- 左上: 段の名前と 4 本の横棒（押すと移動） */
+#hudTitle { left:28px; top:calc(24px + var(--boot-h,0px)); display:flex; flex-direction:column; gap:6px; }
+#hudTitle .k { color:var(--accent); letter-spacing:.32em; }
+#hudTitle .t { display:flex; align-items:center; gap:14px; font-size:28px; font-weight:700; letter-spacing:.08em; line-height:1.1; }
+#hudTitle .t::before { content:""; width:4px; height:30px; background:var(--accent); flex:0 0 auto; }
+#hudTitle .seg { display:flex; gap:6px; margin:2px 0 0 18px; }
+#hudTitle .seg button { box-sizing:content-box; width:26px; height:4px; padding:5px 0; border:0; background:var(--line2); background-clip:content-box; }
+#hudTitle .seg button.done { background-color:var(--deadg); }
+#hudTitle .seg button.now { background-color:var(--accent); }
+#hudTitle .seg button:hover { filter:brightness(1.3); }
+
+/* ---- 左: 目標と補助カード（引き出しが開いている間は隠す） */
+#hudLeft { left:28px; top:calc(150px + var(--boot-h,0px)); width:340px; display:flex; flex-direction:column; gap:16px; }
+body.hud.drawer-open #hudLeft { display:none; }
+#hudGoals { width:300px; display:flex; flex-direction:column; gap:2px; }
+#hudGoals .k { margin-bottom:6px; }
+#hudGoals .goal { display:flex; align-items:center; gap:10px; padding:7px 10px; color:var(--mute); }
+#hudGoals .goal::before { content:""; flex:0 0 14px; width:14px; height:14px; border:1px solid var(--line2); }
+#hudGoals .goal.done::before { border-color:var(--deadg); background:var(--deadg); }
+#hudGoals .goal.now { background:rgba(95,208,255,.10); border-left:2px solid var(--accent); padding-left:8px; color:var(--fg); font-weight:500; }
+#hudGoals .goal.now::before { border-color:var(--accent); }
+#hudGoals .goal b { color:#c9d3de; font-weight:500; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+#hudSide { width:100%; padding:12px 14px; display:flex; flex-direction:column; gap:8px; border-top:2px solid var(--line2); }
+#hudSide[data-tone=claude] { border-top-color:#b48cff; }
+#hudSide[data-tone=act] { border-top-color:var(--accent); }
+#hudSide[data-tone=ok] { border-top-color:var(--deadg); }
+#hudSide[data-tone=cond] { border-top-color:var(--deadu); }
+#hudSide[data-tone=ng] { border-top-color:var(--live); }
+
+/* ---- 右上端: 小さな道具（使い方・内部データ・3 分で一周） */
+#hudTop { right:28px; top:calc(18px + var(--boot-h,0px)); display:flex; gap:6px; align-items:center; }
+#hudTop .hbtns { margin-left:0; display:flex; gap:6px; }
+#hudTop button.sub { font-size:11px; padding:2px 8px; background:rgba(9,13,18,.7); border-color:var(--line); color:var(--mute); }
+#hudTop button.sub:hover, #hudTop button.sub[aria-pressed="true"] { color:var(--accent); border-color:var(--accent); }
+
+/* ---- 右上: 答えの板（右辺 3px が判定の色）、数、詳しく */
+#hudRight { right:28px; top:calc(52px + var(--boot-h,0px)); width:360px; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+#hudAnswer { width:100%; padding:14px 18px; display:flex; flex-direction:column; gap:8px; border-right:3px solid var(--line2); }
+#hudAnswer[data-verdict=ok] { border-right-color:var(--deadg); }
+#hudAnswer[data-verdict=cond] { border-right-color:var(--deadu); }
+#hudAnswer[data-verdict=ng] { border-right-color:var(--live); }
+#hudAnswer .ans { display:flex; flex-direction:column; gap:8px; }
+#hudAnswer .v { font-size:30px; font-weight:700; line-height:1; }
+#hudAnswer .v.ok { color:var(--deadg); } #hudAnswer .v.cond { color:var(--deadu); } #hudAnswer .v.ng { color:var(--live); }
+#hudAnswer .row1 { display:flex; align-items:center; gap:12px; }
+#hudAnswer .row1 .capw { display:flex; flex-direction:column; min-width:0; }
+#hudAnswer .lead { font-size:14px; line-height:1.6; }
+#hudAnswer .kv, #hudAnswer .near, #hudAnswer .cond, #hudAnswer .dim { font-size:12px; color:#c9d3de; }
+#hudAnswer .kv { display:flex; flex-wrap:wrap; gap:2px 12px; }   /* 「据付 20, 38」などの組ごとに折り返す */
+#hudAnswer .kv > span { white-space:nowrap; }
+#hudAnswer .dim { color:var(--mute); }
+#hudAnswer .cond { border-top:1px solid var(--line); padding-top:6px; }
+#hudAnswer .dist { display:flex; align-items:baseline; gap:8px; border-top:1px solid var(--line); padding-top:8px; }
+#hudAnswer .dist .lbl, #hudAnswer .dist .unit, #hudAnswer .dist .need { font-size:12px; color:var(--mute); }
+#hudAnswer .dist .lg { font-size:24px; font-weight:700; }
+#hudAnswer .dist .need { margin-left:auto; } #hudAnswer .dist .need .n { color:var(--fg); }
+#hudAnswer .gauge { height:4px; background:var(--line); position:relative; }
+#hudAnswer .gauge i { position:absolute; left:0; top:0; bottom:0; background:var(--deadg); }
+#hudAnswer[data-verdict=cond] .gauge i { background:var(--deadu); }
+#hudAnswer[data-verdict=ng] .gauge i { background:var(--live); }
+#hudAnswer .gauge b { position:absolute; top:-3px; width:1px; height:10px; background:var(--fg); }
+#hudAnswer .tags { display:flex; gap:6px; flex-wrap:wrap; }
+#hudAnswer .tag { border:1px solid var(--line2); padding:2px 8px; font-size:13px; font-family:var(--mono); }
+#hudAnswer button.act { align-self:flex-start; }
+#hudAnswer .warn { margin:0; }
+#hudLegend { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 14px; font-size:12px; color:#c9d3de; }
+#hudLegend i { display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; }
+#hudLegend .dim { color:var(--mute); flex-basis:100%; text-align:right; white-space:normal; }
+#hudLegend { max-width:100%; }
+#hudDetail { font-size:12px; padding:3px 10px; background:rgba(9,13,18,.7); }
+#hudDetail kbd { font:500 11px/1 var(--mono); color:var(--dim); margin-left:6px; }
+
+/* ---- 右中段: 視点（既存の #viewBtns を縦に） */
+#hudCam { right:28px; bottom:214px; display:flex; flex-direction:column; align-items:flex-end; }
+body.hud #viewBtns { position:static !important; flex-direction:column; align-items:stretch; }
+body.hud #viewBtns button.sub { font-size:12px; padding:5px 12px; text-align:left; background:rgba(9,13,18,.86); }
+
+/* ---- 下: 操作のヒント、タイルのバー */
+#hudHints { left:0; right:0; bottom:134px; display:flex; justify-content:center; gap:22px; font-size:12px; color:#c9d3de; }
+#hudHints kbd { font:500 11px/1.4 var(--mono); border:1px solid var(--dim); padding:0 5px; margin-right:6px; color:#c9d3de; }
+#hudBar { left:50%; bottom:22px; transform:translateX(-50%); display:flex; gap:8px; align-items:flex-end; }
+body.hud.drawer-open #hudHints { left:420px; right:230px; }   /* 引き出し（420）と右下の切り替え（230）の間の中央に */
+body.hud.drawer-open #hudBar { left:calc(50% + 95px); }
+#hudBar .tile { width:112px; height:84px; padding:0 6px; background:rgba(9,13,18,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border:1px solid var(--line2); color:var(--fg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; white-space:normal; line-height:1.3; }
+#hudBar .tile .n { font-size:22px; font-weight:700; line-height:1.1; }
+#hudBar .tile small { font-size:11px; color:var(--mute); }
+#hudBar .tile:hover { border-color:var(--accent); }
+#hudBar .tile:disabled { opacity:.45; cursor:default; }
+#hudBar .tile[aria-pressed="true"] { width:124px; height:96px; background:rgba(95,208,255,.14); border-color:var(--accent); outline:1px solid rgba(95,208,255,.35); outline-offset:3px; }
+#hudBar .tile[aria-pressed="true"] .n { font-size:26px; color:var(--accent); }
+#hudBar .tile[aria-pressed="true"] small { color:#c9d3de; }
+#hudBar .tile.primary { border-color:var(--accent); color:var(--accent); font-size:13px; font-weight:600; }
+#hudBar .tile.primary:hover { background:rgba(95,208,255,.14); }
+#hudBar .sep { width:1px; height:60px; background:var(--line2); margin:0 6px 12px; }
+
+/* ---- 右下: 切り替えと「次へ」 */
+#hudModes { right:28px; bottom:22px; width:190px; display:flex; flex-direction:column; gap:6px; }
+#hudModes .modes { display:flex; flex-direction:column; gap:4px; font-size:13px; }
+#hudModes .mode { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 12px; text-align:left;
+  background:rgba(9,13,18,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line2); color:var(--fg); }
+#hudModes .mode kbd { font:500 12px/1 var(--mono); color:var(--dim); }
+#hudModes .mode:hover { border-color:var(--accent); }
+#hudModes .mode[aria-pressed="true"] { background:rgba(22,54,74,.92); border-color:var(--accent); }   /* 白い結線図の上でも読める濃さ */
+#hudModes .mode[aria-pressed="true"] kbd { color:var(--accent); }
+#hudNext { margin-top:6px; padding:12px 14px; background:var(--accent); color:var(--accent-ink); border:0; font-weight:700; font-size:15px; text-align:left;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%); transition:filter .15s; }
+#hudNext:hover { filter:brightness(1.12); }
+#hudNext:disabled { background:var(--panel3); color:var(--dim); cursor:default; }
+
+/* ---- 3D 上の情報カードと、対象までの線（位置は hud.js が毎フレーム置く） */
+#hudCard { left:0; top:0; width:340px; padding:12px 14px; display:none; flex-direction:column; gap:10px; border-top:2px solid var(--accent); will-change:transform; }
+#hudCard.on { display:flex; }
+#hudCardLine { left:0; top:0; width:100vw; height:100vh; display:none; overflow:visible; }
+#hudCardLine.on { display:block; }
+#hudCardLine line { stroke:var(--accent); stroke-width:1; }
+#hudCardLine rect { fill:rgba(95,208,255,.15); stroke:var(--accent); stroke-width:2; }
+
+/* ---- 引き出し: 今までの左パネル（#left）と内部データ（#right）をそのまま入れる */
+/* 閉じているときは左に引っ込めるだけ（visibility:hidden にはしない: 録画スクリプトの「見えるまで待つ」が中の要素に効き、
+   file input の click() も通るように。Tab で中に入ったときは hud.js が開く） */
+#hudDrawer { position:fixed; left:0; top:var(--boot-h,0px); bottom:0; width:420px; z-index:600; flex-direction:column;
+  background:var(--panel); border-right:1px solid var(--line2); transform:translateX(-100%); transition:transform .22s ease; }
+body.hud.drawer-open #hudDrawer { transform:none; box-shadow:12px 0 40px rgba(0,0,0,.45); }
+#hudDrawer .dhead { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--mute); }
+#hudDrawer .dhead b { color:var(--fg); letter-spacing:.08em; }
+#hudDrawerClose { margin-left:auto; font-size:12px; padding:3px 10px; }
+#hudDrawerClose kbd { font:500 11px/1 var(--mono); color:var(--dim); margin-left:6px; }
+#hudDrawer .dbody { flex:1 1 auto; min-height:0; overflow:auto; display:flex; flex-direction:column; }
+body.hud #left { flex:0 0 auto; overflow:visible; border-right:0; }
+body.hud:not(.drawer-open) #hudDrawer .mini { display:none; }   /* 閉じている間は取込タブの小さい 3D を描かない（毎フレームの無駄） */
+body.hud #right { flex:0 0 auto; border-left:0; border-top:1px solid var(--line2); }
+
+/* 狭い画面（700〜1000px）では左右の列を少し細く */
+@media (max-width:1000px) {
+  #hudLeft { width:300px; } #hudRight { width:300px; } #hudModes { width:170px; }
+  #hudTitle .t { font-size:22px; }
+}
+
+/* 凡例の行は 3D の上で読みにくいので、薄い下地を敷く */
+body.hud #hudLegend { background:rgba(9,13,18,.72); padding:4px 10px; border:1px solid var(--line); }
