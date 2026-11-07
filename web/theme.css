@@ -1,0 +1,97 @@
+/* 見た目の層（2026-11-08）。index.html と onboarding.css の上に重ねる。
+   配置・ID・クラスは変えず、色・罫線・カード・ボタン・数字の見え方だけを揃える。
+   方向: 暗い盤面に細い罫線、四隅の鍵形、等幅の数字。3D の舞台（web/stage3d.js）と同じ色の体系 */
+:root {
+  --bg:#0b0f14; --panel:#0f151c; --panel2:#141c25; --panel3:#1a2430;
+  --line:#1f2b38; --line2:#2c3d50; --fg:#e7edf3; --mute:#8a99ab; --dim:#5d6b7c;
+  --accent:#5fd0ff; --accent-ink:#03141f; --accent-soft:rgba(95,208,255,.08);
+  --live:#ff4d4d; --deadg:#3ddc6a; --deadu:#f5c518; --invalid:#ff3cf0;
+  --mono: ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --r:3px;
+}
+body { background:var(--bg); font-feature-settings:"palt"; letter-spacing:.01em; }
+td, th, .sw, .note, #hud, .big, .cls, input[type=number], #ingestCount { font-variant-numeric:tabular-nums; }
+::selection { background:rgba(95,208,255,.3); }
+* { scrollbar-width:thin; scrollbar-color:var(--line2) transparent; }
+
+/* 上の帯 */
+header { background:var(--bg); border-bottom:1px solid var(--line); gap:14px; }
+header b { font-size:14px; letter-spacing:.14em; display:flex; align-items:center; gap:10px; }
+header b::before { content:""; width:9px; height:18px; background:var(--accent); clip-path:polygon(0 0,100% 18%,100% 100%,0 82%); }
+header small { color:var(--dim); font-size:12px; }
+#prog { background:linear-gradient(180deg,#0d131a,#0b0f14); border-bottom:1px solid var(--line); }
+#prog .stages button { letter-spacing:.06em; }
+#prog .stages i { border-radius:2px; font-family:var(--mono); }
+#prog .stages button.on { border-bottom-color:var(--accent); }
+#prog .stages button.on i { box-shadow:0 0 0 3px rgba(95,208,255,.18); }
+#prog .stages button.done:not(.on) i { background:rgba(61,220,106,.12); }
+#prog .stages button.on i { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700; }
+#prog .stages li + li::before { background:linear-gradient(90deg,var(--line2),var(--line)); }
+
+/* 左右のパネル */
+#left, #right { background:var(--panel); }
+#left { border-right:1px solid var(--line); }
+.step { padding:14px 16px 24px; }
+h3 { font-size:13px; letter-spacing:.08em; margin:18px 0 8px; display:flex; align-items:center; gap:8px; }
+h3::before { content:""; width:3px; height:12px; background:var(--accent); }
+.step > h3:first-of-type { margin-top:4px; }
+h4 { font-size:12px; letter-spacing:.06em; color:var(--mute); display:flex; align-items:center; gap:8px; margin:16px 0 6px; }
+h4::after { content:""; flex:1; height:1px; background:var(--line); }
+.note { color:var(--mute); }
+.todo { background:var(--accent-soft); border-left:2px solid var(--accent); border-radius:0; color:var(--fg); }
+
+/* カード: 四隅の鍵形（左上）。枠の色は判定ごとに付く色をそのまま使う */
+.bay { position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:var(--r); padding:10px 12px; margin:8px 0; }
+.bay::before { content:""; position:absolute; left:-1px; top:-1px; width:10px; height:10px; border-top:2px solid; border-left:2px solid; border-color:inherit; pointer-events:none; }
+.bay:not([style*="border-color"])::before { border-color:var(--line2); }
+.bay summary { color:var(--mute); }
+.bay summary:hover { color:var(--fg); }
+.warn { background:rgba(255,77,77,.08); border:1px solid rgba(255,77,77,.45); border-left:3px solid var(--live); border-radius:var(--r); }
+.big { letter-spacing:.02em; }
+.cls { border-radius:2px; font-family:var(--mono); }
+.sw .id, td, .badge { font-family:var(--mono); }
+td { font-family:inherit; }
+.sw .id { color:var(--fg); }
+table th { color:var(--dim); font-weight:500; }
+td, th { border-bottom:1px solid var(--line); padding:5px 6px; }
+pre { background:#080b0f; border:1px solid var(--line); border-radius:var(--r); color:#b8c6d6; }
+
+/* 入力 */
+select, input[type=number], input[type=text], textarea {
+  background:#090d12 !important; color:var(--fg) !important; border:1px solid var(--line2) !important; border-radius:var(--r) !important;
+  padding:5px 8px !important; transition:border-color .15s; }
+select:hover, input:hover, textarea:hover { border-color:#3b5268 !important; }
+select:focus, input:focus, textarea:focus { outline:none; border-color:var(--accent) !important; box-shadow:0 0 0 3px rgba(95,208,255,.12); }
+input[type=checkbox], input[type=radio] { accent-color:var(--accent); }
+input[type=file] { color:var(--mute); font-size:12px; }
+input[type=file]::file-selector-button { background:var(--panel3); color:var(--fg); border:1px solid var(--line2); border-radius:var(--r); padding:5px 10px; margin-right:10px; cursor:pointer; }
+
+/* ボタン: 主ボタンは右下を斜めに切る */
+button.act { background:var(--accent); color:var(--accent-ink); border-radius:2px; box-shadow:none; letter-spacing:.04em;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%); padding:9px 22px 9px 18px; transition:filter .15s, transform .05s; }
+button.act:hover { filter:brightness(1.12); }
+button.act:active { transform:translateY(1px); }
+button.act:disabled { background:var(--panel3); color:var(--dim); cursor:default; }
+button.sub { background:rgba(20,28,37,.85); border:1px solid var(--line2); border-radius:2px; color:var(--fg); transition:border-color .15s, color .15s; }
+button.sub:hover { border-color:var(--accent); color:var(--accent); }
+button.sub.nav { border-color:transparent; background:none; }
+.badge { border-radius:2px; background:var(--panel2); border-color:var(--line2); font-size:11px; letter-spacing:.04em; }
+
+/* 3D の上に浮かぶもの: すりガラスの板と左の色線 */
+#hud { background:rgba(11,15,20,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line2); border-left:2px solid var(--accent);
+  border-radius:0; padding:8px 12px; font-size:12px; line-height:1.7; }
+#viewBtns button.sub, #sldZoom button.sub { background:rgba(11,15,20,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+#view::after { content:""; position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 120px rgba(0,0,0,.55); }
+#view:has(#sldView.on)::after { display:none; }   /* 結線図（白い紙）には周辺減光をかけない */
+#sldTip { background:rgba(11,15,20,.85); border-left:2px solid var(--accent); border-radius:0; }
+.mini { border-color:var(--line2); border-radius:var(--r); }
+
+/* 自動再生の字幕・初回の案内 */
+#tourCap { background:rgba(11,15,20,.9); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--line2); border-left:3px solid var(--accent); border-radius:0; }
+#welcome { background:rgba(5,8,11,.86); backdrop-filter:blur(4px); }
+#welcome .card { position:relative; background:var(--panel); border:1px solid var(--line2); border-radius:var(--r); }
+#welcome .card::before, #welcome .card::after { content:""; position:absolute; width:16px; height:16px; border-color:var(--accent); border-style:solid; }
+#welcome .card::before { left:-1px; top:-1px; border-width:2px 0 0 2px; }
+#welcome .card::after { right:-1px; bottom:-1px; border-width:0 2px 2px 0; }
+#welcome ol li { background:var(--panel2); border:1px solid var(--line); border-radius:var(--r); }
+#guide { background:var(--accent-soft); border:1px solid rgba(95,208,255,.35); border-radius:2px; }

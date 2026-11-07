@@ -3,18 +3,23 @@
 import * as THREE from './vendor/three/three.module.js';
 
 const MAT = {
-  steel: new THREE.MeshStandardMaterial({ color: 0x7d8794, metalness: 0.5, roughness: 0.6 }),
-  steelDark: new THREE.MeshStandardMaterial({ color: 0x515a66, metalness: 0.5, roughness: 0.65 }),
-  porcelain: new THREE.MeshStandardMaterial({ color: 0xd8d2c2, roughness: 0.4 }),
-  porcelainBrown: new THREE.MeshStandardMaterial({ color: 0x6e4a3a, roughness: 0.45 }),
-  tank: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, metalness: 0.35, roughness: 0.6 }),
-  concrete: new THREE.MeshStandardMaterial({ color: 0x8f8d86, roughness: 0.95 }),
-  cabinet: new THREE.MeshStandardMaterial({ color: 0x5c6670, roughness: 0.7 }),
-  load: new THREE.MeshStandardMaterial({ color: 0x6e7a88, roughness: 0.7 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0x93a0b0, metalness: 0.45, roughness: 0.55 }),
+  steelDark: new THREE.MeshStandardMaterial({ color: 0x5d6878, metalness: 0.45, roughness: 0.6 }),
+  porcelain: new THREE.MeshStandardMaterial({ color: 0xece6d6, roughness: 0.35 }),
+  porcelainBrown: new THREE.MeshStandardMaterial({ color: 0x7a4f3c, roughness: 0.4 }),
+  tank: new THREE.MeshStandardMaterial({ color: 0xb4bec9, metalness: 0.3, roughness: 0.5 }),
+  concrete: new THREE.MeshStandardMaterial({ color: 0x8c8a84, roughness: 0.95 }),
+  cabinet: new THREE.MeshStandardMaterial({ color: 0x6f7b88, roughness: 0.6 }),
+  load: new THREE.MeshStandardMaterial({ color: 0x7b8899, roughness: 0.6 }),
 };
+// 大きな箱にだけ輪郭線を引く（形が読みやすくなる。小さい部品まで引くと重くうるさい）
+const EDGE = new THREE.LineBasicMaterial({ color: 0xd6ecff, transparent: true, opacity: 0.32 });
+const LATTICE = new THREE.LineBasicMaterial({ color: 0x93a0b0 });
 const PH = { R: -1, S: 0, T: 1 };
 
-function box(g, w, d, h, mat, x, y, z) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, d, h), mat); m.position.set(x, y, z); g.add(m); return m; }
+function box(g, w, d, h, mat, x, y, z) { const geo = new THREE.BoxGeometry(w, d, h); const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m);
+  if (w * d * h > 1.5 && mat !== MAT.concrete) { const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo), EDGE); e.position.copy(m.position); g.add(e); }
+  return m; }
 function cylZ(g, r, h, mat, x, y, z0, seg = 14) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z0 + h / 2); g.add(m); return m; }
 function cylAlong(g, a, b, r, mat, seg = 12) { const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b); const len = va.distanceTo(vb); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat); m.position.copy(va.clone().add(vb).multiplyScalar(0.5)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize()); g.add(m); return m; }
 
@@ -34,7 +39,7 @@ function latticeColumn(g, x, y, h, w) {
   for (let i = 0; i < n; i++) { const z0 = i * h / n, z1 = (i + 1) * h / n; const s = i % 2 ? 1 : -1;
     pts.push(new THREE.Vector3(x - hw * s, y - hw, z0), new THREE.Vector3(x + hw * s, y - hw, z1), new THREE.Vector3(x - hw * s, y + hw, z0), new THREE.Vector3(x + hw * s, y + hw, z1),
              new THREE.Vector3(x - hw, y - hw * s, z0), new THREE.Vector3(x - hw, y + hw * s, z1), new THREE.Vector3(x + hw, y - hw * s, z0), new THREE.Vector3(x + hw, y + hw * s, z1)); }
-  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x7d8794 })));
+  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), LATTICE));
   box(g, 1.2, 1.2, 0.4, MAT.concrete, x, y, 0.2);
 }
 function latticeBeam(g, a, b, d) {
@@ -44,7 +49,7 @@ function latticeBeam(g, a, b, d) {
   const pts = []; const n = Math.max(1, Math.floor(len / 1.2));
   for (let i = 0; i < n; i++) { const p0 = va.clone().add(dir.clone().multiplyScalar(i * len / n)), p1 = va.clone().add(dir.clone().multiplyScalar((i + 1) * len / n)); const s = i % 2 ? 1 : -1;
     for (const sg of [-hd, hd]) { const o = side.clone().multiplyScalar(sg); pts.push(new THREE.Vector3(p0.x + o.x, p0.y + o.y, p0.z - hd * s), new THREE.Vector3(p1.x + o.x, p1.y + o.y, p1.z + hd * s)); } }
-  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x7d8794 })));
+  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), LATTICE));
 }
 
 export function buildEquipment(site, dims) {
@@ -124,8 +129,8 @@ export function buildEquipment(site, dims) {
       latticeBeam(sg, beam.a, beam.b, dims.gantry.beam_h);
     } else if (st.id.startsWith('220-TOWER')) {
       const a = st.primitives[0].a, h = st.primitives[0].b[2]; const tw = dims.tower_220;
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(tw.top_w / 2, tw.base_w / 2, h, 4, 1, true), new THREE.MeshBasicMaterial({ color: 0x7d8794, wireframe: true })); m.rotation.x = Math.PI / 2; m.rotation.y = Math.PI / 4; m.position.set(a[0], a[1], h / 2); sg.add(m);
-      for (let i = 1; i < h / 3; i++) { const z = i * 3, w = tw.base_w / 2 + (tw.top_w / 2 - tw.base_w / 2) * z / h; const r = new THREE.Mesh(new THREE.RingGeometry(w * 0.98, w, 4), new THREE.MeshBasicMaterial({ color: 0x7d8794, side: THREE.DoubleSide })); r.rotation.z = Math.PI / 4; r.position.set(a[0], a[1], z); sg.add(r); }
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(tw.top_w / 2, tw.base_w / 2, h, 4, 1, true), new THREE.MeshBasicMaterial({ color: 0x93a0b0, wireframe: true })); m.rotation.x = Math.PI / 2; m.rotation.y = Math.PI / 4; m.position.set(a[0], a[1], h / 2); sg.add(m);
+      for (let i = 1; i < h / 3; i++) { const z = i * 3, w = tw.base_w / 2 + (tw.top_w / 2 - tw.base_w / 2) * z / h; const r = new THREE.Mesh(new THREE.RingGeometry(w * 0.98, w, 4), new THREE.MeshBasicMaterial({ color: 0x93a0b0, side: THREE.DoubleSide })); r.rotation.z = Math.PI / 4; r.position.set(a[0], a[1], z); sg.add(r); }
     } else if (st.kind === 'arrester') {
       for (const pr of st.primitives) { const kv = pr.b[2] > 2.5 ? 220 : 66; const e = dims.equip[String(kv)].la; box(sg, e.base, e.base, 0.3, MAT.concrete, pr.a[0], pr.a[1], 0.15); box(sg, 0.2, 0.2, e.column - 0.3, MAT.steel, pr.a[0], pr.a[1], 0.3 + (e.column - 0.3) / 2); porcelain(sg, e.d / 2 + 0.06, e.porcelain, pr.a[0], pr.a[1], e.column, MAT.porcelainBrown); }
     } else if (st.kind === 'ground_wire') {

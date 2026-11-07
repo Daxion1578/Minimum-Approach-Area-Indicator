@@ -54,6 +54,7 @@
   .cls { display:inline-block; min-width:44px; text-align:center; border-radius:4px; padding:0 6px; margin-right:6px; font-weight:700; }
 </style>
 <link rel="stylesheet" href="./web/onboarding.css">
+<link rel="stylesheet" href="./web/theme.css">
 </head>
 <body>
 <header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide" style="display:none"></span>
@@ -168,6 +169,7 @@
 <script type="module">
 import * as THREE from './web/vendor/three/three.module.js';
 import { buildEquipment, buildConductors } from './web/equipment3d.js';
+import { setupStage, sitePad, envelopeShell } from './web/stage3d.js';
 
 // ------------------------------------------------------------ 軌道カメラ（左ドラッグ回転、ホイール拡大、右ドラッグ移動）
 class MiniOrbit {
@@ -187,13 +189,10 @@ class MiniOrbit {
 // ------------------------------------------------------------ 3D
 const view=document.getElementById('view'), hud=document.getElementById('hud');
 const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio); view.appendChild(renderer.domElement);
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x111418);
+const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(50,1,0.1,2000); camera.up.set(0,0,1);
 const controls=new MiniOrbit(camera, renderer.domElement);
-scene.add(new THREE.GridHelper(300,30,0x2c343d,0x1f262e).rotateX(Math.PI/2));
-{ const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshStandardMaterial({color:0x1a1f26, roughness:1})); ground.position.z=-0.02; scene.add(ground); }
-scene.add(new THREE.HemisphereLight(0xdfe6f0, 0x2a2f36, 0.9));
-{ const sun=new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(-60,80,120); scene.add(sun); }
+setupStage(scene, renderer);   // 地面の盤面（5 m／25 m グリッド）と光。見え方だけ（web/stage3d.js）
 // 2 形態: 充電=赤、停電=緑（計算の「停電・接地／停電・未接地」はどちらも停電）。誤り（充電部に接地）だけ紫
 const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0x39d353, invalid:0xff3cf0};
 const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(), markGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup); scene.add(markGroup);
@@ -218,6 +217,7 @@ function buildSite(site){
   // 構内の広がりに合わせてカメラの注視点と距離を決める（原点は敷地の隅でもよいように）
   { const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
     if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); controls.target.set(c.x,c.y,0); controls.radius=Math.max(60, bb.getSize(new THREE.Vector3()).length()*0.9); controls.phi=0.55; controls.theta=-0.9; } }
+  siteGroup.add(sitePad(site.layout.site?.fence));
   const cond=buildConductors(site); siteGroup.add(cond.group); condMeshes=cond.byId;
   if (dims){ const eq=buildEquipment(site, dims); siteGroup.add(eq.group); switchMeshes=eq.byId; }
 }
@@ -227,7 +227,7 @@ function paint(energ, env, showEnv){
   const stateOf=id => st[id] ?? st[id+'.a'] ?? st[id+'.hv'];
   for (const id in condMeshes){ const s=stateOf(id); const c=COL[s] ?? 0x6b7785; condMeshes[id].mat.color.setHex(c); condMeshes[id].mat.emissive.setHex(s==='live'?0x4a0000:0x000000); }
   clearGroup(envGroup);
-  if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, 0xff4d4d, 0.09)); }
+  if (showEnv) envGroup.add(envelopeShell(env.envelopes.map(e=>e.primitive)));   // 重なっても濃くならない殻
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
   hud.innerHTML = `充電 ${cnt.live||0} ／ 停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>${layoutBadge()}<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
 }
@@ -245,7 +245,7 @@ function drawCrane(out){
   for (const cc of out.crane_capsules){
     const isWorst = worst && cc.part===worst.crane_part && cc.slew_deg===worst.slew_deg;
     const col = cc.part==='carrier' ? 0xe3b320 : isWorst ? 0xffffff : 0xe3b320;
-    if (cc.part==='carrier'){ const m=capsuleMesh(cc.a,cc.b,cc.r,0xe3b320,0.5); craneGroup.add(m); continue; }
+    if (cc.part==='carrier'){ const m=capsuleMesh(cc.a,cc.b,cc.r,0xe3b320,1); m.material=new THREE.MeshStandardMaterial({color:0xf2b705, roughness:0.45, metalness:0.2}); craneGroup.add(m); continue; }
     const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...cc.a), new THREE.Vector3(...cc.b)]);
     craneGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:col, transparent:true, opacity:isWorst?1:0.35})));
     if (isWorst || cc.part==='load') craneGroup.add(capsuleMesh(cc.a,cc.b,cc.r, isWorst?0xffffff:0xe3b320, isWorst?0.35:0.12));
@@ -328,12 +328,11 @@ $('btnIngest').onclick=async()=>{
 const miniViews=[];
 function miniView(host, site){
   const r=new THREE.WebGLRenderer({antialias:true}); r.setPixelRatio(devicePixelRatio); host.appendChild(r.domElement);
-  const sc=new THREE.Scene(); sc.background=new THREE.Color(0x111418);
-  sc.add(new THREE.HemisphereLight(0xdfe6f0,0x2a2f36,0.9)); const sun=new THREE.DirectionalLight(0xffffff,1.1); sun.position.set(-60,80,120); sc.add(sun);
+  const sc=new THREE.Scene(); setupStage(sc, r);
   const cam=new THREE.PerspectiveCamera(50,1,0.1,2000); cam.up.set(0,0,1); const ctl=new MiniOrbit(cam, r.domElement);
   const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
   if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); ctl.target.set(c.x,c.y,0); ctl.radius=Math.max(60,bb.getSize(new THREE.Vector3()).length()*0.9); ctl.phi=0.55; ctl.theta=-0.9; }
-  const g=new THREE.Group(); const cond=buildConductors(site); g.add(cond.group); if (dims) g.add(buildEquipment(site,dims).group); sc.add(g);
+  const g=new THREE.Group(); g.add(sitePad(site.layout.site?.fence)); const cond=buildConductors(site); g.add(cond.group); if (dims) g.add(buildEquipment(site,dims).group); sc.add(g);
   const w=host.clientWidth||170, h=host.clientHeight||170; r.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix();
   miniViews.push({r,sc,cam,ctl,host});
 }
