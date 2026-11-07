@@ -26,7 +26,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -273,6 +273,68 @@ async def post_ingest(file: UploadFile):
         tmp.unlink(missing_ok=True)
     return {"candidate": {k: cand[k] for k in ("nets", "switches", "transformers", "lines", "buses", "loads", "questions", "stats", "page_size_mm")},
             "topology": topo, "annotation": notes, "eval": ev}
+
+
+# ---- 装置図（平面・断面）から起こす 3D の下書き。他のタブの計算には一切関わらない。
+# 本物の取込が無い間は server/layout_stub.py に切り替える（統合のときはこの try/except と stub を消す）。
+try:
+    from ingest.pdf_layout import extract_layout as _extract_layout
+    from ingest.layout_build import build_layout as _build_layout, check_consistency as _check_consistency
+    from scripts.eval_layout import evaluate_layout as _evaluate_layout
+    _LAYOUT_STUB = False
+except ImportError:
+    from server.layout_stub import (extract_layout as _extract_layout, build_layout as _build_layout,
+                                    check_consistency as _check_consistency, evaluate_layout as _evaluate_layout)
+    _LAYOUT_STUB = True
+SAMPLE_LAYOUT_PDF = SITES / "SITE-01" / "drawings" / "SITE-01_layout.pdf"
+
+
+def run_layout(pdf_path: Path) -> dict:
+    """装置図 PDF → 下書き layout と、正解（truth の layout）との一致。失敗は HTTP 400（日本語の理由）。"""
+    try:
+        site = load_site("SITE-01")
+        extracted = _extract_layout(pdf_path, site["topology"])
+        consistency = _check_consistency(site["topology"], extracted)
+        draft = _build_layout(site["topology"], extracted)
+        ev = _evaluate_layout(draft, site["layout"])
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"装置図を読めなかった（{type(e).__name__}: {e}）")
+    return {"layout": draft, "questions": draft.get("questions", extracted.get("questions", [])),
+            "consistency": consistency, "eval": ev, "stats": extracted.get("stats", {}), "stub": _LAYOUT_STUB}
+
+
+def ingest_layout_sample() -> dict:
+    if not SAMPLE_LAYOUT_PDF.is_file():
+        raise HTTPException(400, "サンプルの装置図（SITE-01_layout.pdf）が見つからない")
+    return run_layout(SAMPLE_LAYOUT_PDF)
+
+
+@app.post("/api/ingest/layout")
+async def post_ingest_layout(request: Request):
+    """body: multipart の file（装置図 PDF）、または JSON {"sample": true}（合成変電所の装置図）。"""
+    import tempfile
+    ctype = request.headers.get("content-type", "")
+    if ctype.startswith("multipart/"):
+        form = await request.form()
+        up = form.get("file")
+        if up is None or not hasattr(up, "read"):
+            raise HTTPException(400, "PDF が付いていない")
+        data = await up.read()
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(data); tmp = Path(f.name)
+        try:
+            return run_layout(tmp)
+        finally:
+            tmp.unlink(missing_ok=True)
+    try:
+        body = await request.json()
+    except Exception:
+        body = None
+    if isinstance(body, dict) and body.get("sample"):
+        return ingest_layout_sample()
+    raise HTTPException(400, "装置図の PDF（file）か、サンプル指定（{\"sample\": true}）を送る")
 
 
 @app.get("/api/equipment")

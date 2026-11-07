@@ -38,6 +38,7 @@
   table { border-collapse:collapse; width:100%; font-size:12px; } td,th { border-bottom:1px solid var(--line); padding:3px 4px; text-align:left; } th { color:var(--mute); font-weight:500; }
   pre { background:#0d1117; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:11px; overflow:auto; max-height:280px; margin:4px 0 12px; }
   #hud { position:absolute; left:10px; top:10px; background:rgba(27,32,38,.85); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; pointer-events:none; }
+  .mini { height:170px; border:1px solid var(--line); border-radius:4px; overflow:hidden; } .mini canvas { width:100%!important; height:100%!important; }
   .warn { background:#3a0a0a; border:1px solid #7a1212; border-radius:6px; padding:6px 8px; font-size:12px; margin:8px 0; }
   .soon { color:var(--mute); font-style:italic; }
   #guide { color:var(--fg); font-size:12px; background:#16202c; border:1px solid #2b4560; border-radius:6px; padding:3px 10px; }
@@ -76,6 +77,10 @@
     <div class="note">読むのは結線図（つながり）だけ。3D の機器の位置と高さは合成データで、配置図（平面）・断面図の取込は次の段階。取り込んだ結果は下書きとして表示し、次のタブは合成変電所のデータで動く。</div>
     <div class="row"><input type="file" id="ingestFile" accept="application/pdf"><button class="sub" id="btnIngest">取り込む</button><span class="note" id="agentState"></span></div>
     <div id="ingestBox"></div>
+    <h4>装置図（平面・断面）から起こした 3D（下書き）</h4>
+    <div class="note">停止範囲と離隔の計算は今は合成データで行う。この下書きは図面の読み取りの確認用。</div>
+    <div class="row"><button class="sub" id="btnLayoutSample">サンプル装置図で試す</button><input type="file" id="layoutFile" accept="application/pdf"></div>
+    <div id="layoutBox"></div>
     <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止範囲へ →</button></div>
   </section>
 
@@ -294,6 +299,42 @@ $('btnIngest').onclick=async()=>{
   $('btnConfirmAll').onclick=()=>{ $('ingestSw').querySelectorAll('input').forEach(i=>{ if(!qs.some(q=>q.startsWith(i.dataset.n+' '))) i.checked=true; }); count(); };
   count();
 };
+
+// ---- 装置図から起こした 3D の下書き（取込タブ内。上の 3D とは別の renderer・scene。ここが失敗しても他は動く）
+const miniViews=[];
+function miniView(host, site){
+  const r=new THREE.WebGLRenderer({antialias:true}); r.setPixelRatio(devicePixelRatio); host.appendChild(r.domElement);
+  const sc=new THREE.Scene(); sc.background=new THREE.Color(0x111418);
+  sc.add(new THREE.HemisphereLight(0xdfe6f0,0x2a2f36,0.9)); const sun=new THREE.DirectionalLight(0xffffff,1.1); sun.position.set(-60,80,120); sc.add(sun);
+  const cam=new THREE.PerspectiveCamera(50,1,0.1,2000); cam.up.set(0,0,1); const ctl=new MiniOrbit(cam, r.domElement);
+  const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
+  if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); ctl.target.set(c.x,c.y,0); ctl.radius=Math.max(60,bb.getSize(new THREE.Vector3()).length()*0.9); ctl.phi=0.55; ctl.theta=-0.9; }
+  const g=new THREE.Group(); const cond=buildConductors(site); g.add(cond.group); if (dims) g.add(buildEquipment(site,dims).group); sc.add(g);
+  const w=host.clientWidth||170, h=host.clientHeight||170; r.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix();
+  miniViews.push({r,sc,cam,ctl,host});
+}
+(function miniLoop(){ requestAnimationFrame(miniLoop); for (const v of miniViews){ if (!v.host.offsetParent) continue; v.ctl.update(); v.r.render(v.sc,v.cam); } })();
+async function runLayoutDraft(sample){
+  const box=$('layoutBox'); box.innerHTML='<div class="note">装置図を読んでいる…</div>';
+  try{
+    let r;
+    if (sample) r=await fetch('/api/ingest/layout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sample:true})});
+    else { const f=$('layoutFile').files[0]; if(!f){ box.innerHTML='<div class="warn">PDF を選んでから</div>'; return; } const fd=new FormData(); fd.append('file',f); r=await fetch('/api/ingest/layout',{method:'POST',body:fd}); }
+    if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'装置図を読めなかった'}（${r.status}）</div>`; return; }
+    const j=await r.json(); const e=j.eval, c=e.conductor_match||{}; const f2=v=>(v==null?'—':(+v).toFixed(2));
+    const truth=await (await fetch('/api/sites/SITE-01')).json();
+    const qs=[...(j.questions||[]).map(q=>typeof q==='string'?q:(q.message||JSON.stringify(q))), ...(j.consistency||[]).map(x=>x.message||x.id)];
+    miniViews.splice(0).forEach(v=>{ v.r.dispose(); v.r.domElement.remove(); });
+    box.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div><div class="note">合成データ（正）</div><div class="mini" id="miniL"></div></div><div><div class="note">図面から起こした下書き</div><div class="mini" id="miniR"></div></div></div>`
+      +`<table style="margin-top:6px"><tr><th>機器の一致</th><td>${e.apparatus_matched} / ${e.apparatus_total}</td></tr><tr><th>位置の差 平均／最大</th><td>${f2(e.position_error_mean_m)} m ／ ${f2(e.position_error_max_m)} m</td></tr><tr><th>高さ 一致数</th><td>${e.height_matched}（差 平均 ${f2(e.height_error_mean_m)} m ／ 最大 ${f2(e.height_error_max_m)} m）</td></tr><tr><th>導体の一致</th><td>${c.matched} / ${c.total}${c.tolerance_m!=null?`（許容 ${c.tolerance_m} m）`:''}</td></tr></table>`
+      +(j.stub?'<div class="note">本物の取込が未接続のため、正解データをそのまま下書きとして表示している（全一致）。</div>':'')
+      +`<div class="bay"><h4>要確認（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
+    miniView($('miniL'), {topology:truth.topology, layout:truth.layout});
+    miniView($('miniR'), {topology:truth.topology, layout:j.layout});
+  }catch(err){ box.innerHTML=`<div class="warn">下書きを描けなかった: ${err.message||err}</div>`; }
+}
+$('btnLayoutSample').onclick=()=>runLayoutDraft(true);
+$('layoutFile').onchange=()=>runLayoutDraft(false);
 
 // ---- 視点
 function frameTo(cx,cy,radius,theta){ const steps=20; const t0=controls.target.clone(), r0=controls.radius, th0=controls.theta; let i=0;
