@@ -86,9 +86,11 @@
     <div class="note" id="agentWhy" hidden></div>
     <div id="ingestBox"></div>
     <h4>装置図（平面・断面）から起こした 3D（下書き）</h4>
-    <div class="note">停止範囲と離隔の計算は今は合成データで行う。この下書きは図面の読み取りの確認用。</div>
+    <div class="note">図面から起こした下書き。確認して「この 3D で続ける」を押すまで、停止範囲・離隔・クレーンの計算は合成データのまま。押すと、以降の計算はこの配置で行う。</div>
     <div class="row"><button class="sub" id="btnLayoutSample">サンプル装置図で試す</button><input type="file" id="layoutFile" accept="application/pdf"></div>
     <div id="layoutBox"></div>
+    <div class="row" id="useRow"><button class="act" id="btnUseDraft" disabled>この 3D で続ける</button><button class="sub" id="btnUseTruth">合成データに戻す</button></div>
+    <div class="note" id="useMsg"></div>
     <div class="row" style="margin-top:10px"><button class="sub nav" onclick="go('s1')">停止範囲へ →</button></div>
   </section>
 
@@ -222,9 +224,14 @@ function paint(energ, env, showEnv){
   clearGroup(envGroup);
   if (showEnv) for (const e of env.envelopes){ const p=e.primitive; envGroup.add(capsuleMesh(p.a,p.b,p.r, 0xff4d4d, 0.09)); }
   const cnt={}; for (const c of energ.components) cnt[c.state]=(cnt[c.state]||0)+c.nodes.length;
-  hud.innerHTML = `充電 ${cnt.live||0} ／ 停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
+  hud.innerHTML = `充電 ${cnt.live||0} ／ 停電 ${(cnt.dead_grounded||0)+(cnt.dead_ungrounded||0)}` + (cnt.invalid?` ／ <b style="color:#ff3cf0">充電部に接地 ${cnt.invalid}</b>`:'') + `<br>${layoutBadge()}<br>近づけない範囲（包絡） ${env.envelopes.length} 本（離隔表 ${env.clearance_table_id}、値は要確認）`;
 }
 
+// 3D の元（合成データ／図面から起こした配置）。切り替えは人の操作だけ
+function layoutBadge(){
+  const d = site && site.layout_source==='drawing-draft';
+  return `<span id="srcBadge" class="badge" style="${d?'color:var(--deadu);border-color:var(--deadu)':''}">3D の元: ${d?'図面から起こした配置（承認前）':'合成データ'}</span>`;
+}
 // ------------------------------------------------------------ クレーンの描画
 function drawCrane(out){
   clearGroup(craneGroup);
@@ -259,7 +266,7 @@ renderer.domElement.addEventListener('pointerup', e=>{
 
 // ------------------------------------------------------------ データと操作
 const DEMO_TARGET='66-D1-CB1';   // 見本: 66kV 1号ダイヤの遮断器を取り替える作業日
-let site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
+let lastDraft=null, site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
 const $=id=>document.getElementById(id);
 window.go = s => { document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s));
   showSld(s==='s1' && !view3d); guide(); window.dispatchEvent(new Event('maai-go')); };
@@ -334,7 +341,8 @@ async function runLayoutDraft(sample){
     else { const f=$('layoutFile').files[0]; if(!f){ box.innerHTML='<div class="warn">PDF を選んでから</div>'; return; } const fd=new FormData(); fd.append('file',f); r=await fetch('/api/ingest/layout',{method:'POST',body:fd}); }
     if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'装置図を読めなかった'}（${r.status}）</div>`; return; }
     const j=await r.json(); const e=j.eval, c=e.conductor_match||{}; const f2=v=>(v==null?'—':(+v).toFixed(2));
-    const truth=await (await fetch('/api/sites/SITE-01')).json();
+    const truth={topology:site.topology, layout:j.truth_layout};   // 左は常に合成データ（切り替え後も）
+    lastDraft=j; setUseBtn();
     const qs=[...(j.questions||[]).map(q=>typeof q==='string'?q:(q.message||JSON.stringify(q)))];
     miniViews.splice(0).forEach(v=>{ v.r.dispose(); v.r.domElement.remove(); });
     box.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div><div class="note">合成データ（正）</div><div class="mini" id="miniL"></div></div><div><div class="note">図面から起こした下書き</div><div class="mini" id="miniR"></div></div></div>`
@@ -344,6 +352,30 @@ async function runLayoutDraft(sample){
     miniView($('miniR'), {topology:truth.topology, layout:j.layout});
   }catch(err){ box.innerHTML=`<div class="warn">下書きを描けなかった: ${err.message||err}</div>`; }
 }
+function setUseBtn(){
+  const b=$('btnUseDraft'); const n=lastDraft?(lastDraft.questions||[]).length:0;
+  b.disabled=!lastDraft; b.textContent=n>0?`要確認 ${n} 件を確認のうえ続ける`:'この 3D で続ける';
+}
+function resetResults(){   // 配置が変わったら、古い停止範囲・クレーンの結果は消す（新しい配置の結果に見えないように）
+  lastSteps=null; lastClearance=null; lastCrane=null; lastSelect=null; extraOutage=null;
+  for (const id of ['stepsBox','selectBox','verdictBox','proposeBox','approveBox']) $(id).innerHTML='';
+  $('stepsBox').innerHTML='<div class="note">配置を切り替えた。停止範囲とクレーンは作り直してください。</div>';
+  drawCrane(null);
+}
+async function switchLayout(toDraft){
+  const msg=$('useMsg'); msg.textContent='切り替えている…';
+  try{
+    const r = toDraft
+      ? await fetch(`/api/site/${site.site_id}/layout/use-draft`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({layout:lastDraft.layout,questions:lastDraft.questions||[],drawing_hash:lastDraft.drawing_hash||null})})
+      : await fetch(`/api/site/${site.site_id}/layout/use-truth`,{method:'POST'});
+    if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} msg.innerHTML=`<span class="warn">切り替えられなかった: ${m}（${r.status}）</span>`; return; }
+    const info=await r.json();
+    await loadSite(site.site_id); resetResults();
+    msg.textContent = toDraft ? `以降の計算は図面から起こした配置を使う（要確認 ${info.questions_count} 件は承認の記録に残る）。` : '合成データに戻した。';
+  }catch(err){ msg.innerHTML=`<span class="warn">切り替えられなかった: ${err.message||err}</span>`; }
+}
+$('btnUseDraft').onclick=()=>switchLayout(true);
+$('btnUseTruth').onclick=()=>switchLayout(false);
 $('btnLayoutSample').onclick=()=>runLayoutDraft(true);
 $('layoutFile').onchange=()=>runLayoutDraft(false);
 
