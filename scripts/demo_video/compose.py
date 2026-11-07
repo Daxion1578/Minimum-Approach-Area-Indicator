@@ -17,7 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FPS = 30
-TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 5, 27, 12
+TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 0, 30, 30   # 語り v4: 題の札なし（図面から始める）、構想映像 30 秒、締めの札 30 秒
+CLOSING_TALK = 15   # 締めの札の語りは前半だけ。後半は無音で札を見せる
 FONT = "Noto Sans CJK JP"
 MAXF = 1.5  # 録画を台本の秒数に合わせる早送りの上限。超える分は先頭からの 1.5 倍で流し、余りは最後のコマの静止で埋める
 
@@ -81,10 +82,11 @@ def main() -> int:
     vf0 = f"scale=1920:1080:flags=lanczos,fps={FPS}"
     parts: list[Path] = []
 
-    # 1) 題の札 5 秒
-    p = tmp / "p0_title.mp4"
-    run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(FPS), "-i", str(d / "title.png"), "-t", str(TITLE_SEC), "-vf", vf0, *enc, str(p)])
-    parts.append(p)
+    # 1) 題の札（TITLE_SEC が 0 なら入れない）
+    if TITLE_SEC:
+        p = tmp / "p0_title.mp4"
+        run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(FPS), "-i", str(d / "title.png"), "-t", str(TITLE_SEC), "-vf", vf0, *enc, str(p)])
+        parts.append(p)
 
     # 2) 録画を行ごとに切って台本の秒数に合わせる（速度を変える。足りなければ最後のコマを延ばす）
     narr: list[dict] = []
@@ -116,25 +118,24 @@ def main() -> int:
         seg_start = TITLE_SEC + t if i == 0 else TITLE_SEC + t
         narr.append({"id": s["id"], "script": s["script"], "start": round(seg_start, 2), "end": round(seg_start + out_len, 2), "text": s["text"], "speed": round(factor, 3), "trim": stat})
         t += out_len
-    rec_total = TITLE_SEC + t  # 札 + 録画（= 2:21 = 141 秒）
+    rec_total = TITLE_SEC + t  # 札 + 録画（語り v4 では 0 + 120 = 2:00）
 
-    # 3) 構想映像（27 秒で止める）
+    # 3) 構想映像（CONCEPT_SEC 秒で止める）
     p = tmp / "p7_concept.mp4"
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", a.concept, "-t", str(CONCEPT_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     concept_start = rec_total
-    narr.append({"id": "s7", "script": "2:21-2:48", "start": concept_start, "end": concept_start + CONCEPT_SEC,
-                 "text": "この先は現地です。承認した計画をスマホでかざすと、映った機器を3Dと照らし合わせて位置を合わせ、合ったところだけに近づけない範囲を重ねます。位置が決まらないときは出しません。取り違えが一番危ないからです。充電しているかどうかはカメラで当てず、図面と開閉器の状態から計算で決めます。", "speed": 1.0})
+    narr.append({"id": "s6", "script": "2:00-2:30", "start": concept_start, "end": concept_start + CONCEPT_SEC,
+                 "text": "この先は現地です。承認した計画をスマホでかざすと、近づけない範囲が目の前の設備に重なります。位置が決まらないときは出しません。取り違えが一番危ないからです。", "speed": 1.0})
 
-    # 4) 締めの札 12 秒
+    # 4) 締めの札（後半は無音で札を見せる）
     p = tmp / "p8_closing.mp4"
     run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(FPS), "-i", str(d / "closing.png"), "-t", str(CLOSING_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     c0 = concept_start + CONCEPT_SEC
-    narr.append({"id": "s8", "script": "2:48-3:00", "start": c0, "end": c0 + CLOSING_SEC,
-                 "text": "現場の安全を、見張りの目と経験者の頭の中だけに置きたくない。人が替わっても同じ答えにたどり着ける道具にしたくて、作りました。", "speed": 1.0})
-    # 最初の行（0:00-0:20）は札の 5 秒も含めて 20 秒。語りは札から始める
-    narr[0]["start"] = 0.0
+    narr.append({"id": "s7", "script": "2:30-3:00", "start": c0, "end": c0 + CLOSING_TALK,
+                 "text": "現場は、命を預かっています。だから、最後は人が決める。MAAI は、経験の浅い担当者の判断を助ける道具です。", "speed": 1.0})
+    narr[0]["start"] = 0.0   # 最初の行は動画の頭から語る
 
     lst = tmp / "list.txt"
     lst.write_text("".join(f"file '{x.resolve()}'\n" for x in parts))

@@ -329,7 +329,8 @@ window.renderAt = function (t) {
   const ca = t >= T.crane[1] ? ramp(t, T.crane[1], T.crane[1] + 0.4) : 0;
   if (craneTop) { const p = project(new THREE.Vector3(...craneTop.a).lerp(new THREE.Vector3(...craneTop.b), 0.3)); setLabel('crane', 'crane', `計画のクレーン ${s.crane_name}`, p, ca); }
   const da = showDist ? ramp(t, T.dist, T.dist + 0.4) : 0;
-  setLabel('dist', 'dist', `車体 ↔ 充電部 ${worst.distance_m.toFixed(2)} m（必要 ${worst.required_m.toFixed(2)} m）${s.verdict_ja}`, project(distMid), da);
+  const partJa = { carrier: '車体', boom: 'ブーム', rope: 'ロープ', load: '吊荷' }[worst.crane_part] || 'クレーン';   // engine が出した一番近い部分
+  setLabel('dist', 'dist', `${partJa} ↔ 充電部 ${worst.distance_m.toFixed(2)} m（必要 ${worst.required_m.toFixed(2)} m）${s.verdict_ja}`, project(distMid), da);
 
   // 締めの一言と、暗転
   const tg = t < T.tagline ? 0 : ramp(t, T.tagline, T.tagline + 0.6);

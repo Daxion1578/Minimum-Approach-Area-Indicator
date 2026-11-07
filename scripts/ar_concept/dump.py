@@ -69,7 +69,7 @@ def build(site_id: str = "SITE-01") -> dict:
         "scenario": {"target": TARGET, "target_name": nodes.get(TARGET, {}).get("name") or TARGET,
                      "ops": [o.get("number") or o["id"] for o in st.get("ops", [])],
                      "extra_outage": wo.get("note"), "crane_name": chosen.get("name"), "verdict_ja": cl.get("verdict_ja"),
-                     "min_distance_m": cl.get("min_distance_m"), "required_m": cl.get("required_m")},
+                     "min_distance_m": (cl.get("worst") or {}).get("distance_m"), "required_m": (cl.get("worst") or {}).get("required_m")},
         "site": site, "dims": dims(), "energization": res.to_dict(), "envelope": env, "clearance": cl, "crane": crane2,
     }
 

@@ -20,27 +20,40 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# 台本の行。dur は台本の長さ（秒）。s1 は先頭 5 秒が題の札なので、録画するのは 15 秒。
+# 台本の行（語り v4）。dur は台本の長さ（秒）。s6（構想映像）と s7（締めの札）は compose.py がつなぐ。
 LINES = [
-    ("s1", "0:00-0:20", 15, "機器を取り替える日も、変電所は全部は止められません。すぐ隣に電気が流れたままの線が残り、そこへクレーンが入ります。どこまで近づけていいかは図面に書いてなくて、私も平面図に円を描いて、こんな感じかな、で決めていました。それを見えるようにする道具が、間合い、MAAI です。"),
-    ("s2", "0:20-0:50", 30, "入口はいつもの図面です。単線結線図から機器のつながりを、装置図の平面と断面から機器の位置と高さを読んで、構内の3Dを組み立てます。Claudeは記号の種類を確かめて、迷ったところを人への質問にします。読めなかったところは要確認として残り、人が確認して「この3Dで続ける」を押してはじめて、計算に使われます。"),
-    ("s3", "0:50-1:15", 25, "今日取り替えるのは66kVの遮断器です。対象を選ぶと、電気が流れ込んでくる側すべてで最初の断路器まで切る、という停止範囲が出ます。結線図の緑が停電、赤が充電です。開閉器を押すと、その場で塗り替わります。接地を取ることは、計画の条件として必ず書き出します。"),
-    ("s4", "1:15-1:50", 35, "次にクレーンです。取り替える機器の真上と資材置場の真上、この2点と重さだけなら10t級で足ります。でも充電部から4m離すには35t級が要る。一つ下は、1号変圧器の線に近づきすぎて使えません。では、その変圧器も止めたらどうか。計算すると20t級で済み、監視員を置く条件付きで可になります。止めるかどうかは、人が決めます。"),
-    ("s5", "1:50-2:13", 23, "最後に承認です。承認するのは人で、押した瞬間にもう一度判定し直します。不可の計画と、クレーンのない計画は承認できません。書き出されるのは、停止範囲を塗り分けた単線結線図と、クレーンの据付位置を描き込んだ一般平面図。工事会社にそのまま渡せる形です。"),
-    ("s6", "2:13-2:21", 8, "安全の判断は計算で行い、説明はClaudeが書き、採否は人が決める。この分担で作っています。"),
+    ("s1", "0:00-0:15", 15, "機器を取り替える日も、変電所は全部は止められません。止める範囲は減らしたい。でもその案で大丈夫か。今は図面を見ながら、頭の中で想像しています。"),
+    ("s2", "0:15-0:45", 30, "MAAI は、単線結線図と、平面図・断面図を読んで、構内の 3D を組み立てます。機器の位置と高さは図面から、どこがつながっているかは結線図から。読めなかったところは、要確認として人に返します。"),
+    ("s3", "0:45-1:05", 20, "取り替える機器を選ぶと、電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が出ます。緑が停電、赤が充電。見えなかった充電部が、目に見えるようになります。"),
+    ("s4", "1:05-1:40", 35, "次はクレーンです。新任の私には、何トン吊れるか、角度がいくつ要るかから、どのクレーンにするかが分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。隣の変圧器も止めれば、監視員を置く条件付きで 20t 級。止めるかどうかは人が決めます。"),
+    ("s5", "1:40-2:00", 20, "判定は計算で行い、根拠の表も残します。Claude は図面の意味づけと説明を担い、送る前に名前や定格値を符号に置き換えます。採否は人が決め、停止範囲の結線図と、クレーンの位置を描いた平面図を書き出します。"),
 ]
 
-CARD_HTML = """<div id="__ov" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;
-align-items:center;justify-content:center;gap:56px;color:#fff;font-family:'Noto Sans CJK JP','Noto Sans JP',sans-serif;font-size:60px;font-weight:700">
-<div>安全の判断は計算で、説明は Claude で</div><div>Claude の出力は計算コードで確かめ直す</div><div>採否は人が決める</div></div>"""
+def mask_demo_html() -> str:
+    """Claude に送る前の置き換えを、実物の関数（agent/mask.py）に合成データの文を通して見せる。"""
+    import html as _h
+    sys.path.insert(0, str(ROOT))
+    from agent.mask import Mask
+    topo = json.loads((ROOT / "data/sites/SITE-01/truth/topology.json").read_text(encoding="utf-8"))
+    line = next(n["name"] for n in topo["nodes"] if n["kind"] == "source")
+    amp = f"{2 * 1000}A"   # 定格値の例（公開前チェックの定格値の検出に当たらないよう、コードで組む）
+    before = f"{line} の 20E1-110 遮断器（定格 {amp}）を、合成変電所 の 220kV 母線から切り離す。クレーンとの距離 4.02 m、吊る重さ 3.5 t"
+    after = Mask().text(before)
+    box = "background:#11161c;border:1px solid #3a4452;border-radius:10px;padding:28px 36px;font-size:40px;line-height:1.6;width:1600px"
+    return (f'<div id="__ov" style="position:fixed;inset:0;z-index:99999;background:#0b0e12;display:flex;flex-direction:column;'
+            f'align-items:center;justify-content:center;gap:30px;color:#e6e8eb;font-family:\'Noto Sans CJK JP\',\'Noto Sans JP\',sans-serif">'
+            f'<div style="font-size:34px;color:#8b949e">Claude に送る前（agent/mask.py が置き換える。電圧・距離・重さは計算に要るので残す）</div>'
+            f'<div style="{box}"><span style="color:#8b949e;font-size:28px">手元の文</span><br>{_h.escape(before)}</div>'
+            f'<div style="font-size:48px">↓</div>'
+            f'<div style="{box};border-color:#4ea1ff"><span style="color:#4ea1ff;font-size:28px">送る文（logs/outbound/ に記録）</span><br>{_h.escape(after)}</div></div>')
 
 
-def pdf_png(pdf: Path) -> bytes:
+def pdf_png(pdf: Path, k: float = 1.0) -> bytes:
     import pypdfium2 as pdfium
 
     page = pdfium.PdfDocument(str(pdf))[0]
     w, h = page.get_size()
-    img = page.render(scale=min(1880 / w, 1040 / h)).to_pil()
+    img = page.render(scale=min(1880 / w, 1040 / h) * k).to_pil()
     buf = io.BytesIO()
     img.convert("RGB").save(buf, "PNG")
     return buf.getvalue()
@@ -88,21 +101,25 @@ def main() -> int:
         def smooth(sel: str, block: str = "start"):
             page.evaluate("([s,b])=>{const e=document.querySelector(s); if(e) e.scrollIntoView({behavior:'instant',block:b});}", [sel, block])
 
+        def pan(pdf: Path, hold: int):
+            """図面 1 枚を画面いっぱいに出し、ゆっくり寄せる（CSS の変形。録画が低いコマ数でも滑らかに見える）。"""
+            b64 = base64.b64encode(pdf_png(pdf, 2.0)).decode()
+            page.evaluate("""([b,ms])=>{const o=document.getElementById('__ov'); if(o) o.remove(); const d=document.createElement('div'); d.id='__ov';
+              d.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;overflow:hidden';
+              d.innerHTML='<img id="__pan" style="position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:contain;transform-origin:50% 45%;transform:scale(1);transition:transform '+ms+'ms linear" src="data:image/png;base64,'+b+'">';
+              document.body.appendChild(d); requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('__pan').style.transform='scale(1.35)';}));}""", [b64, hold])
+            page.wait_for_timeout(hold)
+
         def shot(name: str):
             if a.debug:
                 page.screenshot(path=str(out / "dbg" / f"{name}.png"))
 
         def run(sid: str):
             if sid == "s1":
-                click("#vAll")
-                page.mouse.move(1300, 600)
-                page.wait_for_timeout(1500)
-                page.mouse.down()
-                for i in range(6):  # ゆっくり回して立体に見せる
-                    page.mouse.move(1300 - i * 40, 600 - i * 5)
-                page.mouse.up()
-                page.wait_for_timeout(2500)
-                click("#vAll")
+                # 図面（一般平面図 → 機械器具装置図〈平面・断面〉→ 単線結線図）をゆっくり寄せて見せる
+                for name, hold in (("SITE-01_plan.pdf", 4500), ("SITE-01_layout.pdf", 5000), ("SITE-01_sld.pdf", 4500)):
+                    pan(ROOT / "data/sites/SITE-01/drawings" / name, hold)
+                page.evaluate("()=>{const o=document.getElementById('__ov'); if(o) o.remove();}")
             elif sid == "s2":
                 tab("s0")
                 page.set_input_files("#ingestFile", str(ROOT / "data/sites/SITE-01/drawings/SITE-01_sld.pdf"))
@@ -169,13 +186,21 @@ def main() -> int:
                 page.wait_for_timeout(2500)
                 smooth("#verdictBox", "start")
             elif sid == "s5":
+                # 根拠: 3D の上の帯（離隔表の ID と「要確認」）と、導体ごとの距離・必要・余裕の表
+                smooth("#verdictBox", "start")
+                page.wait_for_timeout(3000)
+                shot("s5_evidence")
+                # Claude に送る前の置き換え（3 秒）
+                page.evaluate("(h)=>{const d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d.firstElementChild);}", mask_demo_html())
+                shot("s5_mask")
+                page.wait_for_timeout(3200)
+                page.evaluate("()=>{const o=document.getElementById('__ov'); if(o) o.remove();}")
                 tab("s3")
-                page.wait_for_timeout(2000)
-                smooth("#planConds", "start")
-                page.wait_for_timeout(5000)
+                page.wait_for_timeout(1200)
                 click("#btnApprove")
                 page.wait_for_selector("#approveBox .bay", timeout=60000)
-                page.wait_for_timeout(2500)
+                page.wait_for_timeout(1500)
+
                 def overlay(name: str, hold: int):
                     pdfs = sorted(glob.glob(str(ROOT / f"data/sites/SITE-01/approved/plan-*/{name}")), key=lambda f: Path(f).stat().st_mtime)
                     if not pdfs:
@@ -187,11 +212,8 @@ def main() -> int:
                       d.innerHTML='<img style="max-width:1900px;max-height:1060px;background:#fff" src="data:image/png;base64,'+b+'">'; document.body.appendChild(d);}""", b64)
                     page.wait_for_timeout(hold)
 
-                overlay("step-1-sld.pdf", 6000)
-                overlay("plan-crane.pdf", 6500)  # 全体に合わせて早送りされても約 5 秒残る長さ
-            elif sid == "s6":
-                page.evaluate("()=>{const o=document.getElementById('__ov'); if(o) o.remove();}")
-                page.evaluate("(h)=>{const d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d.firstElementChild);}", CARD_HTML)
+                overlay("step-1-sld.pdf", 4000)
+                overlay("plan-crane.pdf", 4500)
 
         for sid, scr, dur, text in LINES:
             s = el()
