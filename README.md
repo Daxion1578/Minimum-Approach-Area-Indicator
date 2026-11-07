@@ -23,6 +23,8 @@
 
 近づいてはいけない距離は、図面のどこにも描かれていません。系統のつながりと開閉器の状態から計算して初めて分かり、作業日ごとの停止範囲で変わります。今は担当者が単線結線図を頭の中で塗り分け、平面図に円を描いてクレーンの大きさと置き場所を確かめ、現地では見張る人の目に頼っています。クレーンは小さいほど安いのに、近くの充電部を避けるために遠くから吊ると大きいクレーンが要る。止める範囲を広げれば小さく済むが、停止の調整が要る。この比べ方は人の経験に頼っていて、人が減り経験者が入れ替わると再現できなくなります。
 
+この作業は増えます。電力広域的運営推進機関の資料では、500kV〜66kV の変圧器が約 15,000 台あり、至近の約 220 台/年のペースだと全部を更新するのに 70 年度程度かかるとされ（[広域機関 第103回広域系統整備委員会 資料1](https://www.occto.or.jp/assets/iinkai/kouikikeitouseibi/103/seibi_01_01.pdf)、2026年9月、p.18）、大量に置かれた設備の更新が続きます。一方で、送配電網協議会の資料は、ある一社の変電作業員の 50 代以上が約 5 割という例を示し、変電機器の知識と技術を持つ作業員の確保が課題だとしています（[送配電網協議会「送配電事業における人材・サプライチェーンの現状と課題」](https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/pdf/002_07_00.pdf)、2025年9月、p.9）。経済産業省は、令和 4〜7 年度に報告された感電死傷の重大事故を 35 件（うち作業員 25 件）としています（[電力安全課の注意喚起](https://www.safety-chugoku.meti.go.jp/electric/aboutAccident/koujigyoushamuke_chuikanki.pdf)、2026年6月）。同省の事例集の事例 1 は、取替工事で開閉器の蓋を取り違えて端子部が充電されたまま残り、作業者が触れて亡くなった事故です（[感電死傷事故の事例集](https://www.meti.go.jp/policy/safety_security/industrial_safety/oshirase/2025/06/kanden_jireisyu.pdf)、2025年6月）。どこが充電しているかは見ても分からず、停止の状態と回路のつながりで決まります。
+
 ## 誰が使うか
 
 使うのは、取り替える機器を決め、停止計画を自分で組み、重機の配置を工事会社と詰める工事担当者です。系統側との最終調整と承認は人が持ちます。この道具は、その人が頭の中でやっている「結線図を塗り分けて、間合いを測り、クレーンの大きさを決める」を、同じ順番で画面に出します。
@@ -52,6 +54,17 @@
 - **数十年使えるデータに。** 入力は図面、出力は版番号つきの JSON と PDF。判断の数値（離隔表、荷重表、余裕、監視員の条件）はコードでなくファイルに置きます（`data/tables/`, `data/rules/`）。承認の記録には、使った結線・配置・離隔表のハッシュを残します。
 
 判断の経緯は [docs/decisions.md](docs/decisions.md)、Claude に任せること・任せないことの一覧は [docs/claude-boundary.md](docs/claude-boundary.md)。
+
+## どう作ったか（Claude Code）
+
+- `CLAUDE.md` に変わらない約束（公開の制約、安全設計の原則、報告の型）を置き、毎回のセッションで必ず読ませる。
+- Skill は 7 つ（`/daily` `/wrap` `/slice` `/verify` `/report` `/critique` `/publish-check`）。手順を型にして言い直しの抜けを防ぎ、本人の操作は朝 `/daily`・夜 `/wrap` の 2 つに絞る。
+- サブエージェントは 2 つ。`safety-reviewer`（読み取り専用の公開前点検係）は、書いた本人と同じ文脈では見落とすので別の文脈で読ませる。`task-keeper`（`TASKS.md` だけを持つ係）は、予定が作業の実況に流されないように分ける。軽い係ほど安いモデル（`safety-reviewer` は Sonnet、`task-keeper` は Haiku）。
+- フックは 2 本。commit・push の前の公開安全チェックと、`engine/` を編集した後の pytest の自動実行で、人が忘れる作業を機械に任せる。
+- GitHub Actions が push のたびに通しの確認を回す。
+- 本人が見るのは `STATUS.md` だけで、判断は 1 枚 1 判断のカードで求める。外の目での点検（`/critique`）を含め、判断の経緯は `docs/decisions.md` に残す。
+
+一覧と理由は [docs/claude-boundary.md](docs/claude-boundary.md)。
 
 ## Claude に任せること・任せないこと
 
@@ -108,3 +121,5 @@ uvicorn server.app:app --reload     # http://localhost:8000
 ## ライセンス
 
 Apache License 2.0
+
+同梱の three.js r160（`web/vendor/three/`）は MIT ライセンス。ブラウザ版は Pyodide（Mozilla Public License 2.0）を CDN から読み込む。
