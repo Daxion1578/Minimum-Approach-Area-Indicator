@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FPS = 30
 TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 5, 27, 12
 FONT = "Noto Sans CJK JP"
-MAXF = 3.5  # 録画を台本の秒数に合わせる早送りの上限（ソフトウェア描画では操作ごとに約 1 秒かかり、台本より長く録れる）
+MAXF = 1.5  # 録画を台本の秒数に合わせる早送りの上限。超える分は先頭からの 1.5 倍で流し、余りは最後のコマの静止で埋める
 
 
 def run(cmd: list[str]):
