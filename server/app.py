@@ -178,6 +178,7 @@ class SelectRequest(BaseModel):
     pick_id: str
     weight_t: float | None = None
     set_xy: list[float] | None = None
+    unstoppable: list[str] | None = None
 
 
 @app.post("/api/sites/{site_id}/select")
@@ -185,7 +186,23 @@ def post_select(site_id: str, req: SelectRequest):
     """重機の選定（§7.9）: 吊る機器と資材置場から、一番小さいクラスと据付位置。"""
     site = load_site(site_id)
     return select_crane(_topo(site), site["layout"], req.state, req.pick_id, req.weight_t,
-                        tuple(req.set_xy) if req.set_xy else None)
+                        tuple(req.set_xy) if req.set_xy else None, unstoppable=req.unstoppable)
+
+
+class IntakeRequest(BaseModel):
+    text: str
+
+
+@app.post("/api/sites/{site_id}/intake")
+def post_intake(site_id: str, req: IntakeRequest):
+    """工事の依頼文の読み取り（§8.6）: Claude（呼べなければ規則）が取り出し、engine が実在・矛盾を確かめる。"""
+    from agent.intake import read_request
+    from engine.intake import check
+    site = load_site(site_id)
+    if len(req.text) > 4000:
+        raise HTTPException(400, "依頼文が長すぎる（4000 字まで）")
+    ext = read_request(req.text, site["topology"])
+    return {"extracted": ext, "checked": check(ext, site["topology"], site["layout"])}
 
 
 @app.get("/api/cranes")
@@ -290,7 +307,12 @@ async def post_ingest(file: UploadFile):
     try:
         cand = extract(tmp)
         topo = to_topology(cand)
-        notes = annotate(cand)
+        if agent_client.available():
+            # Claude の返事を待つ間も、ほかの要求に応えられるように別のスレッドで待つ（ブラウザ版は Claude を呼ばないので、そのまま）
+            from starlette.concurrency import run_in_threadpool
+            notes = await run_in_threadpool(annotate, cand)
+        else:
+            notes = annotate(cand)
         ev = None
         truth = SITES / "SITE-01" / "truth" / "topology.json"
         if truth.exists():

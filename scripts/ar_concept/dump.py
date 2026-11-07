@@ -2,8 +2,8 @@
 
     python scripts/ar_concept/dump.py [--out scripts/ar_concept/concept.json]
 
-台本と同じ場面（scripts/check_demo.py と同じ）: 66kV 遮断器（66-D1-CB1）の作業日の停止範囲 → 一番小さいクレーン →
-1 号変圧器を追加で止めた配置。その計画の課電・包絡（離隔の範囲）・クレーンの配置を、合成変電所の形（layout）と
+台本と同じ場面: 66kV 遮断器（66-D1-CB1）の作業日の停止範囲 → 依頼文の条件（1 号変圧器は止められない）で
+一番小さいクレーン。その計画の課電・包絡（離隔の範囲）・クレーンの配置を、合成変電所の形（layout）と
 機器の寸法（synth/equipment.py）と一緒に 1 つの JSON にする。動画はこの JSON を 3D に描くだけで、課電も距離も
 ここで engine が決めた値をそのまま使う。
 """
@@ -26,6 +26,7 @@ from engine.steps import generate  # noqa: E402
 from engine.topology import Topology  # noqa: E402
 
 TARGET = "66-D1-CB1"
+UNSTOPPABLE = ["TR-1"]   # 依頼文で止められないとされた設備（本編と同じ）
 
 
 def _read(p: Path) -> dict:
@@ -52,7 +53,9 @@ def build(site_id: str = "SITE-01") -> dict:
     if not st.get("ok"):
         raise SystemExit("停止範囲を作れない: " + "; ".join(st.get("problems", [])))
     day = st["state"]
-    sel = select_crane(topo, site["layout"], day, TARGET, None, None)
+    # 本編（scripts/demo_video/record.py の依頼文）と同じ条件: 1 号変圧器は止められない、資材置場は遮断器の西 8 m、重さ 3.5 t
+    at = next(i["at"] for i in site["layout"]["items"] if i["id"] == TARGET)
+    sel = select_crane(topo, site["layout"], day, TARGET, 3.5, (round(at[0] - 8, 1), round(at[1], 1)), unstoppable=UNSTOPPABLE)
     if not sel.get("ok"):
         raise SystemExit("重機を選べない: " + "; ".join(sel.get("problems", [])))
     wo = sel.get("with_outage") or {}

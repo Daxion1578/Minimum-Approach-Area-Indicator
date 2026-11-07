@@ -96,6 +96,11 @@
 
   <section class="step" id="s1">
     <p class="todo">この画面でやること: 取り替える機器を選び、止める開閉器を出す。結線図で停電（緑）と充電（赤）を確かめる。</p>
+    <h3>工事の依頼文を読む</h3>
+    <div class="note">依頼文から、取り替える機器・止められない設備・資材置場・重さを Claude が読み取る。番号の実在と矛盾は計算で確かめ、人が確かめて「この内容で入れる」を押してから使う。</div>
+    <textarea id="reqText" rows="5" style="width:100%;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px/1.5 inherit">次の作業日に、66kV 1号ダイヤの遮断器 6T-110 を取り替えます。新しい遮断器は約 3.5 t です。資材は取り替える遮断器の西側、8 m ほど離れた空き地に仮置きします。1号バンクは系統の都合で今回は止められません。東線1L・東線2L は通常どおり運用します。</textarea>
+    <div class="row"><button class="act" id="btnIntake">Claude で読み取る</button><span class="note" id="intakeSrc"></span></div>
+    <div id="intakeBox"></div>
     <h3>作業日の停止範囲</h3>
     <details class="more"><summary>停止範囲の決め方</summary><div class="note">その日に取り替える機器を選ぶ。作業する機器に電気が流れ込む端すべてで、最初に出会う断路器まで（途中の遮断器も）切る。送電線は相手端を切る条件、止めない母線は端子の切り離し。ほかは平常どおり。中央の結線図で、停電（緑の破線）と充電（赤）を追う。</div></details>
     <div class="row"><label class="k">取り替える機器</label><select id="targetSel"></select></div>
@@ -434,6 +439,34 @@ async function refreshSld(){
   if (first || refreshSld.lastTarget!==tgt.join()) { refreshSld.lastTarget=tgt.join(); setTimeout(scrollToTarget, 50); }
 }
 
+// ---- 工事の依頼文（Claude が読み、engine が確かめ、人が入れる）
+let unstoppable=[];
+$('btnIntake').onclick=async()=>{
+  $('intakeBox').innerHTML='<div class="note">依頼文を読んでいる…（Claude に送る前に、名前と定格値を符号に置き換える）</div>';
+  const r=await fetch(`/api/sites/${site.site_id}/intake`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:$('reqText').value})});
+  const j=await r.json();
+  if (!r.ok){ $('intakeBox').innerHTML=`<div class="warn">読み取りに失敗 ${r.status}: ${j.detail||''}</div>`; return; }
+  const e=j.extracted, c=j.checked, L=id=>c.labels[id]||id, q=k=>e.quotes?.[k]?`<div class="note" style="margin-left:8px">「${e.quotes[k]}」</div>`:'';
+  $('intakeSrc').textContent=e.source==='claude'?'読み取り: Claude':'読み取り: 規則（Claude 未接続。番号だけ）';
+  let html=`<div class="bay" style="border-color:${c.ok?'var(--accent)':'var(--live)'}">`+
+    `<div>取り替える機器: <b>${c.targets.map(L).join('、')||'—'}</b></div>${q('targets')}`+
+    `<div>止められない設備: <b>${c.unstoppable.map(L).join('、')||'—'}</b></div>${q('unstoppable')}`+
+    `<div>資材置場: <b>${c.laydown_xy?`(${c.laydown_xy.join(', ')})`:'—'}</b>${e.laydown?`<span class="note">　${L(e.laydown.near)} の ${({east:'東',west:'西',north:'北',south:'南'})[e.laydown.dir]||e.laydown.dir} ${e.laydown.dist_m} m</span>`:''}</div>${q('laydown')}`+
+    `<div>重さ: <b>${c.weight_t??'—'}${c.weight_t!=null?' t':''}</b></div>${q('weight_t')}`+
+    (c.problems.length?`<h4>計算で確かめた問題</h4>`+c.problems.map(x=>`<div class="warn">${x}</div>`).join(''):'<div class="note" style="color:var(--deadg)">番号はすべて構内に実在し、矛盾なし（計算で確認）</div>')+
+    ((e.questions||[]).length?`<h4>人に確かめてほしいこと</h4>`+e.questions.map(x=>`<div class="note">・${x}</div>`).join(''):'')+
+    `<div class="row"><button class="act" id="btnIntakeUse" ${c.ok?'':'disabled'}>この内容で入れる</button></div></div>`;
+  $('intakeBox').innerHTML=html;
+  $('btnIntakeUse').onclick=async()=>{
+    unstoppable=[...c.unstoppable];
+    const t=c.targets[0]; $('targetSel').value=t;
+    await $('btnSteps').onclick();          // 停止範囲を作る（ここで吊る機器も対象に合わせる）
+    if (c.weight_t!=null) $('pickT').value=c.weight_t;   // そのあと依頼文の値を入れる（既定値で上書きしない）
+    if (c.laydown_xy){ $('setX').value=c.laydown_xy[0]; $('setY').value=c.laydown_xy[1]; }
+    $('intakeBox').insertAdjacentHTML('beforeend','<div class="note" style="color:var(--deadg)">入れた: 取り替える機器・止められない設備・資材置場・重さ。次は停止範囲を確かめ、重機へ</div>');
+  };
+};
+
 // ---- 重機の選定
 function pickChanged(){
   const id=$('pickSel').value, n=site.topology.nodes.find(x=>x.id===id); if (!n || !cranes) return;
@@ -452,7 +485,7 @@ function drawMarks(){
 const clsName=id=>cranes?.classes.find(c=>c.id===id)?.name||id;
 $('btnSelect').onclick=async()=>{
   $('selectBox').innerHTML='<div class="note">クラスを小さい順に、据付位置を網の目で試している…</div>';
-  const body={state, pick_id:$('pickSel').value, weight_t:$('pickT').value===''?null:+$('pickT').value, set_xy:($('setX').value!==''&&$('setY').value!=='')?[+$('setX').value,+$('setY').value]:null};
+  const body={state, unstoppable, pick_id:$('pickSel').value, weight_t:$('pickT').value===''?null:+$('pickT').value, set_xy:($('setX').value!==''&&$('setY').value!=='')?[+$('setX').value,+$('setY').value]:null};
   const r=await fetch(`/api/sites/${site.site_id}/select`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json(); lastSelect=j;
   if (!r.ok){ $('selectBox').innerHTML=`<div class="warn">選定に失敗 ${r.status}: ${j.detail||''}</div>`; return; }
@@ -470,8 +503,8 @@ $('btnSelect').onclick=async()=>{
       `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div></div>`; }
   if (j.tried) html+=`<details class="bay"><summary>試したクラス（小さい順）</summary>`+j.tried.map(e=>`<div class="note"><span class="cls" style="background:${e.ok?'var(--deadg)':'#3a4452'};color:${e.ok?'#06121f':'var(--fg)'}">${e.class}</span>${e.ok?'置ける':e.why_not}（必要 ${e.need_t} t）</div>`).join('')+`</details>`;
   if (j.with_outage){ const w=j.with_outage;
-    html+=`<div class="bay" style="border-color:var(--accent)"><div><b>追加で止めた場合</b>: ${w.note}</div>`+
-      `<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`+
+    html+=`<div class="bay" style="border-color:var(--accent)"><div><b>${w.blocked?'止められない設備（依頼文）':'追加で止めた場合'}</b>: ${w.note}</div>`+
+      (w.ops.length?`<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`:'')+
       (w.chosen?`<div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
   if (j.pick) html+=`<div class="note">荷重表・重さ: ${j.table_status||'要確認'}（例示値）。吊る点 (${j.pick.slice(0,2).map(v=>v.toFixed(0)).join(', ')})、資材置場 (${j.set.map(v=>(+v).toFixed(0)).join(', ')})</div>`;
   $('selectBox').innerHTML=html;

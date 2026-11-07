@@ -1,6 +1,6 @@
 # 3 分デモ動画の下書き（人手なし）
 
-1. `MAAI_OFFLINE=1 uvicorn server.app:app --port 8000`（別の端末）→ `python scripts/demo_video/record.py --out OUT`（約 4 分。OUT/segments.json と録画）
+1. `uvicorn server.app:app --port 8000`（別の端末。Claude をつなぐ: `.env` にキー。依頼文と図面の意味づけを Claude が読む場面を撮るため）→ `python scripts/demo_video/record.py --out OUT`（約 4 分。OUT/segments.json と録画）
 2. `python scripts/ar_concept/dump.py && python scripts/ar_concept/render.py --out OUT/ar-concept.mp4`（構想映像。compose.py が 30 秒すべて使う）
 3. `python scripts/demo_video/compose.py --dir OUT --concept OUT/ar-concept.mp4`（約 5 分。札は自動で作る）
 - 出力: `maai-demo-draft.mp4`（字幕入り）、`maai-demo-draft-nosub.mp4`、`narration.srt`、`narration.json`（語りの区切りと開始・終了秒）

@@ -20,6 +20,8 @@ nets（導体のまとまり。bus/line/load/conductor）、switches（開閉器
 2. 名前の無い nets に、接続から読める説明（例「東線1L の線路側区間」「2BK 一次」）を付ける。
 3. 人に確かめてほしい点を日本語で短く列挙する（番号・場所を具体的に）。
 出力は JSON: {"labels":[{"number":..,"kind":..,"note":..}], "names":[{"net":..,"name":..}], "questions":[..], "summary": "一言"}
+labels には、規則の目安と違う種別だと思う開閉器だけを入れる（規則どおりのものは書かない）。names は名前の無い主要な nets だけ、20 件まで。
+返事は短く。全部を書き写さないこと。
 接続そのものは変えないこと。数値や安全判定には触れないこと。"""
 
 
@@ -29,7 +31,7 @@ def annotate(cand: dict) -> dict:
              "summary": f"開閉器 {len(cand['switches'])}、ネット {len(cand['nets'])}、変圧器 {len(cand['transformers'])}。Claude 未使用（キー無し／オフライン）のため規則で種別を付けた"}
     slim = {"nets": cand["nets"], "switches": [{"number": s["number"], "kind_guess": s["kind_guess"], "nets": s.get("nets", [])} for s in cand["switches"]],
             "transformers": cand["transformers"], "lines": [l["name"] for l in cand["lines"]], "questions": cand["questions"]}
-    out = client.ask_json("structure", SYSTEM, slim, Mask())
+    out = client.ask_json("structure", SYSTEM, slim, Mask(), max_tokens=6000)
     if not out:
         return rules
     out["source"] = "claude"

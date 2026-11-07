@@ -17,8 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FPS = 30
-TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 0, 30, 30   # 語り v4: 題の札なし（図面から始める）、構想映像 30 秒、締めの札 30 秒
-CLOSING_TALK = 15   # 締めの札の語りは前半だけ。後半は無音で札を見せる
+TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 0, 25, 15   # 語り v5: 題の札なし（図面から始める）、構想映像 25 秒、締めの札 15 秒
+CLOSING_TALK = 12   # 締めの札の語りは 12 秒。最後の 3 秒は札だけ
 FONT = "Noto Sans CJK JP"
 MAXF = 1.5  # 録画を台本の秒数に合わせる早送りの上限。超える分は先頭からの 1.5 倍で流し、余りは最後のコマの静止で埋める
 
@@ -99,18 +99,28 @@ def main() -> int:
         p = tmp / f"p{i + 1}_{s['id']}.mp4"
         # 動かない部分（読み込み待ちなど）を検出して、長い静止は HOLD 秒だけ残して落とす。操作の見た目の速さは変えない
         frz = freeze_spans(video, ss, src_len)
-        cap = HOLD
-        while True:
-            kept = src_len - sum(max(0.0, e - st - cap) for st, e in frz)
-            if kept / MAXF <= target or cap <= 0.3:
-                break
-            cap = max(0.3, cap - 0.05)  # 収まらないときは、長い静止から優先してさらに落とす
+        # 台本の秒数を超えた分だけ、長い静止から順に縮める（読ませたい静止画面は、時間に余裕があれば縮めない）
+        excess = src_len - target
+        cap = max([e - st for st, e in frz], default=0.0) + 1.0
+        if excess > 0 and frz:
+            lo, hi = HOLD, cap
+            if sum(max(0.0, e - st - lo) for st, e in frz) <= excess:
+                cap = lo          # 縮めきっても足りない分は早送り（MAXF まで）
+            else:
+                for _ in range(40):
+                    mid = (lo + hi) / 2
+                    if sum(max(0.0, e - st - mid) for st, e in frz) > excess:
+                        lo = mid
+                    else:
+                        hi = mid
+                cap = hi
+        kept = src_len - sum(max(0.0, e - st - cap) for st, e in frz)
         drops = [(st + cap, e) for st, e in frz if e - st > cap]
         factor = max(1.0, kept / target)  # >1 なら早送り（上限 MAXF。それでも超えるときだけ上限を越える）
         sel = "1" if not drops else "*".join(f"not(between(t,{a:.3f},{b:.3f}))" for a, b in drops)
         fs = tmp / f"f{i + 1}.txt"
         fs.write_text(f"fps={FPS},select='{sel}',setpts=N/({FPS}*TB),setpts=PTS/{factor:.5f},{vf0},tpad=stop_mode=clone:stop_duration={target},trim=duration={target},setpts=PTS-STARTPTS")
-        run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ss:.3f}", "-t", f"{src_len:.3f}", "-i", video, "-filter_script:v", str(fs), *enc, str(p)])
+        run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ss:.3f}", "-t", f"{src_len:.3f}", "-i", video, "-vf", fs.read_text(), *enc, str(p)])
         stat = {"src": round(src_len, 2), "kept": round(kept, 2), "dropped": round(src_len - kept, 2), "factor": round(factor, 3), "after": round(kept / factor, 2), "pad": round(max(0.0, target - kept / factor), 2)}
         print(s["id"], stat)
         parts.append(p)
@@ -125,7 +135,7 @@ def main() -> int:
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", a.concept, "-t", str(CONCEPT_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     concept_start = rec_total
-    narr.append({"id": "s6", "script": "2:00-2:30", "start": concept_start, "end": concept_start + CONCEPT_SEC,
+    narr.append({"id": "s6", "script": "2:20-2:45", "start": concept_start, "end": concept_start + CONCEPT_SEC,
                  "text": "この先は現地です。承認した計画をスマホでかざすと、近づけない範囲が目の前の設備に重なります。位置が決まらないときは出しません。取り違えが一番危ないからです。", "speed": 1.0})
 
     # 4) 締めの札（後半は無音で札を見せる）
@@ -133,7 +143,7 @@ def main() -> int:
     run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(FPS), "-i", str(d / "closing.png"), "-t", str(CLOSING_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     c0 = concept_start + CONCEPT_SEC
-    narr.append({"id": "s7", "script": "2:30-3:00", "start": c0, "end": c0 + CLOSING_TALK,
+    narr.append({"id": "s7", "script": "2:45-3:00", "start": c0, "end": c0 + CLOSING_TALK,
                  "text": "現場は、命を預かっています。だから、最後は人が決める。MAAI は、経験の浅い担当者の判断を助ける道具です。", "speed": 1.0})
     narr[0]["start"] = 0.0   # 最初の行は動画の頭から語る
 
@@ -169,7 +179,7 @@ def main() -> int:
 
     if not a.no_sub:
         style = f"FontName={FONT},FontSize=12,PrimaryColour=&H00FFFFFF,BorderStyle=3,OutlineColour=&H00000000,BackColour=&H00000000,Outline=10,Shadow=0,Alignment=2,MarginV=36"
-        srt = str(d / "narration.srt").replace(":", r"\:")
+        srt = (d / "narration.srt").resolve().as_posix().replace(":", r"\:")   # Windows の \ はフィルタの中で特殊文字になるので / に
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(nosub), "-vf", f"subtitles='{srt}':force_style='{style}'",
              "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an", "-crf", "18", "-preset", "medium", str(d / "maai-demo-draft.mp4")])
     print("できた:", d / "maai-demo-draft.mp4")

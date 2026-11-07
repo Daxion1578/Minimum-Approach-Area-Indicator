@@ -30,6 +30,7 @@ ROUTES = [
     ("POST", _SITE + "/approve", lambda m, b: A.post_approve(m["site"], A.ApproveRequest(**b))),
     ("POST", _SITE + "/explain", lambda m, b: A.post_explain(m["site"], A.ExplainRequest(**b))),
     ("POST", _SITE + "/select", lambda m, b: A.post_select(m["site"], A.SelectRequest(**b))),
+    ("POST", _SITE + "/intake", lambda m, b: A.post_intake(m["site"], A.IntakeRequest(**b))),
     ("POST", _SITE + "/sld", lambda m, b: A.post_sld(m["site"], A.SldRequest(**b))),
     ("GET", r"/api/cranes", lambda m, b: A.get_cranes()),
     ("GET", r"/api/agent", lambda m, b: A.get_agent()),

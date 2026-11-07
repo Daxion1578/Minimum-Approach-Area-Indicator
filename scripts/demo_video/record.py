@@ -24,10 +24,16 @@ ROOT = Path(__file__).resolve().parents[2]
 LINES = [
     ("s1", "0:00-0:15", 15, "機器を取り替える日も、変電所は全部は止められません。止める範囲は減らしたい。でもその案で大丈夫か。今は図面を見ながら、頭の中で想像しています。"),
     ("s2", "0:15-0:45", 30, "MAAI は、単線結線図と、平面図・断面図を読んで、構内の 3D を組み立てます。機器の位置と高さは図面から、どこがつながっているかは結線図から。読めなかったところは、要確認として人に返します。"),
-    ("s3", "0:45-1:05", 20, "取り替える機器を選ぶと、電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が出ます。緑が停電、赤が充電。見えなかった充電部が、目に見えるようになります。"),
-    ("s4", "1:05-1:40", 35, "次はクレーンです。新任の私には、何トン吊れるか、角度がいくつ要るかから、どのクレーンにするかが分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。隣の変圧器も止めれば、監視員を置く条件付きで 20t 級。止めるかどうかは人が決めます。"),
-    ("s5", "1:40-2:00", 20, "判定は計算で行い、根拠の表も残します。Claude は図面の意味づけと説明を担い、送る前に名前や定格値を符号に置き換えます。採否は人が決め、停止範囲の結線図と、クレーンの位置を描いた平面図を書き出します。"),
+    ("s2b", "0:45-1:05", 20, "工事の依頼は文章で来ます。Claude がそこから、取り替える機器、止められない設備、置き場、重さを読み取ります。番号が本当にあるかは計算で確かめ、入れるかどうかは人が決めます。"),
+    ("s3", "1:05-1:25", 20, "取り替える機器に電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が出ます。緑が停電、赤が充電。見えなかった充電部が、目に見えるようになります。"),
+    ("s4", "1:25-2:00", 35, "次はクレーンです。新任の私には、どのクレーンにするかがすぐには分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。依頼文で 1 号バンクは止められないので、追加で止める案は出しません。止められるなら 25t 級、という比較は残します。"),
+    ("s5", "2:00-2:20", 20, "判定は計算で行い、根拠の表も残します。Claude に送る前に、名前や定格値は符号に置き換えます。採否は人が決め、停止範囲の結線図と、クレーンの位置を描いた平面図を書き出します。"),
 ]
+
+REQ_TEXT = ("次の作業日に、66kV 1号ダイヤの遮断器 6T-110 を取り替えます。新しい遮断器は約 3.5 t です。資材は取り替える遮断器の西側、"
+            "8 m ほど離れた空き地に仮置きします。1号バンクは系統の都合で今回は止められません。東線1L・東線2L は通常どおり運用します。")
+REQ_TEXT_HEAD = "次の作業日に"
+
 
 def mask_demo_html() -> str:
     """Claude に送る前の置き換えを、実物の関数（agent/mask.py）に合成データの文を通して見せる。"""
@@ -39,6 +45,13 @@ def mask_demo_html() -> str:
     amp = f"{2 * 1000}A"   # 定格値の例（公開前チェックの定格値の検出に当たらないよう、コードで組む）
     before = f"{line} の 20E1-110 遮断器（定格 {amp}）を、合成変電所 の 220kV 母線から切り離す。クレーンとの距離 4.02 m、吊る重さ 3.5 t"
     after = Mask().text(before)
+    # 依頼文を Claude に読ませたときの、実際の送信記録（logs/outbound/*-structure.request.json の request）があればそれを見せる
+    logs = sorted(glob.glob(str(ROOT / "logs/outbound/*-structure.request.json")), key=lambda f: Path(f).stat().st_mtime)
+    for f in reversed(logs):
+        u = json.loads(Path(f).read_text(encoding="utf-8")).get("user", {})
+        if isinstance(u, dict) and str(u.get("request", "")).startswith(REQ_TEXT_HEAD):
+            before, after = REQ_TEXT, u["request"]
+            break
     box = "background:#11161c;border:1px solid #3a4452;border-radius:10px;padding:28px 36px;font-size:40px;line-height:1.6;width:1600px"
     return (f'<div id="__ov" style="position:fixed;inset:0;z-index:99999;background:#0b0e12;display:flex;flex-direction:column;'
             f'align-items:center;justify-content:center;gap:30px;color:#e6e8eb;font-family:\'Noto Sans CJK JP\',\'Noto Sans JP\',sans-serif">'
@@ -125,7 +138,7 @@ def main() -> int:
                 page.set_input_files("#ingestFile", str(ROOT / "data/sites/SITE-01/drawings/SITE-01_sld.pdf"))
                 page.wait_for_timeout(800)
                 click("#btnIngest")
-                page.wait_for_selector("#btnConfirmAll", timeout=60000)
+                page.wait_for_selector("#btnConfirmAll", timeout=240000)   # Claude の意味づけを待つ（待ちの静止は compose が縮める）
                 page.wait_for_timeout(1800)
                 page.evaluate("()=>{const h=[...document.querySelectorAll('#ingestBox h4')].find(x=>x.textContent.includes('確かめてほしい')); if(h) h.scrollIntoView({behavior:'instant',block:'start'});}")
                 shot("s2_questions")
@@ -148,12 +161,26 @@ def main() -> int:
                 page.wait_for_selector("#srcBadge:has-text('図面から起こした配置')", timeout=30000)
                 smooth("#hud", "start")
                 page.wait_for_timeout(2000)  # バッジが変わったのを見せる
+            elif sid == "s2b":
+                tab("s1")
+                page.wait_for_timeout(1000)
+                page.evaluate("(t)=>{const e=document.getElementById('reqText'); e.value=t;}", REQ_TEXT)
+                smooth("#reqText", "start")
+                page.wait_for_timeout(2500)
+                click("#btnIntake")
+                page.wait_for_selector("#intakeBox .bay", timeout=120000)   # Claude の返事を待つ（待ちの静止は compose が縮める）
+                page.wait_for_timeout(1000)
+                shot("s2b_intake")
+                smooth("#intakeBox", "start")
+                page.wait_for_timeout(5000)
+                click("#btnIntakeUse")
+                page.wait_for_selector("#stepsBox .bay", timeout=30000)
+                page.wait_for_timeout(1500)
             elif sid == "s3":
                 tab("s1")
                 page.wait_for_timeout(1200)
-                click("#btnSteps")
-                page.wait_for_selector("#stepsBox .bay", timeout=30000)
-                page.wait_for_timeout(2500)
+                smooth("#stepsBox", "start")
+                page.wait_for_timeout(2000)
                 click('#sldZoom button[data-z="2.6"]')
                 page.wait_for_timeout(2500)
                 num = page.eval_on_selector("#stepsBox .sw .id", "e=>e.textContent")
@@ -178,12 +205,10 @@ def main() -> int:
                 smooth("#selectBox", "start")
                 shot("s4_select")
                 page.wait_for_timeout(6000)
+                smooth("#selectBox .bay:last-of-type", "center")   # 止められない設備（依頼文）と、止められる場合の参考
+                page.wait_for_timeout(5000)
                 click("#btnAdoptSel")  # 選んだクラスを置く
                 page.wait_for_timeout(4000)
-                smooth("#btnAdoptOutage", "center")
-                page.wait_for_timeout(3500)
-                click("#btnAdoptOutage")
-                page.wait_for_timeout(2500)
                 smooth("#verdictBox", "start")
             elif sid == "s5":
                 # 根拠: 3D の上の帯（離隔表の ID と「要確認」）と、導体ごとの距離・必要・余裕の表

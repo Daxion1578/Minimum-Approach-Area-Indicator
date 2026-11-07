@@ -281,7 +281,8 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
 
 
 def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: float | None = None,
-           set_xy: tuple[float, float] | None = None, load: dict | None = None, suggest_outage: bool = True) -> dict:
+           set_xy: tuple[float, float] | None = None, load: dict | None = None, suggest_outage: bool = True,
+           unstoppable: list[str] | None = None) -> dict:
     """吊る機器 pick_id（layout の at が吊る点）と資材置場 set_xy から、一番小さいクラスと据付位置を選ぶ。"""
     from engine.steps import generate
     rules = load_rules()
@@ -326,9 +327,13 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
         from engine.propose import _owner_equipment
         lim = classes[: (per.index(chosen) if chosen else len(classes))] or classes[:1]
         targets, cur = [], state
+        blocked: list[str] = []
         for _ in range(3):
             owner = _owner_equipment(topo, binding)
             if not owner or owner in targets:
+                break
+            if owner in (unstoppable or []):
+                blocked.append(owner)   # 依頼文で止められないとされた設備は、追加停止の候補にしない
                 break
             st = generate(topo, cur, [owner])
             if not st["ok"]:
@@ -342,6 +347,19 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
             binding = binding_of(per2)
             if not binding:
                 break
+        if blocked and not targets:
+            from engine.steps import _label
+            names_b = "、".join(_label(topo, x) for x in blocked)
+            # 参考: 止められるなら何級で済むか（依頼文の条件を外した場合。採用はできない）
+            ref = None
+            st_b = generate(topo, state, blocked)
+            if st_b["ok"]:
+                env_b = envelopes(topo, layout, energize(topo, st_b["state"]), ClearanceTable.load(), False)
+                per_b = _select_on(env_b["envelopes"], layout, lim, pick, setp, weight_t, load, hook_need_z, rules)
+                ref = next((e for e in per_b if e["ok"]), None)
+            out["with_outage"] = {"blocked": blocked, "names": names_b, "chosen": None, "ops": [], "conditions": [],
+                                  "note": f"{names_b} は依頼文で止められないとされているので、追加停止の案は出さない"
+                                          + (f"（止められるなら {ref['name']} で済む）" if ref else "")}
         if targets:
             from engine.steps import _label
             names = "、".join(_label(topo, x) for x in targets)
