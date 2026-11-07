@@ -37,6 +37,9 @@ SECRET_PATTERNS = [
     ("キーの直書き", re.compile(r"(?i)(api[_-]?key|secret|token)\s*[:=]\s*['\"][A-Za-z0-9_\-]{16,}['\"]")),
 ]
 
+# 定格値（容量・遮断電流）。数値＋単位。合成の例示値でも一般語に直す
+RATING_PATTERN = re.compile(r"\d+\s*(MVA|kVA|MW|Mvar|kA)\b")
+
 # 日本付近の緯度経度の組（構内ローカル座標は地図と結び付けない。§12）
 LATLON = re.compile(r"\b(2[4-9]|3\d|4[0-5])\.\d{4,}\s*[, ]\s*(12[2-9]|13\d|14[0-6])\.\d{4,}\b")
 
@@ -121,6 +124,8 @@ def check(files: list[str], staged: bool, terms: list[str]) -> list[str]:
             for label, pat in SECRET_PATTERNS:
                 if pat.search(text):
                     problems.append(f"{rel}: {label}らしき文字列があります")
+            if RATING_PATTERN.search(text):
+                problems.append(f"{rel}: 定格値（容量・遮断電流）らしき数値があります（一般語に直す）")
             if LATLON.search(text):
                 problems.append(f"{rel}: 緯度経度らしき数値の組があります（構内ローカル座標だけを使う）")
 

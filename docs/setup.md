@@ -29,7 +29,7 @@ notepad .forbidden-terms.local.txt
 ```
 
 - `.env` にはアプリ用の API キーを書く。**PowerShell やシステムの環境変数に `ANTHROPIC_API_KEY` を設定しない**（設定すると Claude Code が Max のログインではなく API 課金で動く）。
-- `.forbidden-terms.local.txt` には、公開してはいけない語を1行1語で書く（勤務先の社名・略称、事業所名、設備名、社内システム名、協力会社名など）。`#` で始まる行はコメント。このファイルはコミットされず、Claude Code の Read も禁止してある。中身を Claude に貼らないこと。
+- `.forbidden-terms.local.txt` には、公開してはいけない語を1行1語で書く（勤務先の社名・略称、事業所名、設備名、社内システム名、協力会社名など）。`#` で始まる行はコメント。このファイルはコミットされず、Claude Code の Read も禁止してある。中身を Claude に貼らないこと。ここに書いた語は、Claude に送る文章からも符号に置き換えられる。
 
 ## 4. git フックの登録と点検
 

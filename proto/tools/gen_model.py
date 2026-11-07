@@ -275,7 +275,7 @@ class Model:
         for tid, d in self._tr.items():
             self.m["transformers"].append({
                 "id": tid, "hv_node": d["hv"], "lv_node": d["lv"], "mva": 300,
-                "name": f"{tid} 300MVA 220/66kV", "position": r3(d["pos"]),
+                "name": f"{tid} 220/66kV", "position": r3(d["pos"]),
             })
 
     def validate(self):

@@ -2596,7 +2596,7 @@
    "hv_node": "220_TR1_HV",
    "lv_node": "66_TR1_LV",
    "mva": 300,
-   "name": "TR1 300MVA 220/66kV",
+   "name": "TR1 220/66kV",
    "position": [
     9.0,
     -22.5,
@@ -2608,7 +2608,7 @@
    "hv_node": "220_TR2_HV",
    "lv_node": "66_TR2_LV",
    "mva": 300,
-   "name": "TR2 300MVA 220/66kV",
+   "name": "TR2 220/66kV",
    "position": [
     27.0,
     -22.5,
