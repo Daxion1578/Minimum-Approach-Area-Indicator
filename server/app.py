@@ -60,12 +60,34 @@ def _read(p: Path) -> dict:
 
 
 @lru_cache(maxsize=8)
-def load_site(site_id: str) -> dict:
+def _load_truth(site_id: str) -> dict:
     d = SITES / site_id / "truth"
     if not (d / "topology.json").exists():
         raise HTTPException(404, f"site {site_id} not found")
     states = {p.stem: _read(p) for p in sorted((d / "states").glob("*.json"))} if (d / "states").is_dir() else {}
     return {"site_id": site_id, "topology": _read(d / "topology.json"), "layout": _read(d / "layout.json"), "states": states}
+
+
+# 「有効な配置」。既定は合成データ（truth）。図面から起こした下書きに切り替わるのは、人が
+# POST .../layout/use-draft を押したときだけ（サイト id ごと）。計算（停止範囲・離隔・クレーン）はこれを読む。
+_ACTIVE_LAYOUT: dict[str, dict] = {}
+
+
+def load_site(site_id: str) -> dict:
+    base = _load_truth(site_id)
+    a = _ACTIVE_LAYOUT.get(site_id)
+    if a is None:
+        return {**base, "layout_source": "truth"}
+    return {**base, "layout": a["layout"], "layout_source": a["source"],
+            "layout_questions": a["questions"], "layout_drawing_hash": a["drawing_hash"]}
+
+
+def _clear_site_cache() -> None:
+    _load_truth.cache_clear()
+    _ACTIVE_LAYOUT.clear()
+
+
+load_site.cache_clear = _clear_site_cache   # 既存のテスト・呼び出しが使う
 
 
 class EnergizeRequest(BaseModel):
@@ -277,7 +299,7 @@ async def post_ingest(file: UploadFile):
 
 # ---- 装置図（平面・断面）から起こす 3D の下書き。他のタブの計算には一切関わらない。
 from ingest.pdf_layout import extract_layout as _extract_layout
-from ingest.layout_build import build_layout as _build_layout, check_consistency as _check_consistency
+from ingest.layout_build import build_layout as _build_layout, check_consistency as _check_consistency, to_contract
 from scripts.eval_layout import evaluate_layout as _evaluate_layout
 SAMPLE_LAYOUT_PDF = SITES / "SITE-01" / "drawings" / "SITE-01_layout.pdf"
 
@@ -285,7 +307,7 @@ SAMPLE_LAYOUT_PDF = SITES / "SITE-01" / "drawings" / "SITE-01_layout.pdf"
 def run_layout(pdf_path: Path) -> dict:
     """装置図 PDF → 下書き layout と、正解（truth の layout）との一致。失敗は HTTP 400（日本語の理由）。"""
     try:
-        site = load_site("SITE-01")
+        site = _load_truth("SITE-01")      # 比べる相手は常に合成データ（切り替え後の配置ではない）
         extracted = _extract_layout(pdf_path, topology=site["topology"])
         consistency = _check_consistency(site["topology"], extracted)
         draft = _build_layout(site["topology"], extracted)
@@ -295,6 +317,8 @@ def run_layout(pdf_path: Path) -> dict:
     except Exception as e:
         raise HTTPException(400, f"装置図を読めなかった（{type(e).__name__}: {e}）")
     return {"layout": draft, "questions": draft.get("questions", extracted.get("questions", [])),
+            "truth_layout": site["layout"],
+            "drawing_hash": hashlib.sha256(Path(pdf_path).read_bytes()).hexdigest()[:16],
             "consistency": consistency, "eval": ev, "stats": extracted.get("stats", {})}
 
 
@@ -328,6 +352,63 @@ async def post_ingest_layout(request: Request):
     if isinstance(body, dict) and body.get("sample"):
         return ingest_layout_sample()
     raise HTTPException(400, "装置図の PDF（file）か、サンプル指定（{\"sample\": true}）を送る")
+
+
+def _layout_source_info(site_id: str) -> dict:
+    a = _ACTIVE_LAYOUT.get(site_id)
+    if a is None:
+        _load_truth(site_id)
+        return {"source": "truth", "questions_count": 0, "drawing_hash": None}
+    return {"source": a["source"], "questions_count": len(a["questions"]), "drawing_hash": a["drawing_hash"]}
+
+
+class UseDraftRequest(BaseModel):
+    layout: dict
+    questions: list[str] | None = None
+    drawing_hash: str | None = None
+
+
+def use_draft_layout(site_id: str, req: UseDraftRequest) -> dict:
+    """人が確認した下書きの配置を、このサイトの計算に使う。契約に通らなければ 400。"""
+    import jsonschema
+    base = _load_truth(site_id)
+    try:
+        contract = to_contract(req.layout)
+        schema = json.loads((ROOT / "contracts" / "layout.schema.json").read_text(encoding="utf-8"))
+        jsonschema.validate(contract, schema)
+        if not contract.get("items"):
+            raise ValueError("機器が 1 つも無い配置は使えない")
+    except jsonschema.ValidationError as e:
+        raise HTTPException(400, f"配置が契約（layout.schema.json）に通らない: {e.message}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"配置を使えない（{type(e).__name__}: {e}）")
+    qs = list(req.questions if req.questions is not None else req.layout.get("questions", []))
+    _ACTIVE_LAYOUT[site_id] = {"source": "drawing-draft", "layout": contract, "questions": qs,
+                               "drawing_hash": req.drawing_hash}
+    return _layout_source_info(site_id)
+
+
+def use_truth_layout(site_id: str) -> dict:
+    _load_truth(site_id)
+    _ACTIVE_LAYOUT.pop(site_id, None)
+    return _layout_source_info(site_id)
+
+
+@app.post("/api/site/{site_id}/layout/use-draft")
+def post_use_draft(site_id: str, req: UseDraftRequest):
+    return use_draft_layout(site_id, req)
+
+
+@app.post("/api/site/{site_id}/layout/use-truth")
+def post_use_truth(site_id: str):
+    return use_truth_layout(site_id)
+
+
+@app.get("/api/site/{site_id}/layout/source")
+def get_layout_source(site_id: str):
+    return _layout_source_info(site_id)
 
 
 @app.get("/api/equipment")

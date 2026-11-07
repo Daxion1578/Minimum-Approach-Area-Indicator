@@ -57,6 +57,14 @@ async def handle(method: str, path: str, body: str | None = None, pdf: bytes | N
             if (json.loads(body) if body else {}).get("sample"):
                 return _json(200, A.ingest_layout_sample())
             return _json(400, {"detail": "ブラウザ版ではサンプルの装置図だけ試せる"})
+        m = re.fullmatch(r"/api/site/(?P<site>[A-Za-z0-9_-]+)/layout/(?P<act>use-draft|use-truth|source)", path)
+        if m:
+            if method == "POST" and m["act"] == "use-draft":
+                return _json(200, A.use_draft_layout(m["site"], A.UseDraftRequest(**(json.loads(body) if body else {}))))
+            if method == "POST" and m["act"] == "use-truth":
+                return _json(200, A.use_truth_layout(m["site"]))
+            if method == "GET" and m["act"] == "source":
+                return _json(200, A._layout_source_info(m["site"]))
         m = _APPROVED.fullmatch(path)
         if method == "GET" and m:
             p = A.SITES / m["site"] / "approved" / m["name"] / m["file"]
