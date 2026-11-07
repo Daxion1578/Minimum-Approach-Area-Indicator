@@ -73,6 +73,7 @@ def main() -> int:
         def el() -> float:
             return time.monotonic() - t0
 
+        ctx.request.post(a.url + "/api/site/SITE-01/layout/use-truth")  # 前の収録で「この 3D で続ける」を押した状態が残っていても、合成データから始める
         page.goto(a.url)
         page.wait_for_function("document.querySelector('#hud') && !document.querySelector('#hud').textContent.includes('読み込み中')", timeout=120000)
         page.wait_for_timeout(1500)
