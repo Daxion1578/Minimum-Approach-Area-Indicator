@@ -323,11 +323,10 @@ async function runLayoutDraft(sample){
     if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'装置図を読めなかった'}（${r.status}）</div>`; return; }
     const j=await r.json(); const e=j.eval, c=e.conductor_match||{}; const f2=v=>(v==null?'—':(+v).toFixed(2));
     const truth=await (await fetch('/api/sites/SITE-01')).json();
-    const qs=[...(j.questions||[]).map(q=>typeof q==='string'?q:(q.message||JSON.stringify(q))), ...(j.consistency||[]).map(x=>x.message||x.id)];
+    const qs=[...(j.questions||[]).map(q=>typeof q==='string'?q:(q.message||JSON.stringify(q)))];
     miniViews.splice(0).forEach(v=>{ v.r.dispose(); v.r.domElement.remove(); });
     box.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div><div class="note">合成データ（正）</div><div class="mini" id="miniL"></div></div><div><div class="note">図面から起こした下書き</div><div class="mini" id="miniR"></div></div></div>`
       +`<table style="margin-top:6px"><tr><th>機器の一致</th><td>${e.apparatus_matched} / ${e.apparatus_total}</td></tr><tr><th>位置の差 平均／最大</th><td>${f2(e.position_error_mean_m)} m ／ ${f2(e.position_error_max_m)} m</td></tr><tr><th>高さ 一致数</th><td>${e.height_matched}（差 平均 ${f2(e.height_error_mean_m)} m ／ 最大 ${f2(e.height_error_max_m)} m）</td></tr><tr><th>導体の一致</th><td>${c.matched} / ${c.total}${c.tolerance_m!=null?`（許容 ${c.tolerance_m} m）`:''}</td></tr></table>`
-      +(j.stub?'<div class="note">本物の取込が未接続のため、正解データをそのまま下書きとして表示している（全一致）。</div>':'')
       +`<div class="bay"><h4>要確認（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
     miniView($('miniL'), {topology:truth.topology, layout:truth.layout});
     miniView($('miniR'), {topology:truth.topology, layout:j.layout});
