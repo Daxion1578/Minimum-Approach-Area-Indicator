@@ -49,6 +49,11 @@ def srt_time(t: float) -> str:
     return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
 
 
+def ass_time(t: float) -> str:
+    cs = round(t * 100)
+    return f"{cs // 360000}:{cs // 6000 % 60:02d}:{cs // 100 % 60:02d}.{cs % 100:02d}"
+
+
 def wrap(text: str, n: int = 28) -> list[str]:
     """句点で改行し、長い文は n 字で折り返す。"""
     out: list[str] = []
@@ -154,6 +159,7 @@ def main() -> int:
 
     # 字幕
     cues: list[str] = []
+    events: list[str] = []
     for k, n in enumerate(narr, 1):
         lines = wrap(n["text"])
         dur = n["end"] - n["start"]
@@ -174,13 +180,21 @@ def main() -> int:
         n["cues"] = [{"start": round(b[0], 2), "end": round(b[1], 2), "text": b[2].replace("\n", "")} for b in blocks]
         for b in blocks:
             cues.append(f"{len(cues) + 1}\n{srt_time(b[0])} --> {srt_time(min(b[1], n['end']))}\n{b[2]}\n")
+            # 焼き込み用（ASS）。構想映像には下に自前の説明文があるので、その区間の字幕は上げる（座標は 384x288）
+            pos = r"{\pos(192,200)}" if n["id"] == "s6" else ""
+            events.append(f"Dialogue: 0,{ass_time(b[0])},{ass_time(min(b[1], n['end']))},Default,,0,0,0,,{pos}{b[2].replace(chr(10), r'\N')}")
     (d / "narration.srt").write_text("\n".join(cues), encoding="utf-8")
     (d / "narration.json").write_text(json.dumps(narr, ensure_ascii=False, indent=1), encoding="utf-8")
+    (d / "narration.ass").write_text(
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 384\nPlayResY: 288\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        f"Style: Default,{FONT},12,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,3,10,0,2,10,10,36,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n" + "\n".join(events) + "\n", encoding="utf-8")
 
     if not a.no_sub:
-        style = f"FontName={FONT},FontSize=12,PrimaryColour=&H00FFFFFF,BorderStyle=3,OutlineColour=&H00000000,BackColour=&H00000000,Outline=10,Shadow=0,Alignment=2,MarginV=36"
-        srt = (d / "narration.srt").resolve().as_posix().replace(":", r"\:")   # Windows の \ はフィルタの中で特殊文字になるので / に
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(nosub), "-vf", f"subtitles='{srt}':force_style='{style}'",
+        ass = (d / "narration.ass").resolve().as_posix().replace(":", r"\:")   # Windows の \ はフィルタの中で特殊文字になるので / に
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(nosub), "-vf", f"subtitles='{ass}'",
              "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an", "-crf", "18", "-preset", "medium", str(d / "maai-demo-draft.mp4")])
     print("できた:", d / "maai-demo-draft.mp4")
     return 0
