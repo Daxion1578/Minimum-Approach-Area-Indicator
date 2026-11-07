@@ -42,6 +42,7 @@ function refresh(){
   $('btnTour').disabled = busy && !tourOn;
 }
 document.querySelectorAll('#prog [data-goto]').forEach(b => b.onclick = () => { window.go(b.dataset.goto); });
+window.addEventListener('maai-go', refresh);
 const mo = new MutationObserver(refresh);
 ['ingestBox','stepsBox','verdictBox','approveBox'].forEach(id => mo.observe($(id), {childList:true, subtree:true}));
 mo.observe(document.querySelector('#left'), {attributes:true, attributeFilter:['class'], subtree:true});

@@ -16,9 +16,6 @@
   #right { border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:10px 12px; }
   #view { position:relative; min-width:0; }
   canvas { display:block; }
-  .tabs { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--line); }
-  .tabs button { background:none; border:0; color:var(--mute); padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent; font-size:13px; }
-  .tabs button.on { color:var(--fg); border-bottom-color:var(--accent); }
   .step { display:none; padding:12px 14px; } .step.on { display:block; }
   h3 { margin:6px 0 8px; font-size:14px; } h4 { margin:12px 0 6px; font-size:13px; color:var(--mute); }
   .note { color:var(--mute); font-size:12px; margin:6px 0; }
@@ -74,12 +71,6 @@
 <div id="tourCap" role="status" aria-live="polite"></div>
 
 <div id="left">
-  <div class="tabs">
-    <button class="on" data-step="s0">1 図面取込</button>
-    <button data-step="s1">2 停止範囲</button>
-    <button data-step="s2">3 重機</button>
-    <button data-step="s3">4 計画確定</button>
-  </div>
 
   <section class="step on" id="s0">
     <p class="todo">この画面でやること: 単線結線図の PDF を取り込み、拾えた開閉器を確かめる。</p>
@@ -270,9 +261,8 @@ renderer.domElement.addEventListener('pointerup', e=>{
 const DEMO_TARGET='66-D1-CB1';   // 見本: 66kV 1号ダイヤの遮断器を取り替える作業日
 let site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
 const $=id=>document.getElementById(id);
-window.go = s => { document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.step===s)); document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s));
-  showSld(s==='s1' && !view3d); guide(); };
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.step));
+window.go = s => { document.querySelectorAll('.step').forEach(x=>x.classList.toggle('on', x.id===s));
+  showSld(s==='s1' && !view3d); guide(); window.dispatchEvent(new Event('maai-go')); };
 
 async function loadSites(){
   dims=await (await fetch('/api/equipment')).json();
