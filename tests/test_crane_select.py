@@ -81,3 +81,30 @@ def test_charts_grow_with_class_at_every_radius():
         vals = [capacity_t(k, r) for k in ks]
         nz = [v for v in vals if v > 0]
         assert nz == sorted(nz), (r, vals)
+
+
+def test_cells_show_where_the_chosen_class_can_stand(topo, site, states):
+    """据えてよい範囲: 選んだクラスのます目ごとの判定を返す。選んだ位置は「置ける」に入り、
+    置けるます目の配置は承認と同じ判定（2° 刻み）でも不可にならない（ふるい分けは保守側）。"""
+    day = _day(topo, states, "66-D1-CB1")
+    r = select(topo, site.layout, day, "66-D1-CB1", suggest_outage=False)
+    cells = r["chosen"]["cells"]
+    ok = [c for c in cells if c["ok"]]
+    assert ok and any(not c["ok"] for c in cells)
+    assert all("crane" in c for c in ok) and all("crane" not in c for c in cells if not c["ok"])
+    assert r["chosen"]["crane"]["base"][:2] in [[c["x"], c["y"]] for c in ok]
+    assert all("cells" not in e for e in r["tried"][:-1])              # 使えないクラスのます目は返さない
+    env = envelopes(topo, site.layout, energize(topo, day), ClearanceTable.load())
+    for c in ok[:: max(1, len(ok) // 8)]:
+        assert evaluate(env, Crane.from_dict(c["crane"]))["verdict"] != NG
+
+
+def test_larger_classes_show_their_own_placement_area(topo, site, states):
+    """一つ上・二つ上のクラスの範囲も返す（動線を考えて人が選ぶ）。置けるます目の配置はそのクラスのもの。"""
+    day = _day(topo, states, "66-D1-CB1")
+    r = select(topo, site.layout, day, "66-D1-CB1", suggest_outage=False)
+    ids = [k["id"] for k in load_classes()]
+    i = ids.index(r["chosen"]["class"])
+    assert [x["class"] for x in r["larger"]] == ids[i + 1: i + 1 + len(r["larger"])] and r["larger"]
+    for x in r["larger"]:
+        assert all(c["crane"]["class"] == x["class"] for c in x["cells"] if c["ok"])

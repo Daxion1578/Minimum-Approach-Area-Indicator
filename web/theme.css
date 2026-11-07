@@ -95,3 +95,6 @@ button.sub.nav { border-color:transparent; background:none; }
 #welcome .card::after { right:-1px; bottom:-1px; border-width:0 2px 2px 0; }
 #welcome ol li { background:var(--panel2); border:1px solid var(--line); border-radius:var(--r); }
 #guide { background:var(--accent-soft); border:1px solid rgba(95,208,255,.35); border-radius:2px; }
+
+/* 据えてよい範囲のクラス切り替え */
+#zoneBox .zbtn[aria-pressed="true"] { border-color:var(--deadg); color:var(--deadg); }

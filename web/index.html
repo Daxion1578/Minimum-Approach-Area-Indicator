@@ -195,7 +195,7 @@ const controls=new MiniOrbit(camera, renderer.domElement);
 setupStage(scene, renderer);   // 地面の盤面（5 m／25 m グリッド）と光。見え方だけ（web/stage3d.js）
 // 2 形態: 充電=赤、停電=緑（計算の「停電・接地／停電・未接地」はどちらも停電）。誤り（充電部に接地）だけ紫
 const COL={live:0xff4d4d, dead_grounded:0x39d353, dead_ungrounded:0x39d353, invalid:0xff3cf0};
-const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(), markGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup); scene.add(markGroup);
+const siteGroup=new THREE.Group(), envGroup=new THREE.Group(), craneGroup=new THREE.Group(), markGroup=new THREE.Group(), zoneGroup=new THREE.Group(); scene.add(siteGroup); scene.add(envGroup); scene.add(craneGroup); scene.add(markGroup); scene.add(zoneGroup);
 let condMeshes={}, switchMeshes={}; let dims=null;
 function resize(){ const w=view.clientWidth,h=view.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 addEventListener('resize',resize); resize();
@@ -257,6 +257,24 @@ function drawCrane(out){
     craneGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.4,8,8), new THREE.MeshBasicMaterial({color:col})).translateX(worst.p_conductor[0]).translateY(worst.p_conductor[1]).translateZ(worst.p_conductor[2]));
   }
 }
+// 据えてよい範囲（engine の選定がます目ごとに出した判定を塗るだけ。目安で、置いたら承認と同じ判定をやり直す）
+let zoneCells=null;
+function drawZone(cells){
+  clearGroup(zoneGroup); zoneCells=cells||null; if (!cells) return;
+  const geo=new THREE.PlaneGeometry(2.7,2.7), m4=new THREE.Matrix4();
+  for (const [want,color,op] of [[true,0x3ddc6a,0.42],[false,0xff4d4d,0.16]]){
+    const list=cells.filter(c=> want ? c.ok : c.why==='clearance'); if (!list.length) continue;
+    const im=new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({color, transparent:true, opacity:op, depthWrite:false, toneMapped:false}), list.length);
+    list.forEach((c,i)=>{ m4.makeTranslation(c.x,c.y,0.05); im.setMatrixAt(i,m4); }); im.renderOrder=1; zoneGroup.add(im);
+  }
+}
+// 範囲を見るクラスの切り替え（選んだクラスと、一つ上・二つ上）。小さいクラスほど置ける場所が狭い
+let zoneSets=[];
+function zoneHtml(sets){ zoneSets=sets;
+  return `<div id="zoneBox" style="margin-top:8px"><div class="note" style="margin-bottom:4px"><i class="dot" style="background:var(--deadg)"></i> 地面の緑: 据えてよい範囲（3 m 角の目安）。押すとそこへ移し、承認と同じ判定をやり直す。入口からの動線は人が見て決める</div>`+
+    `<div class="row">`+sets.map((z,i)=>`<button class="sub zbtn" data-z="${i}" aria-pressed="${i===0}">${z.class} の範囲 ${z.cells.filter(x=>x.ok).length} ます</button>`).join('')+`</div></div>`; }
+function bindZoneButtons(){ document.querySelectorAll('#zoneBox .zbtn').forEach(bt=>bt.onclick=()=>{ document.querySelectorAll('#zoneBox .zbtn').forEach(x=>x.setAttribute('aria-pressed', String(x===bt))); drawZone(zoneSets[+bt.dataset.z].cells); }); }
+function zoneCellAt(x,y){ if (!zoneCells) return null; let best=null, bd=2.2; for (const c of zoneCells){ if (!c.ok) continue; const d=Math.hypot(c.x-x,c.y-y); if (d<bd){ bd=d; best=c; } } return best; }
 // 地面クリックでベースを置く（ドラッグと区別する）
 const ray=new THREE.Raycaster(), plane=new THREE.Plane(new THREE.Vector3(0,0,1),0); let downAt=null;
 renderer.domElement.addEventListener('pointerdown', e=>{ downAt=[e.clientX,e.clientY]; });
@@ -266,6 +284,7 @@ renderer.domElement.addEventListener('pointerup', e=>{
   const r=renderer.domElement.getBoundingClientRect(); const nd=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
   ray.setFromCamera(nd, camera); const hit=new THREE.Vector3(); if (!ray.ray.intersectPlane(plane, hit)) return;
   if ($('setByClick').checked){ $('setX').value=hit.x.toFixed(0); $('setY').value=hit.y.toFixed(0); drawMarks(); return; }
+  const cell=zoneCellAt(hit.x,hit.y); if (cell){ craneToForm(cell.crane); evaluateClearance(); return; }   // 緑のます目: そのます目の配置ごと移す
   $('cx').value=hit.x.toFixed(1); $('cy').value=hit.y.toFixed(1); evaluateClearance();
 });
 
@@ -362,7 +381,7 @@ function setUseBtn(){
 }
 function resetResults(){   // 配置が変わったら、古い停止範囲・クレーンの結果は消す（新しい配置の結果に見えないように）
   lastSteps=null; lastClearance=null; lastCrane=null; lastSelect=null; extraOutage=null;
-  for (const id of ['stepsBox','selectBox','verdictBox','proposeBox','approveBox']) $(id).innerHTML='';
+  for (const id of ['stepsBox','selectBox','verdictBox','proposeBox','approveBox']) $(id).innerHTML=''; drawZone(null);
   $('stepsBox').innerHTML='<div class="note">配置を切り替えた。停止範囲とクレーンは作り直してください。</div>';
   drawCrane(null);
 }
@@ -397,7 +416,7 @@ const nameOf=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.n
 $('btnSteps').onclick=async()=>{
   const targets=[$('targetSel').value];
   const r=await fetch(`/api/sites/${site.site_id}/steps`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({targets, state: site.states.normal})});
-  lastSteps=await r.json(); extraOutage=null; lastSelect=null; $('selectBox').innerHTML='';
+  lastSteps=await r.json(); extraOutage=null; lastSelect=null; $('selectBox').innerHTML=''; drawZone(null);
   if (lastSteps.state) state=structuredClone(lastSteps.state);
   if (['breaker','disconnector'].includes(site.topology.nodes.find(n=>n.id===targets[0])?.kind)){ $('pickSel').value=targets[0]; pickChanged(); }
   renderSteps(); buildSwitchList(); update(); guide(); if (view3d) $('vTarget').onclick();
@@ -490,7 +509,7 @@ $('btnSelect').onclick=async()=>{
   if (!r.ok){ $('selectBox').innerHTML=`<div class="warn">選定に失敗 ${r.status}: ${j.detail||''}</div>`; return; }
   if (j.set){ $('setX').value=j.set[0]; $('setY').value=j.set[1]; }
   if (j.load) lastLoad=j.load;
-  drawMarks();
+  drawMarks(); drawZone(j.chosen?.cells);
   const col=v=>v==='ng'?'var(--live)':v==='conditional'?'var(--deadu)':'var(--deadg)';
   let html='';
   if (j.problems?.length && !j.chosen) html+=`<div class="warn">${j.problems.join('。')}</div>`;
@@ -499,16 +518,17 @@ $('btnSelect').onclick=async()=>{
       `<div class="note">据付 (${c.crane.base.map(v=>v.toFixed(0)).join(', ')})、ブーム ${c.crane.boom_len_m} m、起伏角 ${c.crane.boom_elev_deg.toFixed(0)}°${c.crane.boom_elev2_deg?'／'+c.crane.boom_elev2_deg.toFixed(0)+'°':''}、旋回 ${c.crane.slew_deg.map(v=>v.toFixed(0)+'°').join('〜')}。最小離隔 ${c.min_distance_m?.toFixed(2)} m／必要 ${c.required_m?.toFixed(2)} m</div>`+
       (j.by_weight?.note?`<div style="margin-top:4px">${j.by_weight.note}</div>`:'')+
       (j.smaller_why_not?`<div class="note">一つ下のクラスが使えない理由: ${j.smaller_why_not}</div>`:'')+
-      `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div></div>`; }
+      `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div>`+
+      zoneHtml([{class:c.class, name:c.name, cells:c.cells}, ...(j.larger||[])])+`</div>`; }
   if (j.tried) html+=`<details class="bay"><summary>試したクラス（小さい順）</summary>`+j.tried.map(e=>`<div class="note"><span class="cls" style="background:${e.ok?'var(--deadg)':'#3a4452'};color:${e.ok?'#06121f':'var(--fg)'}">${e.class}</span>${e.ok?'置ける':e.why_not}（必要 ${e.need_t} t）</div>`).join('')+`</details>`;
   if (j.with_outage){ const w=j.with_outage;
     html+=`<div class="bay" style="border-color:var(--accent)"><div><b>${w.blocked?'止められない設備（依頼文）':'追加で止めた場合'}</b>: ${w.note}</div>`+
       (w.ops.length?`<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`:'')+
       (w.chosen?`<div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
   if (j.pick) html+=`<div class="note">荷重表・重さ: ${j.table_status||'要確認'}（例示値）。吊る点 (${j.pick.slice(0,2).map(v=>v.toFixed(0)).join(', ')})、資材置場 (${j.set.map(v=>(+v).toFixed(0)).join(', ')})</div>`;
-  $('selectBox').innerHTML=html;
-  if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
-  if ($('btnAdoptOutage')) $('btnAdoptOutage').onclick=()=>{ extraOutage=j.with_outage; state=structuredClone(j.with_outage.state); craneToForm(j.with_outage.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
+  $('selectBox').innerHTML=html; bindZoneButtons();
+  if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; document.querySelector('#zoneBox .zbtn')?.click(); if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
+  if ($('btnAdoptOutage')) $('btnAdoptOutage').onclick=()=>{ extraOutage=j.with_outage; state=structuredClone(j.with_outage.state); drawZone(j.with_outage.chosen.cells); craneToForm(j.with_outage.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); };
   guide();
 };
 

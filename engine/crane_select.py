@@ -236,9 +236,15 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
         best_ok = None          # (margin, crane, worst)
         best_ng = None          # 離隔不足のうち一番ましなもの
         min_r = None
+        cells = []              # 据付位置ごとの判定（ふるい分け）。画面で「据えてよい範囲」を塗る
         for base in _cells(layout, k, pick, setp):
             why, c, w, r = _try_cell(k, base, pick, setp, need, load, hook_need_z, env_list, SCREEN_STEP_DEG)
             min_r = r if min_r is None else min(min_r, r)
+            cell = {"x": round(base[0], 2), "y": round(base[1], 2), "ok": why is None, "why": why}
+            if why is None:
+                cell["crane"] = c.to_dict()
+                cell["margin_m"] = round(w[0], 2) if w else None
+            cells.append(cell)
             if why:
                 counts[why] += 1
                 if why == "clearance" and (best_ng is None or w[0] > best_ng[0]):
@@ -274,6 +280,8 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
                 entry["why_not"] = "ブームが届かない（作業半径とフックの高さ）、または作業半径で定格荷重が足りない"
             else:
                 entry["why_not"] = "据え付けられる位置がない（機器・鉄構から離せる位置で 2 点に届かない）"
+        if entry["ok"]:
+            entry["cells"] = cells    # 選んだクラスだけ返す（ほかのクラスは数が多く、画面で使わない）
         per_class.append(entry)
         if entry["ok"]:
             break
@@ -312,6 +320,14 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
         out["by_weight"]["note"] = f"重さと届く距離だけなら {wo['name']} で足りる。充電部の離隔を保つために {chosen['name']} が要る"
     elif wo and chosen:
         out["by_weight"]["note"] = f"重さと届く距離で決まる {wo['name']} のまま、充電部の離隔も保てる"
+    # 一つ上・二つ上のクラスの据えてよい範囲（小さいクラスほど置ける場所が狭い。動線を考えて人が選ぶための比較）
+    out["larger"] = []
+    if chosen:
+        ids = [k["id"] for k in classes]
+        for k in classes[ids.index(chosen["class"]) + 1: ids.index(chosen["class"]) + 3]:
+            e = _select_on(env["envelopes"], layout, [k], pick, setp, weight_t, load, hook_need_z, rules)[0]
+            if e.get("cells"):
+                out["larger"].append({"class": e["class"], "name": e["name"], "cells": e["cells"]})
     # 一つ下のクラスが使えない理由（選んだクラスの直前）
     if chosen:
         i = per.index(chosen)
