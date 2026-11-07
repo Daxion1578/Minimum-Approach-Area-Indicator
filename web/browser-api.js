@@ -15,10 +15,14 @@
   // ---- 上の帯（準備中の表示）
   const bar = document.createElement('div');
   bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;padding:6px 12px;font:13px system-ui,sans-serif;' +
-                      'background:#1d2a3a;color:#e8eef5;border-bottom:1px solid #3a5070;text-align:center';
-  const say = (t) => { bar.textContent = t; };
-  say('ブラウザ版を準備しています（初回は 10〜20 秒。計算はすべてこのブラウザの中で行い、どこにも送りません）');
-  const mount = () => document.body.prepend(bar);
+                      'background:#1d2a3a;color:#e8eef5;border-bottom:1px solid #3a5070;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  const say = (t, h = 28) => {
+    bar.textContent = t; window.MAAI_BOOT_TEXT = t;
+    document.body && document.body.style.setProperty('--boot-h', h + 'px');
+    window.dispatchEvent(new CustomEvent('maai-boot', { detail: t }));
+  };
+  say('準備中 1/3: 計算エンジン（Pyodide 本体）を読み込み中（初回 10〜20 秒。計算はこのブラウザの中だけで行い、どこにも送りません）');
+  const mount = () => { document.body.prepend(bar); if (bar.style.display !== 'none') document.body.style.setProperty('--boot-h', '28px'); };
   document.body ? mount() : document.addEventListener('DOMContentLoaded', mount);
 
   const realFetch = window.fetch.bind(window);
@@ -29,7 +33,7 @@
     s.src = PYODIDE + 'pyodide.js';
     await new Promise((ok, ng) => { s.onload = ok; s.onerror = () => ng(new Error('Pyodide を読み込めない')); document.head.append(s); });
     py = await loadPyodide({ indexURL: PYODIDE });
-    say('ブラウザ版: 部品を読み込んでいます…');
+    say('準備中 2/3: 計算部品（Python パッケージと本体のコード）を読み込み中…');
     await py.loadPackage(['micropip', 'pydantic', 'Pillow']);
     const zip = await (await realFetch(base + 'py.zip')).arrayBuffer();
     py.unpackArchive(zip, 'zip', { extractDir: '/repo' });
@@ -51,11 +55,12 @@ async def _maai_call(method, path, body, has_pdf):
     pdf = open("/tmp/upload.pdf", "rb").read() if has_pdf else None
     return json.dumps(await browser.handle(method, path, body, pdf))
 `);
-    say('ブラウザ版（サーバ無し・Claude 無し。判定はサーバ版と同じコード）');
-    setTimeout(() => { bar.style.display = 'none'; }, 4000);
+    say('準備完了 3/3: ブラウザ版（サーバ無し・Claude 無し。判定はサーバ版と同じコード）');
+    setTimeout(() => { bar.style.display = 'none'; document.body.style.removeProperty('--boot-h'); }, 4000);
     return py.globals.get('_maai_call');
   }
   const ready = boot().catch((e) => { say('ブラウザ版の準備に失敗: ' + e.message); throw e; });
+  window.MAAI_READY = ready;
 
   const MIME = { pdf: 'application/pdf', json: 'application/json' };
   async function api(method, url, body, file) {

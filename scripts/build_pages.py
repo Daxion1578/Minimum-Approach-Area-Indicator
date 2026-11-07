@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PY_DIRS = ["engine", "synth", "ingest", "agent", "server", "contracts"]
-PY_FILES = ["scripts/__init__.py", "scripts/run_eval.py"]
+PY_FILES = ["scripts/__init__.py", "scripts/run_eval.py", "scripts/eval_layout.py"]
 DATA = ["data/tables", "data/rules"]
 SKIP_PARTS = {"__pycache__", "approved", "drawings"}
 
@@ -54,6 +54,9 @@ def build(out: Path, keep_web: Path | None = None) -> Path:
     with zipfile.ZipFile(out / "web" / "py.zip", "w", zipfile.ZIP_DEFLATED) as z:
         for p in files:
             z.write(p, p.relative_to(ROOT).as_posix())
+        lp = ROOT / "data" / "sites" / "SITE-01" / "drawings" / "SITE-01_layout.pdf"   # 装置図のサンプル（ブラウザ版の下書き用）
+        if lp.is_file():
+            z.write(lp, lp.relative_to(ROOT).as_posix())
         if not (ROOT / "scripts" / "__init__.py").exists():
             z.writestr("scripts/__init__.py", "")
     (out / ".nojekyll").write_text("", encoding="utf-8")

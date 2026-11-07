@@ -38,6 +38,7 @@
   table { border-collapse:collapse; width:100%; font-size:12px; } td,th { border-bottom:1px solid var(--line); padding:3px 4px; text-align:left; } th { color:var(--mute); font-weight:500; }
   pre { background:#0d1117; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:11px; overflow:auto; max-height:280px; margin:4px 0 12px; }
   #hud { position:absolute; left:10px; top:10px; background:rgba(27,32,38,.85); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; pointer-events:none; }
+  .mini { height:170px; border:1px solid var(--line); border-radius:4px; overflow:hidden; } .mini canvas { width:100%!important; height:100%!important; }
   .warn { background:#3a0a0a; border:1px solid #7a1212; border-radius:6px; padding:6px 8px; font-size:12px; margin:8px 0; }
   .soon { color:var(--mute); font-style:italic; }
   #guide { color:var(--fg); font-size:12px; background:#16202c; border:1px solid #2b4560; border-radius:6px; padding:3px 10px; }
@@ -55,9 +56,22 @@
   .big { font-size:18px; font-weight:700; }
   .cls { display:inline-block; min-width:44px; text-align:center; border-radius:4px; padding:0 6px; margin-right:6px; font-weight:700; }
 </style>
+<link rel="stylesheet" href="./web/onboarding.css">
 </head>
 <body>
-<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide"></span></header>
+<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide" style="display:none"></span>
+  <span class="hbtns"><button class="sub" id="btnHelp" title="最初の案内をもう一度見る">使い方</button><button class="sub" id="btnJson" aria-pressed="false" title="画面と engine がやり取りしている JSON を右に出す">内部データを見る</button></span></header>
+<nav id="prog" aria-label="進み具合">
+  <ol class="stages">
+    <li><button data-goto="s0"><i>1</i><span>図面取込</span></button></li>
+    <li><button data-goto="s1"><i>2</i><span>停止範囲</span></button></li>
+    <li><button data-goto="s2"><i>3</i><span>重機</span></button></li>
+    <li><button data-goto="s3"><i>4</i><span>計画確定</span></button></li>
+  </ol>
+  <div class="next"><span id="nextLabel"></span><button class="act" id="btnNext">次へ</button></div>
+  <button class="sub" id="btnTour" title="サンプルで 4 つの画面を自動で順に進める。画面のどこかを押すと止まる">3 分で一周</button>
+</nav>
+<div id="tourCap" role="status" aria-live="polite"></div>
 
 <div id="left">
   <div class="tabs">
@@ -68,20 +82,29 @@
   </div>
 
   <section class="step on" id="s0">
+    <p class="todo">この画面でやること: 単線結線図の PDF を取り込み、拾えた開閉器を確かめる。</p>
     <h3>構内モデル</h3>
     <div class="row"><label class="k">サイト</label><select id="siteSel"></select></div>
     <table id="siteSummary"></table>
     <h4>単線結線図（ベクター PDF）を取り込む</h4>
+    <details class="more"><summary>読み取りの範囲</summary>
     <div class="note">導体と開閉器記号を機械的に拾い、開閉器番号で結ぶ。種別の確認と質問文は Claude（呼べなければ規則）。接続は人が確認するまで「未確認」。</div>
     <div class="note">読むのは結線図（つながり）だけ。3D の機器の位置と高さは合成データで、配置図（平面）・断面図の取込は次の段階。取り込んだ結果は下書きとして表示し、次のタブは合成変電所のデータで動く。</div>
-    <div class="row"><input type="file" id="ingestFile" accept="application/pdf"><button class="sub" id="btnIngest">取り込む</button><span class="note" id="agentState"></span></div>
+    </details>
+    <div class="row"><input type="file" id="ingestFile" accept="application/pdf"><button class="act" id="btnIngest">取り込む</button><button type="button" class="badge" id="agentState" aria-describedby="agentWhy"></button></div>
+    <div class="note" id="agentWhy" hidden></div>
     <div id="ingestBox"></div>
-    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s1')">停止範囲へ →</button></div>
+    <h4>装置図（平面・断面）から起こした 3D（下書き）</h4>
+    <div class="note">停止範囲と離隔の計算は今は合成データで行う。この下書きは図面の読み取りの確認用。</div>
+    <div class="row"><button class="sub" id="btnLayoutSample">サンプル装置図で試す</button><input type="file" id="layoutFile" accept="application/pdf"></div>
+    <div id="layoutBox"></div>
+    <div class="row" style="margin-top:10px"><button class="sub nav" onclick="go('s1')">停止範囲へ →</button></div>
   </section>
 
   <section class="step" id="s1">
+    <p class="todo">この画面でやること: 取り替える機器を選び、止める開閉器を出す。結線図で停電（緑）と充電（赤）を確かめる。</p>
     <h3>作業日の停止範囲</h3>
-    <div class="note">その日に取り替える機器を選ぶ。作業する機器に電気が流れ込む端すべてで、最初に出会う断路器まで（途中の遮断器も）切る。送電線は相手端を切る条件、止めない母線は端子の切り離し。ほかは平常どおり。中央の結線図で、停電（緑の破線）と充電（赤）を追う。</div>
+    <details class="more"><summary>停止範囲の決め方</summary><div class="note">その日に取り替える機器を選ぶ。作業する機器に電気が流れ込む端すべてで、最初に出会う断路器まで（途中の遮断器も）切る。送電線は相手端を切る条件、止めない母線は端子の切り離し。ほかは平常どおり。中央の結線図で、停電（緑の破線）と充電（赤）を追う。</div></details>
     <div class="row"><label class="k">取り替える機器</label><select id="targetSel"></select></div>
     <div class="row"><button class="act" id="btnSteps">停止範囲を作る</button><button class="sub" id="btnViewToggle">3D を見る</button></div>
     <div id="stepsBox"></div>
@@ -98,15 +121,18 @@
       <div class="row"><label>近づけない範囲（包絡）を 3D に表示</label><input type="checkbox" id="showEnv" checked></div>
       <div id="switchList"></div>
     </details>
-    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s2')">重機へ →</button></div>
+    <div class="row" style="margin-top:10px"><button class="sub nav" onclick="go('s2')">重機へ →</button></div>
   </section>
 
   <section class="step" id="s2">
+    <p class="todo">この画面でやること: 吊る機器を選び、離隔を保てる一番小さいクレーンと据付位置を出して、採用する。</p>
     <h3>重機の選定</h3>
-    <div class="note">ブームは「取り替える機器の真上」と「資材置場の真上」に来る。2 点と重さから、届いて、吊れて、充電部の離隔を保てる一番小さい（安い）クレーンと据付位置を計算で選ぶ。荷重表と重さは例示値（要確認）。</div>
+    <details class="more"><summary>選び方</summary><div class="note">ブームは「取り替える機器の真上」と「資材置場の真上」に来る。2 点と重さから、届いて、吊れて、充電部の離隔を保てる一番小さい（安い）クレーンと据付位置を計算で選ぶ。荷重表と重さは例示値（要確認）。</div></details>
     <div class="row"><label class="k">吊る機器</label><select id="pickSel" style="flex:1"></select></div>
+    <details class="more"><summary>詳細（重さ・資材置場）</summary>
     <div class="row"><label class="k">重さ t</label><input type="number" id="pickT" step="0.1" style="width:80px"><span class="note" id="pickNote"></span></div>
     <div class="row"><label class="k">資材置場 x</label><input type="number" id="setX" step="1" style="width:70px"><label class="k">y</label><input type="number" id="setY" step="1" style="width:70px"><label><input type="checkbox" id="setByClick"> 3D の地面を押して置く</label></div>
+    </details>
     <div class="row"><button class="act" id="btnSelect">一番小さいクレーンを選ぶ</button></div>
     <div id="selectBox"></div>
     <details class="bay" id="manualBox"><summary>手で置いて確かめる（選んだ配置の確認・修正案）</summary>
@@ -119,10 +145,11 @@
     <div id="verdictBox"></div>
     <div id="proposeBox"></div>
     </details>
-    <div class="row" style="margin-top:10px"><button class="act" onclick="go('s3')">計画確定へ →</button></div>
+    <div class="row" style="margin-top:10px"><button class="sub nav" onclick="go('s3')">計画確定へ →</button></div>
   </section>
 
   <section class="step" id="s3">
+    <p class="todo">この画面でやること: 条件を確かめて承認する。承認時に engine がもう一度判定し、停止範囲図と計画を書き出す。</p>
     <h3>計画確定</h3>
     <div id="planSummary" class="note">停止範囲と重機を済ませてから。</div>
     <div id="planConds"></div>
@@ -134,7 +161,7 @@
 
 <div id="view"><div id="hud">読み込み中…</div><div id="sldView"><div id="sldScroll"><div id="sldWrap"></div></div><div id="sldZoom"><button class="sub" data-z="1">全体</button><button class="sub" data-z="1.8">拡大</button><button class="sub" data-z="2.6">さらに拡大</button></div><div id="sldTip">結線図を押すと、開閉器の入・切（または取り替える機器の選択）。計算は engine が行う</div></div><div id="viewBtns" style="position:absolute;right:10px;top:10px;display:flex;gap:6px"><button class="sub" id="vAll">全体</button><button class="sub" id="vTarget">対象へ寄る</button><button class="sub" id="vCrane">クレーンへ寄る</button></div></div>
 
-<div id="right">
+<div id="right" aria-label="内部データ">
   <h4>state.json（画面 → engine）</h4><pre id="jState"></pre>
   <h4>energization.json（engine → 画面）</h4><pre id="jEnerg"></pre>
   <h4>envelope.json（engine → 画面、承認前）</h4><pre id="jEnv"></pre>
@@ -271,7 +298,7 @@ async function loadSite(id){
 }
 
 // ---- 図面取込
-fetch('/api/agent').then(r=>r.json()).then(a=>{ $('agentState').textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 未接続（キー無し、またはオフライン設定）→ 規則で代替'; });
+fetch('/api/agent').then(r=>r.json()).then(a=>{ const why=a.available?'Claude が図面の種別を確かめ、人への質問文を作っている。停止範囲・離隔の判定は Claude を使わず、engine の計算だけで行う。':'Claude に接続していない（キーが無い、またはオフライン設定）。種別の確認と質問文は規則で代替している。停止範囲・離隔の判定は元から Claude を使わない。'; const el=$('agentState'); el.textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 規則で代替'; el.title=why; $('agentWhy').textContent=why; el.onclick=()=>{ $('agentWhy').hidden=!$('agentWhy').hidden; }; });
 $('btnIngest').onclick=async()=>{
   const f=$('ingestFile').files[0]; if (!f){ $('ingestBox').innerHTML='<div class="warn">PDF を選んでから。合成変電所の図面は data/sites/SITE-01/drawings/SITE-01_sld.pdf</div>'; return; }
   $('ingestBox').innerHTML='<div class="note">導体を拾って、番号で結んでいる…</div>';
@@ -286,7 +313,7 @@ $('btnIngest').onclick=async()=>{
   if (ev && !ev.error) html+=`<div class="bay"><h4>読み取り精度（合成変電所の正解データと照合）</h4><table><tr><th>開閉器番号の再現</th><td>${ev.numbers.found} / ${ev.numbers.drawn}</td></tr><tr><th>種別</th><td>${ev.kinds.ok} / ${ev.kinds.of}</td></tr><tr><th>隣接の一致 precision / recall</th><td>${ev.adjacency.precision} / ${ev.adjacency.recall}</td></tr><tr><th>変圧器</th><td>${ev.transformers.found} / ${ev.transformers.truth}</td></tr></table>${ev.numbers.missing.length?`<div class="note">見つからず: ${ev.numbers.missing.join(', ')}</div>`:''}</div>`;
   const qs=(a.questions||[]);
   html+=`<div class="bay"><h4>人に確かめてほしいこと（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
-  html+=`<details class="bay" open><summary>開閉器 ${sw.length}（未確認 → チェックで確認済）</summary><div id="ingestSw">`+sw.map(s=>{ const k=kindOf[s.number]||s.kind_guess; const bad=qs.some(q=>q.startsWith(s.number+' ')); return `<label class="sw"><input type="checkbox" data-n="${s.number}"><span class="id">${s.number}</span><span class="note">${kindJa[k]||k}　${(s.nets||[]).join(' ↔ ')||'—'}${bad?' <b style="color:var(--deadu)">要確認</b>':''}</span></label>`; }).join('')+`</div><div class="row"><button class="sub" id="btnConfirmAll">質問の無いものを確認済にする</button><span class="note" id="ingestCount"></span></div></details>`;
+  html+=`<details class="bay" open><summary>開閉器 ${sw.length}（未確認 → チェックで確認済）</summary><div id="ingestSw">`+sw.map(s=>{ const k=kindOf[s.number]||s.kind_guess; const bad=qs.some(q=>q.startsWith(s.number+' ')); return `<label class="sw"><input type="checkbox" data-n="${s.number}"><span class="id">${s.number}</span><span class="note">${kindJa[k]||k}　${(s.nets||[]).join(' ↔ ')||'—'}${bad?' <b style="color:var(--deadu)">要確認</b>':''}</span></label>`; }).join('')+`</div><div class="row"><button class="act" id="btnConfirmAll">質問の無いものを確認済にする</button><span class="note" id="ingestCount"></span></div></details>`;
   html+=`<details class="bay"><summary>topology 下書き（§6.1。確認後に truth へ）</summary><pre style="max-height:200px;overflow:auto">${JSON.stringify({nodes:j.topology.nodes.length, edges:j.topology.edges.length, sample:j.topology.nodes.slice(0,6)},null,1)}</pre></details>`;
   $('ingestBox').innerHTML=html;
   const count=()=>{ const all=[...$('ingestSw').querySelectorAll('input')]; $('ingestCount').textContent=`確認済 ${all.filter(i=>i.checked).length} / ${all.length}`; };
@@ -294,6 +321,41 @@ $('btnIngest').onclick=async()=>{
   $('btnConfirmAll').onclick=()=>{ $('ingestSw').querySelectorAll('input').forEach(i=>{ if(!qs.some(q=>q.startsWith(i.dataset.n+' '))) i.checked=true; }); count(); };
   count();
 };
+
+// ---- 装置図から起こした 3D の下書き（取込タブ内。上の 3D とは別の renderer・scene。ここが失敗しても他は動く）
+const miniViews=[];
+function miniView(host, site){
+  const r=new THREE.WebGLRenderer({antialias:true}); r.setPixelRatio(devicePixelRatio); host.appendChild(r.domElement);
+  const sc=new THREE.Scene(); sc.background=new THREE.Color(0x111418);
+  sc.add(new THREE.HemisphereLight(0xdfe6f0,0x2a2f36,0.9)); const sun=new THREE.DirectionalLight(0xffffff,1.1); sun.position.set(-60,80,120); sc.add(sun);
+  const cam=new THREE.PerspectiveCamera(50,1,0.1,2000); cam.up.set(0,0,1); const ctl=new MiniOrbit(cam, r.domElement);
+  const bb=new THREE.Box3(); for (const it of site.layout.items) for (const p of it.primitives){ bb.expandByPoint(new THREE.Vector3(...p.a)); bb.expandByPoint(new THREE.Vector3(...p.b)); }
+  if (!bb.isEmpty()){ const c=bb.getCenter(new THREE.Vector3()); ctl.target.set(c.x,c.y,0); ctl.radius=Math.max(60,bb.getSize(new THREE.Vector3()).length()*0.9); ctl.phi=0.55; ctl.theta=-0.9; }
+  const g=new THREE.Group(); const cond=buildConductors(site); g.add(cond.group); if (dims) g.add(buildEquipment(site,dims).group); sc.add(g);
+  const w=host.clientWidth||170, h=host.clientHeight||170; r.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix();
+  miniViews.push({r,sc,cam,ctl,host});
+}
+(function miniLoop(){ requestAnimationFrame(miniLoop); for (const v of miniViews){ if (!v.host.offsetParent) continue; v.ctl.update(); v.r.render(v.sc,v.cam); } })();
+async function runLayoutDraft(sample){
+  const box=$('layoutBox'); box.innerHTML='<div class="note">装置図を読んでいる…</div>';
+  try{
+    let r;
+    if (sample) r=await fetch('/api/ingest/layout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sample:true})});
+    else { const f=$('layoutFile').files[0]; if(!f){ box.innerHTML='<div class="warn">PDF を選んでから</div>'; return; } const fd=new FormData(); fd.append('file',f); r=await fetch('/api/ingest/layout',{method:'POST',body:fd}); }
+    if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'装置図を読めなかった'}（${r.status}）</div>`; return; }
+    const j=await r.json(); const e=j.eval, c=e.conductor_match||{}; const f2=v=>(v==null?'—':(+v).toFixed(2));
+    const truth=await (await fetch('/api/sites/SITE-01')).json();
+    const qs=[...(j.questions||[]).map(q=>typeof q==='string'?q:(q.message||JSON.stringify(q)))];
+    miniViews.splice(0).forEach(v=>{ v.r.dispose(); v.r.domElement.remove(); });
+    box.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div><div class="note">合成データ（正）</div><div class="mini" id="miniL"></div></div><div><div class="note">図面から起こした下書き</div><div class="mini" id="miniR"></div></div></div>`
+      +`<table style="margin-top:6px"><tr><th>機器の一致</th><td>${e.apparatus_matched} / ${e.apparatus_total}</td></tr><tr><th>位置の差 平均／最大</th><td>${f2(e.position_error_mean_m)} m ／ ${f2(e.position_error_max_m)} m</td></tr><tr><th>高さ 一致数</th><td>${e.height_matched}（差 平均 ${f2(e.height_error_mean_m)} m ／ 最大 ${f2(e.height_error_max_m)} m）</td></tr><tr><th>導体の一致</th><td>${c.matched} / ${c.total}${c.tolerance_m!=null?`（許容 ${c.tolerance_m} m）`:''}</td></tr></table>`
+      +`<div class="bay"><h4>要確認（${qs.length}）</h4>`+(qs.length?qs.map(q=>`<div class="note">・${q}</div>`).join(''):'<div class="note">なし</div>')+`</div>`;
+    miniView($('miniL'), {topology:truth.topology, layout:truth.layout});
+    miniView($('miniR'), {topology:truth.topology, layout:j.layout});
+  }catch(err){ box.innerHTML=`<div class="warn">下書きを描けなかった: ${err.message||err}</div>`; }
+}
+$('btnLayoutSample').onclick=()=>runLayoutDraft(true);
+$('layoutFile').onchange=()=>runLayoutDraft(false);
 
 // ---- 視点
 function frameTo(cx,cy,radius,theta){ const steps=20; const t0=controls.target.clone(), r0=controls.radius, th0=controls.theta; let i=0;
@@ -492,5 +554,6 @@ async function update(){
 $('showEnv').onchange=update;
 loadSites().then(()=>go('s0')).catch(e=>{ hud.textContent='読み込みに失敗: '+e.message; });
 </script>
+<script type="module" src="./web/onboarding.js"></script>
 </body>
 </html>
