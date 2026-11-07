@@ -67,9 +67,9 @@ def run() -> list[tuple[str, bool, str]]:
 
     r = c.post("/api/sites/SITE-01/approve", json={"state": state2, "crane": crane2, "clearance": cl, "steps": st})
     a = r.json()
-    pdfs = [f for f in a.get("files", []) if f.endswith(".pdf")]
-    ok = r.status_code == 200 and len(pdfs) >= 2 and not a.get("drawing_error")
-    rows.append(("6 承認と書き出し", ok, f"承認ハッシュ {str(a.get('approval_hash', ''))[:12]}…、停止範囲図 PDF {len(pdfs)} 枚" if r.status_code == 200 else f"失敗 {r.status_code}"))
+    pdfs = [f for f in a.get("files", []) if f.endswith(".pdf") and f != "plan-crane.pdf"]
+    ok = r.status_code == 200 and len(pdfs) >= 2 and "plan-crane.pdf" in a.get("files", []) and not a.get("drawing_error")
+    rows.append(("6 承認と書き出し", ok, f"承認ハッシュ {str(a.get('approval_hash', ''))[:12]}…、停止範囲図 PDF {len(pdfs)} 枚、クレーン配置の平面図 PDF 1 枚" if r.status_code == 200 else f"失敗 {r.status_code}"))
 
     no_crane = c.post("/api/sites/SITE-01/approve", json={"state": day})
     bad = c.post("/api/sites/SITE-01/approve", json={"state": normal, "crane": dict(crane2, base=[34.0, 44.0], boom_elev_deg=30)})

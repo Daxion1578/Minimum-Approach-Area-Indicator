@@ -68,11 +68,12 @@ def setup_font() -> str:
 class Sheet:
     """図面 1 枚。紙の座標は mm（左下原点）。図枠・表題欄を持つ。"""
 
-    def __init__(self, path, pagesize, font, name, number, scale_text, canvas_obj=None):
+    def __init__(self, path, pagesize, font, name, number, scale_text, canvas_obj=None, date_text=None):
         # canvas_obj: 画面用に SVG へ描くとき（synth/svg_canvas.py）。無ければ PDF
         self.c = canvas_obj if canvas_obj is not None else canvas.Canvas(str(path), pagesize=landscape(pagesize))
         self.w, self.h = (v / MM for v in landscape(pagesize))
         self.font = font
+        self.date_text = date_text or ("作成年月日　" + DATE_TEXT)   # 暦日を載せない図は date_text に別の文を渡す
         self.c.setLineWidth(LW["frame"])
         self.c.rect(35 * MM, 10 * MM, (self.w - 45) * MM, (self.h - 20) * MM)   # 輪郭: 左 35、他 10
         self.title_block(name, number, scale_text)
@@ -143,7 +144,7 @@ class Sheet:
         self.line(x + 80, y, x + 80, y + 16, LW["thin"])
         self.text(x + 4, y + 19.5, name, 7.0)
         self.text(x + 95, y + 20, OFFICE, 2.5)
-        self.text(x + 4, y + 11, "作成年月日　" + DATE_TEXT, 2.5)
+        self.text(x + 4, y + 11, self.date_text, 2.5)
         self.text(x + 4, y + 6.5, "縮尺　" + scale_text, 2.5)
         self.text(x + 4, y + 2, "合成変電所（架空）。寸法・名称・番号はすべて仮定値", 2.2)
         self.text(x + 84, y + 11, "図番", 2.5); self.text(x + 95, y + 11, number, 3.5)

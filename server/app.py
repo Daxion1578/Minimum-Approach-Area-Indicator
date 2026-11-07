@@ -91,6 +91,7 @@ class ApproveRequest(BaseModel):
     steps: dict | None = None
     approver: str = "APPROVER-01"
     note: str = ""
+    lift: dict | None = None     # 任意。{"pick_id", "set": [x, y]}（クレーン配置図の吊り点・資材置場。無ければ対象機器と既定の置場）
 
 
 def _sha(obj) -> str:
@@ -223,6 +224,11 @@ def post_approve(site_id: str, req: ApproveRequest):
         files += write_step_drawings(site, req.steps, req.state, out_dir)
     except Exception as e:  # 図面が出せなくても承認は成立させる（理由は返す）
         payload["drawing_error"] = str(e)
+    try:
+        from synth.step_drawings import write_crane_plan
+        files.append(write_crane_plan(site, payload, out_dir, req.lift))
+    except Exception as e:
+        payload["drawing_error"] = (payload.get("drawing_error") or "") + f"クレーン配置図: {e}"
     rel = str(out_dir.relative_to(ROOT)) if ROOT in out_dir.parents else str(out_dir)
     return {"name": name, "approval_hash": h, "files": files, "dir": rel, "drawing_error": payload.get("drawing_error")}
 

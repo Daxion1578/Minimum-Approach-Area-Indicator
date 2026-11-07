@@ -502,7 +502,7 @@ function planSummary(){
 }
 $('btnApprove').onclick=async()=>{
   const steps=lastSteps?{...lastSteps, conditions:planConditions()}:null;
-  const body={state, crane:lastCrane, clearance:lastClearance, steps, approver:$('approver').value};
+  const body={state, crane:lastCrane, clearance:lastClearance, steps, approver:$('approver').value, lift:(lastSelect&&lastSelect.pick_id)?{pick_id:lastSelect.pick_id,set:lastSelect.set}:null};
   const r=await fetch(`/api/sites/${site.site_id}/approve`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json();
   if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; return; }

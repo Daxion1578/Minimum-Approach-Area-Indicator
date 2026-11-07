@@ -48,3 +48,22 @@ def test_full_flow(client):
     assert plan["approval_hash"] == j["approval_hash"] and plan["verdict"] == cl["verdict"]
     assert plan["conditions"][0].startswith("作業する機器に電気が流れ込む端すべてに")
     assert set(plan["inputs"]) >= {"topology_sha256", "layout_sha256", "clearance_table_sha256"}
+
+
+def test_crane_plan_pdf(client):
+    """承認すると、クレーンの配置を描き込んだ一般平面図 plan-crane.pdf が出る（クラス名・対象機器番号・承認ハッシュ・暦日なし）。"""
+    import io
+    import pdfplumber
+    normal = client.get("/api/sites/SITE-01").json()["states"]["normal"]
+    steps = client.post("/api/sites/SITE-01/steps", json={"targets": ["66-D1-CB1"], "state": normal}).json()
+    sel = client.post("/api/sites/SITE-01/select", json={"state": steps["state"], "pick_id": "66-D1-CB1"}).json()
+    r = client.post("/api/sites/SITE-01/approve", json={"state": steps["state"], "crane": sel["chosen"]["crane"], "steps": steps,
+                                                       "lift": {"pick_id": sel["pick_id"], "set": sel["set"]}})
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert "plan-crane.pdf" in j["files"] and not j.get("drawing_error")
+    pdf = client.get(f"/api/sites/SITE-01/approved/{j['name']}/plan-crane.pdf").content
+    with pdfplumber.open(io.BytesIO(pdf)) as doc:
+        text = "".join(p.extract_text() or "" for p in doc.pages).replace(" ", "")
+    assert "35t" in text and "6T-110" in text and j["approval_hash"][:12] in text
+    assert "令和" not in text and "据付" in text
