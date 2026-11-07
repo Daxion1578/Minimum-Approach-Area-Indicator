@@ -29,6 +29,20 @@ def run(cmd: list[str]):
         raise SystemExit(1)
 
 
+HOLD = 1.2  # これより長い静止だけを 1.2 秒に縮める（短い静止は録画の通常の間なので触らない）
+
+
+def freeze_spans(video: str, ss: float, length: float) -> list[tuple[float, float]]:
+    """録画の ss から length 秒のうち、画面が動かない区間（0.3 秒以上）を、その切り出しの先頭を 0 とした秒で返す。"""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-ss", f"{ss:.3f}", "-t", f"{length:.3f}", "-i", video, "-vf", f"fps={FPS},freezedetect=n=0.003:d=0.3", "-an", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    st = [float(x) for x in re.findall(r"freeze_start: ([\d.]+)", r.stderr)]
+    en = [float(x) for x in re.findall(r"freeze_end: ([\d.]+)", r.stderr)]
+    if len(st) > len(en):
+        en.append(length)  # 最後まで止まっている
+    return list(zip(st, en))
+
+
 def srt_time(t: float) -> str:
     ms = round(t * 1000)
     return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
@@ -80,21 +94,27 @@ def main() -> int:
         src_len = s["end"] - s["start"]
         ss = s["start"]
         out_len = target
-        if i == 0:
-            pass  # 最初の行は録画 15 秒 + 札 5 秒 = 台本の 20 秒
-        factor = src_len / target  # >1 なら早送り
-        speed_ok = 0.85 <= factor <= MAXF
         p = tmp / f"p{i + 1}_{s['id']}.mp4"
-        if speed_ok:
-            vf = f"setpts=PTS/{factor:.5f},{vf0},trim=duration={target},setpts=PTS-STARTPTS"
-        else:  # 範囲外: 上限で速度を変え、余りは最後のコマの静止
-            f = min(max(factor, 0.85), MAXF)
-            vf = f"setpts=PTS/{f:.5f},{vf0},tpad=stop_mode=clone:stop_duration={target},trim=duration={target},setpts=PTS-STARTPTS"
-        run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ss:.3f}", "-t", f"{src_len:.3f}", "-i", video, "-vf", vf, *enc, str(p)])
+        # 動かない部分（読み込み待ちなど）を検出して、長い静止は HOLD 秒だけ残して落とす。操作の見た目の速さは変えない
+        frz = freeze_spans(video, ss, src_len)
+        cap = HOLD
+        while True:
+            kept = src_len - sum(max(0.0, e - st - cap) for st, e in frz)
+            if kept / MAXF <= target or cap <= 0.3:
+                break
+            cap = max(0.3, cap - 0.05)  # 収まらないときは、長い静止から優先してさらに落とす
+        drops = [(st + cap, e) for st, e in frz if e - st > cap]
+        factor = max(1.0, kept / target)  # >1 なら早送り（上限 MAXF。それでも超えるときだけ上限を越える）
+        sel = "1" if not drops else "*".join(f"not(between(t,{a:.3f},{b:.3f}))" for a, b in drops)
+        fs = tmp / f"f{i + 1}.txt"
+        fs.write_text(f"fps={FPS},select='{sel}',setpts=N/({FPS}*TB),setpts=PTS/{factor:.5f},{vf0},tpad=stop_mode=clone:stop_duration={target},trim=duration={target},setpts=PTS-STARTPTS")
+        run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ss:.3f}", "-t", f"{src_len:.3f}", "-i", video, "-filter_script:v", str(fs), *enc, str(p)])
+        stat = {"src": round(src_len, 2), "kept": round(kept, 2), "dropped": round(src_len - kept, 2), "factor": round(factor, 3), "after": round(kept / factor, 2), "pad": round(max(0.0, target - kept / factor), 2)}
+        print(s["id"], stat)
         parts.append(p)
         # 字幕の時刻（全体の時刻）。最初の行は札の 5 秒の後ろから語る
         seg_start = TITLE_SEC + t if i == 0 else TITLE_SEC + t
-        narr.append({"id": s["id"], "script": s["script"], "start": round(seg_start, 2), "end": round(seg_start + out_len, 2), "text": s["text"], "speed": round(factor, 3)})
+        narr.append({"id": s["id"], "script": s["script"], "start": round(seg_start, 2), "end": round(seg_start + out_len, 2), "text": s["text"], "speed": round(factor, 3), "trim": stat})
         t += out_len
     rec_total = TITLE_SEC + t  # 札 + 録画（= 2:21 = 141 秒）
 
