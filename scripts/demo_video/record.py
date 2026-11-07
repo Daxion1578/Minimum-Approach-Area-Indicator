@@ -22,12 +22,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # 台本の行。dur は台本の長さ（秒）。s1 は先頭 5 秒が題の札なので、録画するのは 15 秒。
 LINES = [
-    ("s1", "0:00-0:20", 15, "機器を取り替える日も、変電所は全部は止められません。隣には電気の流れる線が残り、そこへクレーンが入ります。近づいてはいけない距離は、図面のどこにも描かれていない。担当者の頭の中と、現場で見張る人の目の中にあります。MAAI、間合い。見えない間合いを、見えるようにする道具です。"),
-    ("s2", "0:20-0:48", 28, "入口は、いつもの単線結線図です。線と記号と番号から、つながりを起こします。つながりを決めるのは計算。Claude は記号の種別を確かめ、迷った所を人への質問にします。装置図と断面図からは、機器の位置と高さを読んで3Dを組み立て直します。読めなかった所は、要確認として人に戻します。"),
-    ("s3", "0:48-1:13", 25, "この日に取り替えるのは66kVの遮断器。電気が流れ込む端すべてで、最初の断路器まで切ります。緑が停電、赤が充電。開閉器を押せば、その場で塗り替わる。接地を取ることは、計画の条件として必ず書きます。"),
-    ("s4", "1:13-1:48", 35, "クレーンは小さいほど安い。ブームは取り替える機器の真上と、資材置場の真上に来ます。その2点と重さから、届いて、吊れて、充電部に近づかない一番小さいクレーンを計算で選ぶ。重さだけなら10t級で足りる。でも充電部を避けて遠くから吊るので、答えは35t級。一つ下は、1号変圧器の線に近づきすぎて使えない。では、その変圧器も止めたら。20t級で済む。ただし余裕が小さいので、監視員を置く条件付き。止めるかどうかは、人が決めます。"),
-    ("s5", "1:48-2:13", 25, "承認は人。承認の瞬間にもう一度判定し直し、不可の計画と、クレーンの無い計画は承認できません。停止範囲図と、接地や追加停止の条件が書き出されます。"),
-    ("s6", "2:13-2:21", 8, "安全の判断は計算で、説明はClaudeで。Claudeの出力は計算コードで確かめ直してから出し、採否は人が決めます。"),
+    ("s1", "0:00-0:20", 15, "機器を取り替える日も、変電所は全部は止められません。すぐ隣に電気が流れたままの線が残り、そこへクレーンが入ります。どこまで近づけていいかは図面に書いてなくて、私も平面図に円を描いて、こんな感じかな、で決めていました。それを見えるようにする道具が、間合い、MAAI です。"),
+    ("s2", "0:20-0:50", 30, "入口はいつもの図面です。単線結線図から機器のつながりを、装置図の平面と断面から機器の位置と高さを読んで、構内の3Dを組み立てます。Claudeは記号の種類を確かめて、迷ったところを人への質問にします。読めなかったところは要確認として残り、人が確認して「この3Dで続ける」を押してはじめて、計算に使われます。"),
+    ("s3", "0:50-1:15", 25, "今日取り替えるのは66kVの遮断器です。対象を選ぶと、電気が流れ込んでくる側すべてで最初の断路器まで切る、という停止範囲が出ます。結線図の緑が停電、赤が充電です。開閉器を押すと、その場で塗り替わります。接地を取ることは、計画の条件として必ず書き出します。"),
+    ("s4", "1:15-1:50", 35, "次にクレーンです。取り替える機器の真上と資材置場の真上、この2点と重さだけなら10t級で足ります。でも充電部から4m離すには35t級が要る。一つ下は、1号変圧器の線に近づきすぎて使えません。では、その変圧器も止めたらどうか。計算すると20t級で済み、監視員を置く条件付きで可になります。止めるかどうかは、人が決めます。"),
+    ("s5", "1:50-2:13", 23, "最後に承認です。承認するのは人で、押した瞬間にもう一度判定し直します。不可の計画と、クレーンのない計画は承認できません。書き出されるのは、停止範囲を塗り分けた単線結線図と、クレーンの据付位置を描き込んだ一般平面図。工事会社にそのまま渡せる形です。"),
+    ("s6", "2:13-2:21", 8, "安全の判断は計算で行い、説明はClaudeが書き、採否は人が決める。この分担で作っています。"),
 ]
 
 CARD_HTML = """<div id="__ov" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;
@@ -122,6 +122,14 @@ def main() -> int:
                 smooth("#miniL", "start")
                 page.wait_for_timeout(3500)
                 page.evaluate("()=>{const t=document.querySelector('#layoutBox table'); if(t) t.scrollIntoView({behavior:'instant',block:'center'});}")
+                page.wait_for_timeout(3000)
+                page.wait_for_function("()=>{const b=document.querySelector('#btnUseDraft'); return b && !b.disabled}", timeout=30000)
+                smooth("#btnUseDraft", "center")
+                page.wait_for_timeout(1500)
+                click("#btnUseDraft")  # 「この 3D で続ける」（要確認があるときは「要確認 n 件を確認のうえ続ける」）
+                page.wait_for_selector("#srcBadge:has-text('図面から起こした配置')", timeout=30000)
+                smooth("#hud", "start")
+                page.wait_for_timeout(2000)  # バッジが変わったのを見せる
             elif sid == "s3":
                 tab("s1")
                 page.wait_for_timeout(1200)
@@ -167,12 +175,19 @@ def main() -> int:
                 click("#btnApprove")
                 page.wait_for_selector("#approveBox .bay", timeout=60000)
                 page.wait_for_timeout(2500)
-                pdfs = sorted(glob.glob(str(ROOT / "data/sites/SITE-01/approved/plan-*/step-1-sld.pdf")), key=lambda f: Path(f).stat().st_mtime)
-                if pdfs:
+                def overlay(name: str, hold: int):
+                    pdfs = sorted(glob.glob(str(ROOT / f"data/sites/SITE-01/approved/plan-*/{name}")), key=lambda f: Path(f).stat().st_mtime)
+                    if not pdfs:
+                        print("PDF が無い:", name, file=sys.stderr)
+                        return
                     b64 = base64.b64encode(pdf_png(Path(pdfs[-1]))).decode()
-                    page.evaluate("""(b)=>{const d=document.createElement('div'); d.id='__ov';
+                    page.evaluate("""(b)=>{const o=document.getElementById('__ov'); if(o) o.remove(); const d=document.createElement('div'); d.id='__ov';
                       d.style.cssText='position:fixed;inset:0;z-index:99999;background:#222;display:flex;align-items:center;justify-content:center';
                       d.innerHTML='<img style="max-width:1900px;max-height:1060px;background:#fff" src="data:image/png;base64,'+b+'">'; document.body.appendChild(d);}""", b64)
+                    page.wait_for_timeout(hold)
+
+                overlay("step-1-sld.pdf", 6000)
+                overlay("plan-crane.pdf", 6500)  # 全体に合わせて早送りされても約 5 秒残る長さ
             elif sid == "s6":
                 page.evaluate("()=>{const o=document.getElementById('__ov'); if(o) o.remove();}")
                 page.evaluate("(h)=>{const d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d.firstElementChild);}", CARD_HTML)

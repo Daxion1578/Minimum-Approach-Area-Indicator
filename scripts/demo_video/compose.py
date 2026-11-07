@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FPS = 30
-TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 5, 30, 9
+TITLE_SEC, CONCEPT_SEC, CLOSING_SEC = 5, 27, 12
 FONT = "Noto Sans CJK JP"
 MAXF = 2.6  # 録画を台本の秒数に合わせる早送りの上限（ソフトウェア描画では操作ごとに約 1 秒かかり、台本より長く録れる）
 
@@ -98,21 +98,21 @@ def main() -> int:
         t += out_len
     rec_total = TITLE_SEC + t  # 札 + 録画（= 2:21 = 141 秒）
 
-    # 3) 構想映像（そのまま）
+    # 3) 構想映像（27 秒で止める）
     p = tmp / "p7_concept.mp4"
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", a.concept, "-t", str(CONCEPT_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     concept_start = rec_total
-    narr.append({"id": "s7", "script": "2:21-2:51", "start": concept_start, "end": concept_start + CONCEPT_SEC,
-                 "text": "この先は現地です。承認した計画をスマホで、かざすだけ。映った機器を図面の3Dと照らし合わせて位置を合わせ、合った分だけ、離隔の範囲を重ねる。ずれの分は太らせる。同じ並びが続いて位置が決まらないときは、出さない。取り違えが一番の危険だからです。課電はカメラでは当てません。図面と開閉器の状態から、計算で決めます。", "speed": 1.0})
+    narr.append({"id": "s7", "script": "2:21-2:48", "start": concept_start, "end": concept_start + CONCEPT_SEC,
+                 "text": "この先は現地です。承認した計画をスマホでかざすと、映った機器を3Dと照らし合わせて位置を合わせ、合ったところだけに近づけない範囲を重ねます。位置が決まらないときは出しません。取り違えが一番危ないからです。充電しているかどうかはカメラで当てず、図面と開閉器の状態から計算で決めます。", "speed": 1.0})
 
-    # 4) 締めの札 9 秒
+    # 4) 締めの札 12 秒
     p = tmp / "p8_closing.mp4"
     run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(FPS), "-i", str(d / "closing.png"), "-t", str(CLOSING_SEC), "-vf", vf0, *enc, str(p)])
     parts.append(p)
     c0 = concept_start + CONCEPT_SEC
-    narr.append({"id": "s8", "script": "2:51-3:00", "start": c0, "end": c0 + CLOSING_SEC,
-                 "text": "現場の安全を、見張る人の目と、経験者の頭の中だけに置かない。人が入れ替わっても、同じ答えにたどり着ける道具にしたい。見えない間合いを、見えるように。", "speed": 1.0})
+    narr.append({"id": "s8", "script": "2:48-3:00", "start": c0, "end": c0 + CLOSING_SEC,
+                 "text": "現場の安全を、見張りの目と経験者の頭の中だけに置きたくない。人が替わっても同じ答えにたどり着ける道具にしたくて、作りました。", "speed": 1.0})
     # 最初の行（0:00-0:20）は札の 5 秒も含めて 20 秒。語りは札から始める
     narr[0]["start"] = 0.0
 

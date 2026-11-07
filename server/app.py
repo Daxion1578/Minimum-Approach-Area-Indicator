@@ -234,7 +234,9 @@ def post_approve(site_id: str, req: ApproveRequest):
                # どの版の結線・配置・離隔表で判定したか（承認ハッシュに含める）
                "inputs": {"topology_sha256": _sha(site["topology"]), "layout_sha256": _sha(site["layout"]),
                           "clearance_table_sha256": hashlib.sha256(CLEARANCE_CSV.read_bytes()).hexdigest()[:16],
-                          "clearance_table_id": env.get("clearance_table_id")}}
+                          "clearance_table_id": env.get("clearance_table_id")},
+               "layout_source": site.get("layout_source"), **({"layout_questions": site.get("layout_questions", []), "layout_drawing_hash": site.get("layout_drawing_hash")} if site.get("layout_source") == "drawing-draft" else {}),
+               }
     body = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     h = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
     payload["approval_hash"] = h
