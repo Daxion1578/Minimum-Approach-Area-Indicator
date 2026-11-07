@@ -66,6 +66,7 @@ def main() -> int:
         browser = p.chromium.launch(args=["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
         ctx = browser.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=1,
                                   record_video_dir=str(rec), record_video_size={"width": 1920, "height": 1080})
+        ctx.add_init_script("try{localStorage.setItem('maai.onboarded','1');localStorage.setItem('maai.json','1')}catch(e){}")  # 初回の案内を出さない・内部データの列を従来どおり出す
         t0 = time.monotonic()
         page = ctx.new_page()
 

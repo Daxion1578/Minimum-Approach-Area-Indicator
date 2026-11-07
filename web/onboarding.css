@@ -1,0 +1,79 @@
+/* 初回の案内・進行バー・スマホ。色と字体は index.html の既存のもの（--bg, --panel, --accent …）を使う */
+body { grid-template-columns:380px 1fr; grid-template-rows:44px auto 1fr; padding-top:var(--boot-h,0px); }
+body.json { grid-template-columns:380px 1fr 360px; }
+header { grid-column:1/-1; }
+#right { display:none; } body.json #right { display:block; }
+.hbtns { margin-left:auto; display:flex; gap:8px; }
+.hbtns button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* 主ボタンを目立たせる */
+button { white-space:nowrap; }
+.row { flex-wrap:wrap; }
+.row input[type=file] { max-width:100%; flex:1 1 100%; }
+button.act { padding:9px 18px; font-size:14px; box-shadow:0 0 0 1px rgba(78,161,255,.5); }
+button.act:hover { filter:brightness(1.1); }
+button.sub.nav { background:none; border-color:transparent; color:var(--mute); }
+button.sub.nav:hover { color:var(--fg); }
+.todo { margin:0 0 10px; padding:8px 10px; border-left:3px solid var(--accent); background:#16202c; border-radius:0 6px 6px 0; font-size:13px; line-height:1.6; }
+details.more { margin:6px 0; }
+details.more > summary { cursor:pointer; color:var(--mute); font-size:12px; padding:2px 0; }
+details.more[open] > summary { color:var(--fg); }
+
+/* Claude のバッジ */
+.badge { background:#16202c; color:var(--mute); border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:12px; cursor:help; white-space:nowrap; }
+.badge:hover { color:var(--fg); border-color:var(--accent); }
+
+/* 進行バー */
+#prog { grid-column:1/-1; display:flex; align-items:center; gap:14px; padding:6px 14px; background:var(--bg); border-bottom:1px solid var(--line); overflow-x:auto; }
+#prog .stages { display:flex; align-items:center; list-style:none; margin:0; padding:0; flex:0 0 auto; }
+#prog .stages li { display:flex; align-items:center; }
+#prog .stages li + li::before { content:""; width:28px; height:1px; background:var(--line); margin:0 4px; }
+#prog .stages button { display:flex; align-items:center; gap:7px; background:none; border:0; border-bottom:2px solid transparent; color:var(--mute); padding:6px 4px; cursor:pointer; font-size:13px; white-space:nowrap; }
+#prog .stages i { font-style:normal; width:20px; height:20px; border-radius:50%; border:1px solid var(--line); display:inline-flex; align-items:center; justify-content:center; font-size:11px; }
+#prog .stages button.on { color:var(--fg); border-bottom-color:var(--accent); }
+#prog .stages button.on i { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:700; }
+#prog .stages button.done i { border-color:var(--deadg); color:var(--deadg); }
+#prog .stages button.on.done i { border-color:var(--accent); color:#06121f; }
+#prog .next { display:flex; align-items:center; gap:10px; margin-left:auto; flex:0 0 auto; }
+#nextLabel { color:var(--mute); font-size:12px; white-space:nowrap; }
+#btnNext:disabled, #btnTour:disabled { opacity:.5; cursor:default; }
+#btnTour { flex:0 0 auto; white-space:nowrap; }
+#tourCap { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:9000; max-width:min(680px,calc(100vw - 32px)); background:rgba(27,32,38,.95); border:1px solid var(--accent); border-radius:8px; padding:10px 16px; font-size:14px; line-height:1.6; display:none; }
+#tourCap.on { display:block; }
+#tourCap small { display:block; color:var(--mute); font-size:11px; }
+
+/* 初回の案内 */
+#welcome { position:fixed; inset:0; z-index:10000; background:rgba(8,10,13,.82); display:none; align-items:center; justify-content:center; padding:16px; overflow:auto; }
+#welcome.on { display:flex; }
+#welcome .card { width:min(560px,100%); background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:26px 28px 20px; }
+#welcome h2 { margin:0 0 16px; font-size:19px; line-height:1.7; font-weight:600; }
+#welcome ol { margin:0 0 20px; padding:0; list-style:none; display:grid; gap:8px; }
+#welcome ol li { display:flex; gap:12px; align-items:baseline; padding:8px 12px; background:#16202c; border-radius:6px; }
+#welcome ol b { color:var(--accent); font-weight:700; flex:0 0 auto; }
+#welcome .btns { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+#welcome .btns .act { padding:11px 22px; font-size:15px; }
+#welcome .prog { margin:12px 0 0; font-size:12px; color:var(--mute); min-height:18px; }
+#welcome .bar { height:3px; background:var(--line); border-radius:2px; margin-top:6px; overflow:hidden; display:none; }
+#welcome .bar.on { display:block; }
+#welcome .bar i { display:block; height:100%; width:40%; background:var(--accent); animation:slide 1.4s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left:-40%; } 100% { margin-left:100%; } }
+#welcome .fine { margin:14px 0 0; font-size:11px; color:var(--mute); }
+@media (prefers-reduced-motion: reduce) { #welcome .bar i { animation:none; width:100%; } }
+
+/* スマホ: 1 列（操作 → 3D → 表） */
+@media (max-width:1100px) { header small { display:none; } }
+@media (max-width:699px) {
+  body, body.json { display:flex; flex-direction:column; height:auto; min-height:100vh; padding-top:var(--boot-h,0px); }
+  header { height:auto; min-height:44px; flex-wrap:wrap; padding:6px 12px; }
+  #prog { padding:6px 12px; gap:10px; }
+  #prog .stages li + li::before { width:12px; }
+  #prog .stages button span { font-size:12px; }
+  #left { border-right:0; overflow:visible; }
+  #view { height:max(300px,100vw); flex:0 0 auto; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  body.json #right { border-left:0; }
+  .row { flex-wrap:wrap; }
+  #hud { font-size:11px; max-width:calc(100% - 20px); }
+  #welcome .card { padding:20px 18px 16px; }
+  #welcome .btns .act { width:100%; }
+}
