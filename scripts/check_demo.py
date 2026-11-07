@@ -54,7 +54,7 @@ def run() -> list[tuple[str, bool, str]]:
     sel = c.post("/api/sites/SITE-01/select", json={"state": day, "pick_id": TARGET}).json()
     ch = sel.get("chosen") or {}
     rows.append(("3 重機の選定（一番小さいクラス）", bool(sel.get("ok")),
-                 f"{ch.get('name')}（{ch.get('verdict_ja')}、最小 {ch.get('min_distance_m')} m／必要 {ch.get('required_m')} m）。一つ下が使えない理由: {sel.get('smaller_why_not')}" if ch else "; ".join(sel.get("problems", []))))
+                 f"{ch.get('name')}（{ch.get('verdict_ja')}、最小 {ch.get('min_distance_m')} m／必要 {ch.get('required_m')} m）。{(sel.get('by_weight') or {}).get('note', '')}。一つ下が使えない理由: {sel.get('smaller_why_not')}" if ch else "; ".join(sel.get("problems", []))))
 
     wo = sel.get("with_outage") or {}
     ch2 = wo.get("chosen")

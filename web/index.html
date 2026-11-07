@@ -381,6 +381,7 @@ $('btnSelect').onclick=async()=>{
   if (j.chosen){ const c=j.chosen;
     html+=`<div class="bay" style="border-color:${col(c.verdict)}"><div class="big"><span class="cls" style="background:${col(c.verdict)};color:#06121f">${c.class}</span>${c.name} で置ける（${c.verdict_ja}）</div>`+
       `<div class="note">据付 (${c.crane.base.map(v=>v.toFixed(0)).join(', ')})、ブーム ${c.crane.boom_len_m} m、起伏角 ${c.crane.boom_elev_deg.toFixed(0)}°${c.crane.boom_elev2_deg?'／'+c.crane.boom_elev2_deg.toFixed(0)+'°':''}、旋回 ${c.crane.slew_deg.map(v=>v.toFixed(0)+'°').join('〜')}。最小離隔 ${c.min_distance_m?.toFixed(2)} m／必要 ${c.required_m?.toFixed(2)} m</div>`+
+      (j.by_weight?.note?`<div style="margin-top:4px">${j.by_weight.note}</div>`:'')+
       (j.smaller_why_not?`<div class="note">一つ下のクラスが使えない理由: ${j.smaller_why_not}</div>`:'')+
       `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div></div>`; }
   if (j.tried) html+=`<details class="bay"><summary>試したクラス（小さい順）</summary>`+j.tried.map(e=>`<div class="note"><span class="cls" style="background:${e.ok?'var(--deadg)':'#3a4452'};color:${e.ok?'#06121f':'var(--fg)'}">${e.class}</span>${e.ok?'置ける':e.why_not}（必要 ${e.need_t} t）</div>`).join('')+`</details>`;

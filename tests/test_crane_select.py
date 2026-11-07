@@ -14,7 +14,7 @@ def _day(topo, states, target):
 
 
 def test_capacity_uses_the_far_side_of_the_chart():
-    k = load_classes()[0]
+    k = next(c for c in load_classes() if c["id"] == "13t")
     assert capacity_t(k, 3.0) == k["chart"][0][1]
     assert capacity_t(k, 3.1) == k["chart"][1][1]      # 表の間は遠い側（小さい方）の値
     assert capacity_t(k, 999) == 0.0
@@ -59,3 +59,25 @@ def test_heavier_load_never_gets_a_smaller_class(topo, site, states):
 def test_transformer_body_has_no_example_weight(topo, site, states):
     r = select(topo, site.layout, states["normal"], "TR-2")
     assert r["ok"] is False and "重さ" in r["problems"][0]
+
+
+def test_weight_only_class_is_not_larger_than_chosen(topo, site, states):
+    """重さと届く距離だけで決まるクラスは、離隔も見て選んだクラス以下。差は充電部を避けるための上乗せ。"""
+    day = _day(topo, states, "66-D1-CB1")
+    r = select(topo, site.layout, day, "66-D1-CB1", suggest_outage=False)
+    ranks = [k["id"] for k in load_classes()]
+    assert r["by_weight"] and r["chosen"]
+    assert ranks.index(r["by_weight"]["class"]) <= ranks.index(r["chosen"]["class"])
+    assert len(load_classes()) >= 10
+    caps = [k["capacity_t"] for k in load_classes()]
+    assert caps == sorted(caps)
+
+
+def test_charts_grow_with_class_at_every_radius():
+    """大きいクラスほど、同じ作業半径で吊れる重さが減らない（例示値の表の整合）。"""
+    from engine.crane_select import capacity_t
+    ks = load_classes()
+    for r in (3, 5, 8, 10, 14, 18):
+        vals = [capacity_t(k, r) for k in ks]
+        nz = [v for v in vals if v > 0]
+        assert nz == sorted(nz), (r, vals)

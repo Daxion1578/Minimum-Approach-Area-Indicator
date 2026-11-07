@@ -247,7 +247,8 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
             m = w[0] if w else 99.0
             if best_ok is None or m > best_ok[0]:
                 best_ok = (m, c, w)
-        entry = {"class": k["id"], "name": k["name"], "need_t": round(need, 2), "counts": counts}
+        entry = {"class": k["id"], "name": k["name"], "need_t": round(need, 2), "counts": counts,
+                 "reach_and_lift": bool(best_ok or best_ng)}   # 離隔を見なければ、届いて吊れる位置があるか
         if best_ok:
             # ふるい分けで選んだ位置を、承認と同じ判定（2° 刻み）でやり直す
             c = best_ok[1]
@@ -303,6 +304,13 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
     chosen = next((e for e in per if e["ok"]), None)
     out = {"ok": chosen is not None, "pick_id": pick_id, "pick": list(p), "set": list(setp), "weight_t": weight_t, "load": load,
            "item": item, "chosen": chosen, "tried": per, "table_status": _table()["status"], "problems": []}
+    # 重さと届く距離だけで決まるクラス（離隔を見ない）。選んだクラスとの差が「充電部を避けるための上乗せ」
+    wo = next((e for e in per if e.get("reach_and_lift")), None)
+    out["by_weight"] = {"class": wo["class"], "name": wo["name"]} if wo else None
+    if wo and chosen and wo["class"] != chosen["class"]:
+        out["by_weight"]["note"] = f"重さと届く距離だけなら {wo['name']} で足りる。充電部の離隔を保つために {chosen['name']} が要る"
+    elif wo and chosen:
+        out["by_weight"]["note"] = f"重さと届く距離で決まる {wo['name']} のまま、充電部の離隔も保てる"
     # 一つ下のクラスが使えない理由（選んだクラスの直前）
     if chosen:
         i = per.index(chosen)
