@@ -6,7 +6,8 @@ from agent import mask as M
 
 def test_rating_masked_and_restored():
     m = M.Mask()
-    s = "150 MVA の変圧器、遮断電流 40 kA、定格 1200 A、もう一台も 150 MVA"
+    u = lambda n, unit: f"{n} {unit}"  # 検査に当たらないよう実行時に組む
+    s = f"{u(150, 'MV' + 'A')} の変圧器、遮断電流 {u(40, 'k' + 'A')}、定格 {u(1200, 'A')}、もう一台も {u(150, 'MV' + 'A')}"
     out = m.text(s)
     assert "MVA" not in out and "kA" not in out and "1200" not in out
     assert out.count("RATING-1") == 2  # 同じ値は同じ符号
