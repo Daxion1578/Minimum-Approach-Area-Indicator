@@ -230,7 +230,15 @@ def _cells(layout: dict, k: dict, pick, setp) -> list[tuple[float, float]]:
     return out
 
 
-def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_z, rules):
+def _namer(topo: Topology):
+    """導体の ID（220-BUS-A など）→ 画面に出す名前（220kV 母線 A区間）。topology に無い ID はそのまま返す。"""
+    def name(cid: str) -> str:
+        n = topo.nodes.get(cid)
+        return (n.name or cid) if n is not None else cid
+    return name
+
+
+def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_z, rules, cname=lambda cid: cid):
     tbl = _table()
     per_class = []
     for k in classes:
@@ -273,8 +281,10 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
             entry["ok"] = False
             if best_ng:
                 m, c, w = best_ng
-                entry["why_not"] = (f"届いて吊れる位置はあるが、どの位置でも {w[1]}（{w[2]:g}kV）に {w[4]:.2f}m まで近づく。"
-                                    f"必要 {w[3]:.2f}m")
+                nm = cname(w[1])
+                lab = nm if "kV" in nm else f"{nm}（{w[2]:g}kV）"   # 名前に電圧が入っていなければ添える
+                entry["why_not"] = (f"届いて吊れる位置はあるが、どの位置でも {lab}に {w[4]:.2f} m まで近づく。"
+                                    f"必要 {w[3]:.2f} m")
                 entry["binding_conductor"] = w[1]
             elif counts["weight"] and not counts["reach"]:
                 cap = capacity_t(k, min_r or 0)
@@ -358,7 +368,8 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
     res = energize(topo, state)
     env = envelopes(topo, layout, res, ClearanceTable.load(), False)
     classes = load_classes()
-    per = _select_on(env["envelopes"], layout, classes, pick, setp, weight_t, load, hook_need_z, rules)
+    cname = _namer(topo)
+    per = _select_on(env["envelopes"], layout, classes, pick, setp, weight_t, load, hook_need_z, rules, cname)
     chosen = next((e for e in per if e["ok"]), None)
     out = {"ok": chosen is not None, "pick_id": pick_id, "pick": list(p), "set": list(setp), "weight_t": weight_t, "load": load,
            "item": item, "chosen": chosen, "tried": per, "table_status": _table()["status"], "problems": []}
@@ -374,7 +385,7 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
     if chosen:
         ids = [k["id"] for k in classes]
         for k in classes[ids.index(chosen["class"]) + 1: ids.index(chosen["class"]) + 3]:
-            e = _select_on(env["envelopes"], layout, [k], pick, setp, weight_t, load, hook_need_z, rules)[0]
+            e = _select_on(env["envelopes"], layout, [k], pick, setp, weight_t, load, hook_need_z, rules, cname)[0]
             if e.get("cells"):
                 out["larger"].append({"class": e["class"], "name": e["name"], "cells": e["cells"]})
     # 一つ下のクラスが使えない理由（選んだクラスの直前）
@@ -405,7 +416,7 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
                 break
             targets.append(owner); cur = st["state"]
             env2 = envelopes(topo, layout, energize(topo, cur), ClearanceTable.load(), False)
-            per2 = _select_on(env2["envelopes"], layout, lim, pick, setp, weight_t, load, hook_need_z, rules)
+            per2 = _select_on(env2["envelopes"], layout, lim, pick, setp, weight_t, load, hook_need_z, rules, cname)
             ch2 = next((e for e in per2 if e["ok"]), None)
             if ch2:
                 break
@@ -420,7 +431,7 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
             st_b = generate(topo, state, blocked)
             if st_b["ok"]:
                 env_b = envelopes(topo, layout, energize(topo, st_b["state"]), ClearanceTable.load(), False)
-                per_b = _select_on(env_b["envelopes"], layout, lim, pick, setp, weight_t, load, hook_need_z, rules)
+                per_b = _select_on(env_b["envelopes"], layout, lim, pick, setp, weight_t, load, hook_need_z, rules, cname)
                 ref = next((e for e in per_b if e["ok"]), None)
             out["with_outage"] = {"blocked": blocked, "names": names_b, "chosen": None, "ops": [], "conditions": [],
                                   "note": f"{names_b} は依頼文で止められないとされているので、追加停止の案は出さない"

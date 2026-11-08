@@ -102,7 +102,7 @@ const W = document.createElement('div');
 W.id = 'welcome'; W.setAttribute('role','dialog'); W.setAttribute('aria-modal','true'); W.setAttribute('aria-labelledby','welcomeH');
 W.innerHTML = `<div class="card">
   <h2 id="welcomeH">変電所の機器を取り替える日に、どこを止めれば足りるか、残った充電部に近づかずに吊れる一番小さいクレーンはどれかを、図面から計算して出す道具です。</h2>
-  <ol><li><b>1</b>図面を読む（単線結線図の PDF）</li><li><b>2</b>停止範囲を出す（切る開閉器と、停電・充電の色分け）</li><li><b>3</b>クレーンを選んで承認する（離隔を計算で確かめ、書き出す）</li></ol>
+  <ol><li><b>1</b>図面を読む（結線図の PDF）</li><li><b>2</b>停止範囲を出す（切る開閉器と、停電・充電の色分け）</li><li><b>3</b>クレーンを選んで承認する（離隔を計算で確かめ、書き出す）</li></ol>
   <div class="btns"><button class="act" id="wStart">サンプルで始める</button><button class="sub" id="wOwn">自分の図面を読み込む</button></div>
   <div class="bar" id="wBar"><i></i></div><p class="prog" id="wProg" aria-live="polite"></p>
   <p class="fine">データはすべて合成です。</p></div>`;
@@ -123,7 +123,7 @@ $('wStart').onclick = async () => {
   const say = t => $('wProg').textContent = t;
   try {
     say('サイトを読み込み中…'); await siteReady();
-    say('サンプルの単線結線図を読んでいる…'); if (!(await ingest())) throw new Error('図面を取り込めなかった。取込タブで確かめてください');
+    say('サンプルの結線図を読んでいる…'); if (!(await ingest())) throw new Error('図面を取り込めなかった。取込タブで確かめてください');
     say('質問の無い開閉器を確認済にして、停止範囲へ進む…'); await sleep(400);
     $('btnConfirmAll').click(); window.go('s1'); hideWelcome();
   } catch (e) { say(String(e.message || e)); $('wOwn').disabled = false; $('wStart').disabled = false; $('wBar').classList.remove('on'); }
@@ -146,7 +146,7 @@ async function tour(){
   try {
     hideWelcome();
     window.go('s0'); say('サイトを読み込んでいる…'); await siteReady(); if (stop) return;
-    say('1 図面取込: 単線結線図の PDF を読んでいる…'); if (!(await ingest()) || stop) return;
+    say('1 図面取込: 結線図の PDF を読んでいる…'); if (!(await ingest()) || stop) return;
     say('1 図面取込: 開閉器を拾い、番号で結んだ。質問の無いものを確認済にする', '接続は人が確認するまで「未確認」のまま。'); await nap(5500); if (stop) return;
     $('btnConfirmAll').click(); await nap(800);
     window.go('s1'); say('2 停止範囲: 66kV 遮断器を取り替える日。電気が流れ込む端すべてで、最初の断路器まで切る', '結線図の緑が停電、赤が充電。'); await nap(1500);

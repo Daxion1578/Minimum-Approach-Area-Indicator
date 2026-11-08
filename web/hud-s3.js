@@ -18,13 +18,14 @@ const blocked = m => !ready(m) || m.lastClearance.verdict === 'ng';
 const approver = () => ($('approver')?.value || '').trim();
 
 const fileUrl = (m, a, fl) => `/api/sites/${encodeURIComponent(m.site.site_id)}/approved/${encodeURIComponent(a.name)}/${encodeURIComponent(fl)}`;
-// 書き出した PDF の名前（step-N-sld.pdf は段ごとの停止範囲の単線図、plan-crane.pdf はクレーン配置の平面図）
+// 書き出した PDF の名前（step-N-sld.pdf は段ごとの停止範囲の結線図、plan-crane.pdf はクレーン配置の平面図）。
+// 画面の STEP 0〜3 とぶつからないよう、図の種類（結線図・平面図）と中身（作業前・作業日の停止範囲・クレーンの配置）で呼ぶ
 function pdfTitle(fl, st) {
-  if (fl === 'plan-crane.pdf') return { k: 'PLAN · 平面図', t: 'クレーンの配置' };
+  if (fl === 'plan-crane.pdf') return { k: '平面図', t: 'クレーンの配置' };
   const n = +(/^step-(\d+)-sld\.pdf$/.exec(fl)?.[1] ?? NaN);
-  if (n === 0) return { k: 'STEP 0 · 単線図', t: '作業前（平常）' };
+  if (n === 0) return { k: '結線図', t: '作業前の結線図' };
   const s = (st?.steps || []).find(x => x.n === n);
-  return { k: `STEP ${isNaN(n) ? '' : n} · 単線図`, t: s ? s.title : '承認した状態' };
+  return { k: '結線図', t: s ? s.title : '作業日の停止範囲' };
 }
 
 export default {
@@ -61,7 +62,7 @@ export default {
         <dt>離隔</dt><dd><span class="vt ${v}">${esc(c.verdict_ja)}</span>${w ? ` <span class="dim">最小 <b class="n">${f(w.distance_m)}</b> m／必要 <b class="n">${f(w.required_m)}</b> m</span>` : ''}</dd>
       </dl>`;
     const conds = cs.length ? `<div class="conds${a ? ' folded' : ''}"><div class="cap">条件 · ${cs.length}</div><ol>${cs.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>` : '';
-    const tail = a ? `<div class="hash"><span class="lbl">承認ハッシュ</span><span class="n">${esc(a.approval_hash)}</span></div>` : '';
+    const tail = a ? `<div class="hash"><span class="lbl">承認の記録番号</span><span class="n">${esc(a.approval_hash)}</span></div>` : '';
     return `<div class="ans s3" data-verdict="${a ? 'ok' : v}">${head}${err}${rows}${a ? '' : conds}${tail}</div>`;
   },
 
@@ -72,8 +73,8 @@ export default {
     return `<div class="s3out"><div class="hd"><b>ステップ図ができた</b><span>押すと PDF を開く</span></div><div class="pdfs">`
       + pdf.map(fl => { const t = pdfTitle(fl, m.lastSteps);
         return `<a class="tile s3f${fl === 'plan-crane.pdf' ? ' plan' : ''}" href="${fileUrl(m, a, fl)}" target="_blank" rel="noopener" title="${esc(fl)} を開く">`
-          + `<span class="ic"></span><span class="k">${esc(t.k)}</span><span class="t">${esc(t.t)}</span><small>${esc(fl)}</small></a>`; }).join('')
-      + `</div>${other.length ? `<div class="json">${other.map(fl => `<a href="${fileUrl(m, a, fl)}" target="_blank" rel="noopener">${esc(fl)}</a>`).join('')}</div>` : ''}</div>`;
+          + `<span class="ic"></span><span class="k">${esc(t.k)}</span><span class="t">${esc(t.t)}</span></a>`; }).join('')
+      + `</div>${other.length ? `<details class="json"><summary>内部データ（JSON）</summary>${other.map(fl => `<a href="${fileUrl(m, a, fl)}" target="_blank" rel="noopener">${esc(fl)}</a>`).join('')}</details>` : ''}</div>`;
   },
 
   // 承認者の欄（小さく、承認ボタンの上）。値は bind で #approver から入れる（打っている途中に書き直さないため）

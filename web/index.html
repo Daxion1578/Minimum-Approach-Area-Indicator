@@ -79,11 +79,11 @@
 <div id="left">
 
   <section class="step on" id="s0">
-    <p class="todo">この画面でやること: 単線結線図の PDF を取り込み、拾えた開閉器を確かめる。</p>
+    <p class="todo">この画面でやること: 結線図の PDF を取り込み、拾えた開閉器を確かめる。</p>
     <h3>構内モデル</h3>
     <div class="row"><label class="k">サイト</label><select id="siteSel"></select></div>
     <table id="siteSummary"></table>
-    <h4>単線結線図（ベクター PDF）を取り込む</h4>
+    <h4>結線図（ベクター PDF）を取り込む</h4>
     <details class="more"><summary>読み取りの範囲</summary>
     <div class="note">導体と開閉器記号を機械的に拾い、開閉器番号で結ぶ。種別の確認と質問文は Claude（呼べなければ規則）。接続は人が確認するまで「未確認」。</div>
     <div class="note">読むのは結線図（つながり）だけ。3D の機器の位置と高さは合成データで、配置図（平面）・断面図の取込は次の段階。取り込んだ結果は下書きとして表示し、次のタブは合成変電所のデータで動く。</div>
@@ -93,7 +93,7 @@
     <div id="ingestBox"></div>
     <h4>装置図（平面・断面）から起こした 3D（下書き）</h4>
     <div class="note">図面から起こした下書き。確認して「この 3D で続ける」を押すまで、停止範囲・離隔・クレーンの計算は合成データのまま。押すと、以降の計算はこの配置で行う。</div>
-    <div class="row"><button class="sub" id="btnLayoutSample">サンプル装置図で試す</button><input type="file" id="layoutFile" accept="application/pdf"></div>
+    <div class="row"><button class="sub" id="btnLayoutSample">サンプルの平面・断面図で試す</button><input type="file" id="layoutFile" accept="application/pdf"></div>
     <div id="layoutBox"></div>
     <div class="row" id="useRow"><button class="act" id="btnUseDraft" disabled>この 3D で続ける</button><button class="sub" id="btnUseTruth">合成データに戻す</button></div>
     <div class="note" id="useMsg"></div>
@@ -259,7 +259,7 @@ function drawCrane(out){
   }
   if (worst){
     const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...worst.p_crane), new THREE.Vector3(...worst.p_conductor)]);
-    const col = out.verdict==='ng'?0xff4d4d: out.verdict==='conditional'?0xf5c518:0x39d353;
+    const col = out.verdict==='ng'?0xff4d4d:0xffb020;   // 一番近い充電部への線と点は黄（緑は停電・据えてよい所の意味だけに使う）。不可は赤
     craneGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:col})));
     craneGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.4,8,8), new THREE.MeshBasicMaterial({color:col})).translateX(worst.p_conductor[0]).translateY(worst.p_conductor[1]).translateZ(worst.p_conductor[2]));
   }
@@ -269,7 +269,7 @@ let zoneCells=null;
 function drawZone(cells){
   clearGroup(zoneGroup); zoneCells=cells||null; if (!cells){ emit('zone'); return; }
   const geo=new THREE.PlaneGeometry(2.7,2.7), m4=new THREE.Matrix4();
-  for (const [want,color,op] of [[true,0x3ddc6a,0.42],[false,0xff4d4d,0.16]]){
+  for (const [want,color,op] of [[true,0x3ddc6a,0.42],[false,0x8d97a3,0.22]]){   // 緑＝据えてよい、灰＝離隔が足りず置けない（赤は充電部だけ）
     const list=cells.filter(c=> want ? c.ok : c.why==='clearance'); if (!list.length) continue;
     const im=new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({color, transparent:true, opacity:op, depthWrite:false, toneMapped:false}), list.length);
     list.forEach((c,i)=>{ m4.makeTranslation(c.x,c.y,0.05); im.setMatrixAt(i,m4); }); im.renderOrder=1; zoneGroup.add(im);
@@ -318,7 +318,7 @@ async function loadSites(){
   cranes=await (await fetch('/api/cranes')).json();
   $('cclass').innerHTML=`<option value="">例示の 25t 級（既定）</option>`+cranes.classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   const sites=await (await fetch('/api/sites')).json();
-  $('siteSel').innerHTML=sites.map(s=>`<option value="${s.site_id}">${s.site_id} ${s.name}</option>`).join('');
+  $('siteSel').innerHTML=sites.map(s=>`<option value="${s.site_id}">${s.name||s.site_id}</option>`).join('');
   $('siteSel').onchange=()=>loadSite($('siteSel').value);
   await loadSite(sites[0].site_id);
 }
@@ -339,7 +339,7 @@ async function loadSite(id){
 // ---- 図面取込
 fetch('/api/agent').then(r=>r.json()).then(a=>{ const why=a.available?'Claude が図面の種別を確かめ、人への質問文を作っている。停止範囲・離隔の判定は Claude を使わず、engine の計算だけで行う。':'Claude に接続していない（キーが無い、またはオフライン設定）。種別の確認と質問文は規則で代替している。停止範囲・離隔の判定は元から Claude を使わない。'; const el=$('agentState'); el.textContent=a.available?`Claude: ${a.models.structure}`:'Claude: 規則で代替'; el.title=why; $('agentWhy').textContent=why; el.onclick=()=>{ $('agentWhy').hidden=!$('agentWhy').hidden; }; });
 $('btnIngest').onclick=async()=>{
-  const f=$('ingestFile').files[0]; if (!f){ $('ingestBox').innerHTML='<div class="warn">PDF を選んでから。合成変電所の図面は data/sites/SITE-01/drawings/SITE-01_sld.pdf</div>'; return; }
+  const f=$('ingestFile').files[0]; if (!f){ $('ingestBox').innerHTML='<div class="warn">PDF を選んでから（合成変電所のサンプルなら「サンプルの結線図を読む」）</div>'; return; }
   $('ingestBox').innerHTML='<div class="note">導体を拾って、番号で結んでいる…</div>';
   const fd=new FormData(); fd.append('file', f);
   const r=await fetch('/api/ingest',{method:'POST',body:fd});
@@ -378,12 +378,12 @@ function miniView(host, site){
 }
 (function miniLoop(){ requestAnimationFrame(miniLoop); for (const v of miniViews){ if (!v.host.offsetParent) continue; v.ctl.update(); v.r.render(v.sc,v.cam); } })();
 async function runLayoutDraft(sample){
-  const box=$('layoutBox'); box.innerHTML='<div class="note">装置図を読んでいる…</div>';
+  const box=$('layoutBox'); box.innerHTML='<div class="note">平面・断面図を読んでいる…</div>';
   try{
     let r;
     if (sample) r=await fetch('/api/ingest/layout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sample:true})});
     else { const f=$('layoutFile').files[0]; if(!f){ box.innerHTML='<div class="warn">PDF を選んでから</div>'; return; } const fd=new FormData(); fd.append('file',f); r=await fetch('/api/ingest/layout',{method:'POST',body:fd}); }
-    if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'装置図を読めなかった'}（${r.status}）</div>`; return; }
+    if (!r.ok){ let m=''; try{ m=(await r.json()).detail; }catch(e){} box.innerHTML=`<div class="warn">${m||'平面・断面図を読めなかった'}（${r.status}）</div>`; return; }
     const j=await r.json(); const e=j.eval, c=e.conductor_match||{}; const f2=v=>(v==null?'—':(+v).toFixed(2));
     const truth={topology:site.topology, layout:j.truth_layout};   // 左は常に合成データ（切り替え後も）
     lastDraft=j; setUseBtn();
@@ -435,6 +435,10 @@ $('vCrane').onclick=()=>{ const c=lastCrane||craneFromForm(); frameTo(c.base[0],
 
 // ---- 作業日の停止範囲
 const nameOf=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.number?n.number+' ':'')+(n.name||id):id; };
+// 画面に内部の ID を出さない: 導体の ID（220-BUS-A）→ 名前（220kV 母線 A区間）、文の中の ID も名前に、クレーンの部分は日本語に
+const condName=id=>{ const n=site.topology.nodes.find(x=>x.id===id); return n?(n.name||id):id; };
+const idsJa=s=>String(s).replace(/\b[0-9]{2,3}-[A-Z0-9]+(?:-[A-Z0-9]+)*\b/g, id=>condName(id));
+const partJa={carrier:'車体', upper:'上部', boom:'ブーム', jib:'ジブ', rope:'ロープ', hook:'フック', load:'吊荷'};
 $('btnSteps').onclick=async()=>{
   const targets=[$('targetSel').value];
   const r=await fetch(`/api/sites/${site.site_id}/steps`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({targets, state: site.states.normal})});
@@ -567,10 +571,10 @@ async function evaluateClearance(){
   paint(j.energization, j.envelope, $('showEnv').checked); drawCrane(j.clearance);
   const c=j.clearance; const col=c.verdict==='ng'?'var(--live)':c.verdict==='conditional'?'var(--deadu)':'var(--deadg)';
   let html=`<div class="bay" style="border-color:${col}"><div style="font-size:20px;font-weight:700;color:${col}">${c.verdict_ja}</div>`;
-  if (c.worst) html+=`<div style="font-size:16px">最小離隔 <b>${c.worst.distance_m.toFixed(2)} m</b> ／ 必要 ${c.worst.required_m.toFixed(2)} m ／ 余裕 ${c.worst.margin_m.toFixed(2)} m</div><div class="note">最寄り: ${c.worst.conductor_id}（${c.worst.phase} 相 ${c.worst.voltage_kv}kV）、${c.worst.crane_part}${c.worst.slew_deg!==null?`、旋回 ${c.worst.slew_deg>0?'+':''}${c.worst.slew_deg.toFixed(0)}°`:''}</div>`;
-  html+=c.reasons.map(x=>`<div class="note">根拠: ${x}</div>`).join('');
-  if (c.conditions.length) html+=`<div style="margin-top:4px">条件:</div>`+c.conditions.map(x=>`<div class="note">・${x}</div>`).join('');
-  html+=`<table style="margin-top:6px"><tr><th>導体</th><th>相</th><th>距離</th><th>必要</th><th>余裕</th></tr>`+c.hits.slice(0,5).map(h=>`<tr><td>${h.conductor_id}</td><td>${h.phase||''}</td><td>${h.distance_m.toFixed(2)}</td><td>${h.required_m.toFixed(2)}</td><td style="color:${h.margin_m<0?'var(--live)':h.margin_m<0.5?'var(--deadu)':'inherit'}">${h.margin_m.toFixed(2)}</td></tr>`).join('')+`</table></div>`;
+  if (c.worst) html+=`<div style="font-size:16px">最小離隔 <b>${c.worst.distance_m.toFixed(2)} m</b> ／ 必要 ${c.worst.required_m.toFixed(2)} m ／ 余裕 ${c.worst.margin_m.toFixed(2)} m</div><div class="note">最寄り: ${condName(c.worst.conductor_id)}（${c.worst.phase} 相 ${c.worst.voltage_kv}kV）、${partJa[c.worst.crane_part]||c.worst.crane_part}${c.worst.slew_deg!==null?`、旋回 ${c.worst.slew_deg>0?'+':''}${c.worst.slew_deg.toFixed(0)}°`:''}</div>`;
+  html+=c.reasons.map(x=>`<div class="note">根拠: ${idsJa(x)}</div>`).join('');
+  if (c.conditions.length) html+=`<div style="margin-top:4px">条件:</div>`+c.conditions.map(x=>`<div class="note">・${idsJa(x)}</div>`).join('');
+  html+=`<table style="margin-top:6px"><tr><th>導体</th><th>相</th><th>距離</th><th>必要</th><th>余裕</th></tr>`+c.hits.slice(0,5).map(h=>`<tr><td>${condName(h.conductor_id)}</td><td>${h.phase||''}</td><td>${h.distance_m.toFixed(2)}</td><td>${h.required_m.toFixed(2)}</td><td style="color:${h.margin_m<0?'var(--live)':h.margin_m<0.5?'var(--deadu)':'inherit'}">${h.margin_m.toFixed(2)}</td></tr>`).join('')+`</table></div>`;
   $('verdictBox').innerHTML=html; $('manualBox').open=true;
   planSummary(); guide(); emit('clearance');
 }
@@ -616,7 +620,7 @@ $('btnApprove').onclick=async()=>{
   catch(e){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${e.message||e}</div>`; emit('approve'); return; }
   lastApprove=j;
   if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; emit('approve'); return; }
-  $('approveBox').innerHTML=`<div class="bay"><div>承認ハッシュ <b>${j.approval_hash}</b></div><div class="note">${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
+  $('approveBox').innerHTML=`<div class="bay"><div>承認の記録番号 <b>${j.approval_hash}</b></div><div class="note">書き出した場所（内部）: ${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
   guide(); emit('approve');
 };
 // ---- 次に何を押すか（上の帯）

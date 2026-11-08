@@ -129,3 +129,14 @@ def test_select_at_matches_the_chosen_base_and_grows_when_moved_closer(topo, sit
     # 向きを渡すとその向きで判定する
     h = select_at(topo, site.layout, day, "66-D1-CB1", tuple(ch["crane"]["base"]), set_xy=tuple(r["set"]), heading_deg=ch["crane"]["heading_deg"] + 5)
     assert h["chosen"] is None or abs(h["chosen"]["crane"]["heading_deg"] - (ch["crane"]["heading_deg"] + 5)) < 1e-6
+
+
+def test_reason_names_the_conductor_not_its_id(topo, site, states):
+    """一つ下の級が使えない理由は、導体の ID（220-BUS-A）ではなく画面に出す名前（220kV 母線 A区間）で書く。"""
+    day = _day(topo, states, "220-L1-CB")
+    r = select(topo, site.layout, day, "220-L1-CB", weight_t=10, set_xy=(26, 108), unstoppable=["220-BUS-A"])
+    why = r["smaller_why_not"]
+    assert why and "220-BUS-A" not in why
+    assert topo.nodes["220-BUS-A"].name in why and "まで近づく" in why
+    ng = next(e for e in r["tried"] if not e["ok"] and e.get("binding_conductor"))
+    assert ng["binding_conductor"] == "220-BUS-A"          # データには ID のまま残す（画面の文だけ名前にする）

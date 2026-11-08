@@ -8,7 +8,7 @@ const isDraft = m => m.site?.layout_source === 'drawing-draft';
 // 読んでいる途中か（index.html が箱に書く文言で見る。応答が来れば箱が書き換わる）
 let fetching = false;      // サンプルの PDF を取ってきている間（#btnIngest を押す前）
 const busyIngest = () => fetching || !!$('ingestBox')?.textContent.includes('番号で結んでいる');
-const busyLayout = () => !!$('layoutBox')?.textContent.includes('装置図を読んでいる');
+const busyLayout = () => !!$('layoutBox')?.textContent.includes('平面・断面図を読んでいる');
 const busySwitch = () => !!$('useMsg')?.textContent.includes('切り替えている');
 const warnOf = id => $(id)?.querySelector(':scope > .warn')?.textContent || '';
 
@@ -52,14 +52,14 @@ const list = a => a.slice(0, 10).map(n => `<span class="no">${esc(n)}</span>`).j
 function matchBlock(j, d) {
   const mt = d?.match; if (!j || !mt) return '';
   if (mt.sld_source === 'truth' || mt.sld !== sldCount(j))   // 装置図を先に読んだ: その照合は今の単線図とではない
-    return `<div class="sect match old"><div class="dim">機器の一致: 装置図を読み直すと、読んだ単線図と照合する</div></div>`;
+    return `<div class="sect match old"><div class="dim">機器の一致: 平面図を読み直すと、読んだ結線図と照合する</div></div>`;
   const k = mt.only_sld.length + mt.only_plan.length;
-  const head = `機器の一致: 単線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台`;
+  const head = `機器の一致: 結線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台`;
   if (!k) return `<div class="sect match ok" data-match="ok"><div class="mh">${head} — 一致</div></div>`;
-  const side = [mt.only_sld.length ? `<div class="ml"><span class="k">単線図だけ</span>${list(mt.only_sld)}</div>` : '',
+  const side = [mt.only_sld.length ? `<div class="ml"><span class="k">結線図だけ</span>${list(mt.only_sld)}</div>` : '',
     mt.only_plan.length ? `<div class="ml"><span class="k">平面図だけ</span>${list(mt.only_plan)}</div>` : ''];
   return `<div class="sect match ng" data-match="ng" title="平面図は装置図の平面（1/400）。一般平面図には機器番号が無い">
-    <div class="mh">機器の不一致 <b class="n">${k}</b> 件</div><div class="md">単線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台</div>${side.join('')}
+    <div class="mh">機器の不一致 <b class="n">${k}</b> 件</div><div class="md">結線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台</div>${side.join('')}
     <div class="mn">図面どうしが合っていない。この 3D で続ける前に、どちらの図面が正しいか確かめる</div></div>`;
 }
 const mismatch = (j, d) => /data-match="ng"/.test(matchBlock(j, d));
@@ -94,12 +94,12 @@ export default {
         ${qn ? `<button class="sub link" data-act="detail" data-to="ingestBox">質問を見る（詳しく）</button>` : ''}`);
     }
     const lw = warnOf('layoutBox');
-    if (busyLayout()) parts.push(`<div class="sect"><div class="dim">装置図を読んでいる…</div></div>`);
+    if (busyLayout()) parts.push(`<div class="sect"><div class="dim">平面・断面図を読んでいる…</div></div>`);
     else if (lw) parts.push(`<div class="sect"><div class="warn">${esc(lw)}</div></div>`);
     if (d && !busyLayout()) parts.push(matchBlock(j, d));
     if (d && !busyLayout()) {
       const e = d.eval || {}, dq = (d.questions || []).length, ub = $('btnUseDraft'), sw = busySwitch(), dr = isDraft(m);
-      parts.push(`<div class="sect small"><div class="kv"><span>装置図 機器 <b class="n">${e.apparatus_matched ?? '—'} / ${e.apparatus_total ?? '—'}</b></span><span${dq ? ' class="qtxt"' : ''}>要確認 <b class="n">${dq}</b></span></div>
+      parts.push(`<div class="sect small"><div class="kv"><span>平面図 機器 <b class="n">${e.apparatus_matched ?? '—'} / ${e.apparatus_total ?? '—'}</b></span><span${dq ? ' class="qtxt"' : ''}>要確認 <b class="n">${dq}</b></span></div>
         <div class="btnrow">${dr ? '<span class="using">この 3D で続けている（承認前）</span>' : `<button class="sub" data-act="use"${ub?.disabled || sw ? ' disabled' : ''}>${sw ? '切り替えている…' : esc(ub?.textContent || 'この 3D で続ける')}</button>`}
           ${dr ? `<button class="sub" data-act="truth"${sw ? ' disabled' : ''}>合成データに戻す</button>` : ''}</div></div>`);
     }
@@ -110,14 +110,14 @@ export default {
   // 主役はサンプルの結線図のタイル 1 つ。ほかは小さく右に寄せる
   bar(m) {
     const bi = busyIngest(), bl = busyLayout(), j = m.lastIngest;
-    const hero = `<button class="tile s0t hero${j ? ' done' : ''}" data-act="sld-sample"${bi ? ' disabled' : ''} title="合成変電所の単線結線図 PDF を取り込む">`
+    const hero = `<button class="tile s0t hero${j ? ' done' : ''}" data-act="sld-sample"${bi ? ' disabled' : ''} title="合成変電所の結線図 PDF を取り込む">`
       + `<span class="ic sld"></span><span class="tx"><span class="lb">${bi ? '読んでいる…' : j ? 'サンプルの結線図（読めた）' : 'サンプルの結線図を読む'}</span>`
-      + `<small>SITE-01 · 合成の単線結線図</small></span></button>`;
+      + `<small>合成変電所の結線図</small></span></button>`;
     const t = (act, label, o = {}) => `<button class="tile s0t mini" data-act="${act}"${o.busy ? ' disabled' : ''} title="${esc(o.title)}"><span class="lb">${o.busy ? '読んでいる…' : label}</span></button>`;
     return hero + `<span class="minis">`
-      + t('sld-file', '結線図 PDF', { busy: bi, title: '手元の単線結線図 PDF を選んで取り込む' })
-      + t('lay-sample', 'サンプル装置図', { busy: bl, title: '合成変電所の装置図（平面・断面）から 3D の下書きを起こす' })
-      + t('lay-file', '装置図 PDF', { busy: bl, title: '手元の装置図 PDF から 3D の下書きを起こす' }) + `</span>`;
+      + t('sld-file', '結線図 PDF', { busy: bi, title: '手元の結線図 PDF を選んで取り込む' })
+      + t('lay-sample', 'サンプル平面図', { busy: bl, title: '合成変電所の装置図（平面・断面）から 3D の下書きを起こす' })
+      + t('lay-file', '平面・断面図 PDF', { busy: bl, title: '手元の装置図（平面・断面）PDF から 3D の下書きを起こす' }) + `</span>`;
   },
 
   modes() { return ''; },
