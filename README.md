@@ -12,6 +12,7 @@
 
 ## すぐ見る（インストールなし・スマホ可）
 
+- **動画（3 分以内）**: 〔YouTube の URL〕
 - **ブラウザで動かす**: https://daxion1578.github.io/Minimum-Approach-Area-Indicator/ を開くだけ。サーバ無しで、計算はそのブラウザの中で、手元のサーバ版と同じ Python コードが行います（初回は準備に 10〜20 秒）。3D が画面いっぱいに出て、各ステップで入れるもの（単線図で対象を押す、平面図で資材置場と重さ、この配置で OK）だけが画面に出ます。表や数値の内訳は「詳しく」の引き出しに入っています。Claude は呼ばないので、図面の意味づけと修正案の説明は規則の文になり、工事の依頼文は開閉器番号だけを拾います（止められない設備・置き場・重さは、Claude をつないだサーバ版で読みます）。
 - **動いている証拠**: 上の `check` バッジ → 最新の実行 → **Summary**。push のたびに GitHub 上で、図面取込 → 作業日の停止範囲 → 重機の選定（一番小さいクラス）→ 追加停止で小さくできるか → 承認、を通しで動かし、段階ごとの合否を表で出しています（Claude は呼ばない経路）。
 - **画面**: 下の「流れ」の画面写真。
@@ -65,6 +66,7 @@
 - フックは 2 本。commit・push の前の公開安全チェックと、`engine/` を編集した後の pytest の自動実行で、人が忘れる作業を機械に任せる。
 - GitHub Actions が push のたびに通しの確認を回す。
 - 本人が見るのは `STATUS.md` だけで、判断は 1 枚 1 判断のカードで求める。外の目での点検（`/critique`）を含め、判断の経緯は `docs/decisions.md` に残す。
+- 動画は、場面ごとに一時的な係を立てて並行して作った（220kV の 3D 静止画、各カットの場面、尺合わせの仮の読み上げ、本人の声の取り込み）。操作の流れは、作業の文脈を持たない別の係に初めて見る人の目で点検させ、見つかった不具合（図面を読む段の一括の確認済が、質問に出てくる開閉器まで確認済にしていた）を直した。
 
 一覧と理由は [docs/claude-boundary.md](docs/claude-boundary.md)。
 
@@ -121,7 +123,7 @@ uvicorn server.app:app --reload     # http://localhost:8000
 
 - [進み具合](STATUS.md) ／ [残りの作業](TASKS.md)
 - [仕組みの図](docs/architecture.md) ／ [仕様書](docs/spec.md) ／ [設計判断の記録](docs/decisions.md) ／ [Claude に任せること・任せないこと](docs/claude-boundary.md)
-- [開発環境の導入手順](docs/setup.md) ／ [動画の台本](docs/demo-plan.md)
+- [開発環境の導入手順](docs/setup.md) ／ [動画の台本](docs/demo-plan.md) ／ [動画の作り方（v9）](scripts/demo_video/v9/README.md)
 
 ## ライセンス
 
