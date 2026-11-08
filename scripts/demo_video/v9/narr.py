@@ -21,8 +21,10 @@ VOICES = {
     "shizuka": {"speaker": 14, "speed": 1.03, "intonation": 1.12, "credit": "VOICEVOX:冥鳴ひまり"},
     "dan": {"speaker": 52, "speed": 0.98, "intonation": 0.85, "credit": "VOICEVOX:雀松朱司"},
     "kataru": {"speaker": 11, "speed": 1.0, "intonation": 1.15, "credit": "VOICEVOX:玄野武宏"},
-    # v9: 本人の声（override/self/pNN.wav）。まだ録っていない段落は冥鳴ひまりの仮の読み上げで尺を合わせる（書き出しの表記は出さない）
-    "self": {"speaker": 14, "speed": 1.08, "intonation": 1.12, "credit": "VOICEVOX:冥鳴ひまり"},   # 11/08 本人の判断: 読み上げは VOICEVOX（無料・クレジット表記が条件）
+    # v9: 読み上げ。override/self/pNN.wav があればそちらを使う。11/08 本人の判断: 読み上げは VOICEVOX（無料・クレジット表記が条件）。
+    # 声は説明を平らに読む WhiteCUL のノーマル（抑揚を抑えめ）。商用・非商用ともクレジットで使える声から選ぶ
+    # （No.7 のアナウンスは個人の非商用だけで、商用は事前の確認が要るので外した）。それまでは冥鳴ひまり（14, 話速 1.08, 抑揚 1.12）
+    "self": {"speaker": 23, "speed": 1.14, "intonation": 0.9, "credit": "VOICEVOX:WhiteCUL"},   # 1.03 では語りが 173.5 秒で 3 分を超える
 }
 # 段落 → カット（v8 絵コンテの C1〜C10）
 ACT_OF = {i: f"C{i}" for i in range(1, 11)}
