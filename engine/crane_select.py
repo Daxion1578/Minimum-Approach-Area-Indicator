@@ -445,5 +445,22 @@ def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: fl
                                   "note": (f"{names} を追加で止めれば {ch2['name']} で置ける" if ch2
                                            else f"{names} を追加で止めても、{lim[-1]['name']}以下では置けない")}
     if not chosen:
-        out["problems"].append("どのクラスでも、2 点に届き、吊れて、離隔を保てる位置が見つからない")
+        # 置けないときは、作業できないことと、何を止めればできるかを先頭に書く（誤った判断を防ぐ。値は上の計算のまま）
+        w = out.get("with_outage") or {}
+        if w.get("blocked"):
+            ref_name = None
+            if "止められるなら" in w.get("note", ""):
+                ref_name = w["note"].split("止められるなら ")[1].split(" で済む")[0]
+            head = (f"停止なしでは作業できない: {w['names']} を止めないと、どのクラスでも離隔を保てない"
+                    + (f"（止めれば {ref_name} で作業できる。依頼文で止められないとされているので、系統側と停止を調整する）" if ref_name
+                       else "（止めても作業できる案は見つからない。作業の方法を見直す）"))
+            out["cannot_work"] = {"needs_outage": w["blocked"], "names": w["names"], "with_class": ref_name}
+        elif w.get("targets") and w.get("chosen"):
+            head = (f"この停止範囲では作業できない: {w['names']} も止めれば {w['chosen']['name']} で作業できる"
+                    "（止めるかどうかは人が決める。停止の調整が要る）")
+            out["cannot_work"] = {"needs_outage": w["targets"], "names": w["names"], "with_class": w["chosen"]["name"]}
+        else:
+            head = "この条件では作業できない: 止める範囲・資材置場・作業の方法を見直す"
+            out["cannot_work"] = {"needs_outage": [], "names": "", "with_class": None}
+        out["problems"] += [head, "どのクラスでも、2 点に届き、吊れて、離隔を保てる位置が見つからない"]
     return out

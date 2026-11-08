@@ -1,8 +1,8 @@
 """C3 いまの決め方（v9.3）: 左に図面 3 枚 → ベテラン（白い帽子）が読み込み、吹き出しにくっきりした立体
-→ 新任（黄色い帽子）の吹き出しは薄い立体に「？」→ 50 代の札でベテランが薄れる → 新任の言葉の札。
+→ 新任（黄色い帽子）の吹き出しは薄い立体に「？」→「図面に残らない」の札でベテランが薄れる → 新任の言葉の札。
 
 語り（scripts/self.txt の 3 段落目、字幕は 4 つ）: 0「いまは、ベテランが、3枚の図面から、」1「頭の中で立体を組み立てて決める」
-2「ある会社では、変電の作業員の約半分が、50代以上」3「新任の私には、まだ判断しきれない」。
+2「その経験は、図面には残らない」3「新任の私には、まだ判断しきれない」。
 2・3 は札が字幕を兼ねる。動きはすべて cue() の時刻に合わせる（秒の決め打ちはしない）。
 
 図面: assets/c3/{sld,plan,section}.png。今の合成の図面（data/sites/SITE-01/drawings/ の SITE-01_sld.pdf と
@@ -196,17 +196,15 @@ def make(G):
         if kq > 0:
             aq = cl((t - (c1b - 0.25)) / 0.2)
             text(d, (BN[0], BN[1] + 8 + lerp(22, 0, kq)), "？", F(GOTH_B, 120), INK, anchor="mm", stroke=6, stroke_fill=WHITE, alpha=aq)
-        # 6) 50 代の札（3 文目）: ベテランの吹き出しの所に、大きく
+        # 6) 経験の札（3 文目）: ベテランの吹き出しの所に、大きく（11/08 本人の指摘で、50 代の数字の札から替えた）
         ks = back((t - (c2a - 0.05)) / 0.5)
         if ks > 0:
             a = cl((t - (c2a - 0.05)) / 0.25)
             x0, y0 = BV[0] - 222, 62 + lerp(16, 0, ks)
-            card(d, x0, y0, x0 + 444, y0 + 236, a, outline=RED, r=16, op=250)
-            text(d, (x0 + 24, y0 + 44), "ある会社では", F(GOTH_R, 26), SUBINK, anchor="ls", alpha=a)
-            text(d, (x0 + 24, y0 + 92), "変電の作業員の", F(GOTH_B, 36), INK, anchor="ls", alpha=a)
-            text(d, (x0 + 24, y0 + 152), "約半分が 50 代以上", F(GOTH_B, 44), RED, anchor="ls", alpha=a)
-            text(d, (x0 + 24, y0 + 192), "一社の例・送配電網協議会の資料", F(GOTH_R, 24), SUBINK, anchor="ls", alpha=a)
-            text(d, (x0 + 24, y0 + 222), "（2025年9月）", F(GOTH_R, 24), SUBINK, anchor="ls", alpha=a)
+            card(d, x0, y0, x0 + 444, y0 + 200, a, outline=RED, r=16, op=250)
+            text(d, (x0 + 24, y0 + 48), "ベテランの頭の中の立体は", F(GOTH_R, 28), SUBINK, anchor="ls", alpha=a)
+            text(d, (x0 + 24, y0 + 120), "図面に", F(GOTH_B, 44), INK, anchor="ls", alpha=a)
+            text(d, (x0 + 24, y0 + 174), "残らない", F(GOTH_B, 52), RED, anchor="ls", alpha=a)
         # 7) 新任の言葉の札（4 文目の字幕を兼ねる）: 左下、薄れたベテランの前に
         kc = back((t - (c3a - 0.1)) / 0.5)
         if kc > 0:

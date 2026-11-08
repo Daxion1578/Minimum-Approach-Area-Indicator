@@ -28,6 +28,8 @@ ap.add_argument("--at", default="")
 ap.add_argument("--out", default="")
 ap.add_argument("--jobs", type=int, default=2)
 ap.add_argument("--part", default="")
+ap.add_argument("--bgm", default="v9")        # v8 = 前の明るい曲（木琴・軽い打楽器）
+ap.add_argument("--audio", action="store_true")   # 音だけ書き出す（試聴用）
 A = ap.parse_args()
 V = A.variant
 W, H = (1280, 720) if A.res == 720 else (1920, 1080)
@@ -864,6 +866,52 @@ def bgm8(total, t_drop, t_soft):
     return out * np.minimum(1, t / 1.5) * np.minimum(1, (total - t) / 3.0)
 
 
+def bgm9(total, t_drop, t_soft, dips=()):
+    """11/08 本人の判断で手本の動画に寄せた BGM: 拍の無い柔らかい和音（パッド）と、まばらなピアノ。
+    冒頭（C1〜C3）は少し暗い和音、C4 の名前から明るい和音、締め（C10）は薄くして静かに終える。dips の時刻では一瞬だけ引く。"""
+    N = int(total * SR); t = np.arange(N) / SR; pad = np.zeros(N); keys = np.zeros(N)
+    hz = lambda m: 440 * 2 ** ((m - 69) / 12)
+    rng = np.random.default_rng(23)
+    dark = [[50, 57, 62, 64, 65], [46, 53, 58, 62, 69], [43, 50, 55, 58, 65], [45, 52, 57, 61, 64]]     # Dm(add9) B♭maj7 Gm7 A
+    light = [[41, 48, 53, 57, 64], [40, 48, 52, 55, 62], [38, 45, 50, 53, 60], [46, 53, 58, 62, 69]]    # Fmaj7 C/E Dm7 B♭maj7
+    dur = 4.6
+    def chord_at(at, ch, amp, bass=True, piano=True):
+        i0 = int(at * SR); n = min(N - i0, int((dur + 1.8) * SR))
+        if n <= 0: return
+        tt = np.arange(n) / SR
+        env = np.minimum(1, tt / 1.4) * np.clip((dur + 1.8 - tt) / 1.8, 0, 1)          # ゆっくり立ち上がり、次の和音と重なって消える
+        for m in ch[1:]:
+            f = hz(m)
+            for c in (-7, 0, 6):                                                     # 少しずらした 3 本で厚みを出す
+                ph = rng.uniform(0, 2 * np.pi)
+                pad[i0:i0 + n] += amp * env * (np.sin(2 * np.pi * f * 2 ** (c / 1200) * tt + ph) + 0.18 * np.sin(4 * np.pi * f * tt + ph))
+        if bass:
+            pad[i0:i0 + n] += amp * 1.6 * env * np.sin(2 * np.pi * hz(ch[0] - 12) * tt)
+        if piano:                                                                    # まばらなピアノ: 和音の上の 2 音を、間をあけて
+            for j, m in enumerate(rng.choice(ch[2:], 2, replace=False) + 12):
+                p0 = i0 + int((0.35 + j * 2.1 + rng.uniform(-0.1, 0.25)) * SR); pn = min(N - p0, int(3.2 * SR))
+                if pn <= 0: continue
+                pt = np.arange(pn) / SR; f = hz(m); v = rng.uniform(0.75, 1.0)
+                keys[p0:p0 + pn] += v * 0.9 * amp * np.exp(-pt / 1.1) * np.minimum(1, pt / 0.006) * sum(a * np.sin(2 * np.pi * f * h * pt) for h, a in ((1, 1.0), (2, 0.32), (3, 0.12), (4, 0.05)))
+    at, k = 0.0, 0
+    while at < total:
+        soft = at >= t_soft
+        ch = (dark if at + 1.0 < t_drop else light)[k % 4]
+        chord_at(at, ch, 0.010 if not soft else 0.007, bass=not soft or k % 2 == 0, piano=True)
+        at += dur; k += 1
+        if at < t_drop < at + dur:   # 名前（間合い）の所で明るい和音に切り替える
+            at, k = t_drop - 0.3, 0
+    # 柔らかくする: 高い所を落とす（パッドは 1.6 kHz、ピアノは 3 kHz から上を弱める）
+    def lowpass(x, fc):
+        X = np.fft.rfft(x); f = np.fft.rfftfreq(len(x), 1 / SR); X *= 1 / np.sqrt(1 + (f / fc) ** 4); return np.fft.irfft(X, len(x))
+    out = lowpass(pad, 1600) + lowpass(keys, 3000)
+    out = reverb(out, 2.4, 0.35)
+    g = np.ones(N)
+    for td in dips:              # 札の所で一瞬だけ引く（約 1.6 秒）
+        g *= 1 - 0.6 * np.exp(-0.5 * ((t - td - 0.5) / 0.55) ** 2)
+    return out * g * np.minimum(1, t / 2.0) * np.minimum(1, (total - t) / 4.0)
+
+
 def smooth_arr(x): x = np.clip(x, 0, 1); return x * x * (3 - 2 * x)
 
 
@@ -903,11 +951,12 @@ def mix_audio(path):
     rms = np.sqrt(np.mean(narr[speech] ** 2)) if speech.any() else 0.1
     narr *= 10 ** (-20 / 20) / max(rms, 1e-6)
     t_drop = ACT["C4"]["start"] + kw("C4", "間合い", 2.5)
-    music = bgm8(N / SR, t_drop, ACT["C10"]["start"])[:N]
+    dips = [ACT["C2"]["start"] + kw("C2", "35件", 12.9), ACT["C7"]["start"] + kw("C7", "だから", ACT["C7"]["dur"] - 4.0)]
+    music = (bgm8(N / SR, t_drop, ACT["C10"]["start"]) if A.bgm == "v8" else bgm9(N / SR, t_drop, ACT["C10"]["start"], dips))[:N]
     if len(music) < N: music = np.pad(music, (0, N - len(music)))
     seg_after = music[int(t_drop * SR):]
-    music *= 10 ** (-35 / 20) / (np.sqrt(np.mean(seg_after ** 2)) + 1e-9)        # 曲の所の RMS を語りより 15 dB 下
-    duck = np.convolve(np.where(speech, 10 ** (-7 / 20), 1.0), np.ones(int(0.25 * SR)) / int(0.25 * SR), "same")
+    music *= 10 ** (-36 / 20) / (np.sqrt(np.mean(seg_after ** 2)) + 1e-9)        # 曲の所の RMS を語りより 16 dB 下（語りの間はさらに 6 dB 下げる）
+    duck = np.convolve(np.where(speech, 10 ** (-6 / 20), 1.0), np.ones(int(0.25 * SR)) / int(0.25 * SR), "same")
     music *= duck
     fx = np.zeros(N)
     def put(at, s, g=1.0):
@@ -980,6 +1029,8 @@ def main():
         encode(out.with_suffix(f".part{i}.mp4"), i * n // k, (i + 1) * n // k)
         report(); return
     print(V, "合計 %.1f 秒" % TOTAL, " ".join(f"{x['act']}:{x['dur']:.1f}" for x in ACTS))
+    if A.audio:
+        mix_audio(out.with_suffix(".wav")); print("audio", out.with_suffix(".wav")); return
     if A.frames or A.at:
         req = [(a, ACT[a]["dur"] * fr) for a in A.frames.split(",") if a for fr in (0.3, 0.6, 0.9)]
         req += [(s.split(":")[0], float(s.split(":")[1])) for s in A.at.split(",") if s]

@@ -7,7 +7,7 @@ compose9.py が make(G) を呼ぶ。G は compose9 の globals。
 """
 from __future__ import annotations
 
-TESTS = 105   # 2026-11-08 にリポジトリ直下で MAAI_OFFLINE=1 python -m pytest -q（105 passed）
+TESTS = 107   # 2026-11-08 夕方にリポジトリ直下で MAAI_OFFLINE=1 python -m pytest -q（107 passed）
 
 # docs/decisions.md の日付つきの行から短く（実在の名前・設備名は含まない）
 DEC9 = [("11/02", "判定は計算、Claude は意味づけと提案"), ("11/03", "離隔表は「要確認」の印つきで置く"),

@@ -44,6 +44,19 @@ def test_rules_fallback_reads_the_sample_request_like_claude(site):
     assert c["ok"] and c["problems"] == [] and c["laydown_xy"] == [round(at[0] - 6, 1), round(at[1], 1)]
 
 
+def test_says_plainly_when_work_needs_an_outage(topo, site, states):
+    """どの級でも離隔を保てないときは、「停止なしでは作業できない」と、何を止めれば何級でできるかを先頭に出す。"""
+    day = generate(topo, states["normal"], ["220-L1-CB"])["state"]
+    far = (42.0, 108.0)   # この置き場では、母線 A区間が充電のままだと 100t 級でも 7.00 m を保てない（例示値）
+    held = select(topo, site.layout, day, "220-L1-CB", weight_t=10, set_xy=far, unstoppable=["220-BUS-A"])
+    assert held["chosen"] is None
+    assert held["problems"][0].startswith("停止なしでは作業できない: 220kV 母線 A区間 を止めないと")
+    assert "止めれば 25t 級" in held["problems"][0] and held["cannot_work"]["needs_outage"] == ["220-BUS-A"]
+    free = select(topo, site.layout, day, "220-L1-CB", weight_t=10, set_xy=far)
+    assert free["chosen"] is None and free["problems"][0].startswith("この停止範囲では作業できない:")
+    assert "220-BUS-A" in free["cannot_work"]["needs_outage"]
+
+
 def test_check_accepts_claude_like_output_and_converts_laydown(site):
     topo, layout = _site_dicts(site)
     ext = {"targets": ["66-D1-CB1"], "unstoppable": ["TR-1"], "weight_t": 3.5,

@@ -314,32 +314,36 @@ def make(G, act):
         point_at(d, t, a + 0.4, b - 0.1, r, (w[2], (w[1] + w[3]) / 2), frm=(1, 0))
         a, b = span(2, D)
         k = inwin(None, t, a + 0.35, b - 0.1)
-        if k > 0:   # 比べの札: 一番近い充電部（220kV 母線）まで。25t 級は必要な離れに届かず、100t 級は届く（engine の値と同じ）
+        if k > 0:   # 比べの札: 一番近い充電部（220kV 母線）まで。25t〜70t 級は必要な離れに届かず、100t 級は届く（engine の値と同じ）
             card(d, 120, 48, 1160, 592, k, r=18, op=250)
             text(d, (160, 112), "220kV 母線まで、いちばん近づく距離", F(GOTH_B, 32), INK, anchor="ls", alpha=k)
             x0b, pxm = 360, 66
-            for lab, v, s, col, dt, yc in (("25t 級", 5.37, "5.37 m ×", RED, 0.7, 230), ("100t 級", 8.08, "8.08 m ○", GREEN, 1.6, 350)):
+            # 11/08: 25t〜100t 級の 5 段（engine の「試したクラス」と同じ値。届いて吊れる所に据えたときの、一番近づく距離）
+            rows = (("25t 級", 2.84, "2.84 m ×", RED, 0.5), ("35t 級", 2.61, "2.61 m ×", RED, 0.8), ("50t 級", 3.35, "3.35 m ×", RED, 1.1),
+                    ("70t 級", 5.37, "5.37 m ×", RED, 1.4), ("100t 級", 8.08, "8.08 m ○", GREEN, 2.0))
+            for (lab, v, s, col, dt), yc in zip(rows, (196, 258, 320, 382, 444)):
                 kr = cl((t - a - dt) / 0.25) * k
                 if kr <= 0:
                     continue
-                text(d, (160, yc + 15), lab, F(GOTH_B, 40), INK, anchor="ls", alpha=kr)
+                text(d, (160, yc + 12), lab, F(GOTH_B, 34), INK, anchor="ls", alpha=kr)
                 g = ease((t - a - dt) / 0.5)
                 solid = tuple(int(255 + (c - 255) * 0.88) for c in col)   # 透かさない（重ねた所の画素は置き換わるので、薄めた色で塗る）
-                d.rounded_rectangle([P(x0b), P(yc - 26), P(x0b + max(4, v * pxm * g)), P(yc + 26)], int(P(6)), fill=solid + (int(255 * kr),))
-                text(d, (930, yc + 15), s, F(GOTH_B, 40), col, anchor="ls", alpha=kr * cl((t - a - dt - 0.45) / 0.25))
-            kd = cl((t - a - 0.5) / 0.3) * k
+                d.rounded_rectangle([P(x0b), P(yc - 20), P(x0b + max(4, v * pxm * g)), P(yc + 20)], int(P(6)), fill=solid + (int(255 * kr),))
+                text(d, (930, yc + 12), s, F(GOTH_B, 34), col, anchor="ls", alpha=kr * cl((t - a - dt - 0.45) / 0.25))
+            kd = cl((t - a - 0.3) / 0.3) * k
             if kd > 0:   # 必要な離れの破線（棒の上に引く）
-                xr, yy = x0b + 7.0 * pxm, 170
-                while yy < 412:
-                    d.line([(P(xr), P(yy)), (P(xr), P(min(yy + 12, 412)))], fill=INK + (int(230 * kd),), width=int(P(3)))
+                xr, yy = x0b + 7.0 * pxm, 162
+                while yy < 470:
+                    d.line([(P(xr), P(yy)), (P(xr), P(min(yy + 12, 470)))], fill=INK + (int(230 * kd),), width=int(P(3)))
                     yy += 20
-                text(d, (xr, 160), "必要 7.00 m", F(GOTH_B, 28), INK, anchor="ms", alpha=kd)
+                text(d, (xr, 152), "必要 7.00 m", F(GOTH_B, 28), INK, anchor="ms", alpha=kd)
+            text(d, (160, 516), "20t 級以下は、届く所では 10 t を吊れない（荷重表）", F(GOTH_R, 26), INK, anchor="ls", alpha=k * cl((t - a - 2.4) / 0.3))
             text(d, (160, 556), "数字は例示値。実際は会社の決まりと機種の荷重表を入れる", F(GOTH_R, 24), SUBINK, anchor="ls", alpha=k)
         a, b = span(3, D)
         k = inwin(None, t, a + 0.3, b - 0.1)
         if k > 0:   # 止められるかどうかで、答えが変わる
             card(d, 600, 96, 1190, 336, k, outline=CYAN, r=16, op=248)
-            for lab, v, col, dt, yb in (("母線も止めれば", "25t 級", GREEN, 0.0, 186), ("依頼文どおり", "100t 級", CYAN, 1.2, 300)):
+            for lab, v, col, dt, yb in (("母線も止めれば", "25t 級", GREEN, 0.0, 186), ("母線を止めないなら", "100t 級", CYAN, 1.2, 300)):
                 kr = cl((t - a - 0.3 - dt) / 0.3) * k
                 if kr <= 0:
                     continue
@@ -356,7 +360,7 @@ def make(G, act):
         k = inwin(None, t, a + 1.0, b - 0.1)
         if k > 0:
             card(d, 700, 380, 1190, 540, k, outline=CYAN, r=16, op=248)
-            text(d, (726, 446), "依頼文の一言で、", F(GOTH_B, 38), INK, anchor="ls", alpha=k)
+            text(d, (726, 446), "条件の一言で、", F(GOTH_B, 38), INK, anchor="ls", alpha=k)
             text(d, (726, 508), "計算の答えが変わる", F(GOTH_B, 38), CYAN, anchor="ls", alpha=k)
         a, b = span(6, D)
         k = inwin(None, t, a + 0.2, D + 1)
