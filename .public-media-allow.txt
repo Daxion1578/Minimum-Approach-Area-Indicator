@@ -28,3 +28,16 @@ scripts/demo_video/v8/assets/r7/z_safe.jpg
 scripts/demo_video/v8/assets/draw/sld-1.png
 scripts/demo_video/v8/assets/draw/layout-1.png
 scripts/demo_video/v8/assets/rec/s4_verdict.png
+scripts/demo_video/v9/assets/c3/plan.png
+scripts/demo_video/v9/assets/c3/section.png
+scripts/demo_video/v9/assets/c3/sld.png
+scripts/demo_video/v9/assets/r9/crane.jpg
+scripts/demo_video/v9/assets/r9/gray.jpg
+scripts/demo_video/v9/assets/r9/live.jpg
+scripts/demo_video/v9/assets/r9/safe.jpg
+scripts/demo_video/v9/assets/rec/s4_verdict.png
+scripts/demo_video/v9/assets/rec9/d_layout-1.png
+scripts/demo_video/v9/assets/rec9/d_plan-1.png
+scripts/demo_video/v9/assets/rec9/d_sld-1.png
+scripts/demo_video/v9/assets/rec9/s2_answer.png
+scripts/demo_video/v9/tools/stills/ground.png
