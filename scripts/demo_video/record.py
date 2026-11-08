@@ -31,7 +31,7 @@ LINES = [
     ("s2", "0:15-0:45", 30, "MAAI は、単線結線図と、平面図・断面図を読んで、構内の 3D を組み立てます。機器の位置と高さは図面から、どこがつながっているかは結線図から。読めなかったところは、要確認として人に返します。"),
     ("s2b", "0:45-1:05", 20, "工事の依頼は文章で来ます。Claude がそこから、取り替える機器、止められない設備、置き場、重さを読み取ります。番号が本当にあるかは計算で確かめ、入れるかどうかは人が決めます。"),
     ("s3", "1:05-1:25", 20, "取り替える機器に電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が出ます。緑が停電、赤が充電。見えなかった充電部が、目に見えるようになります。"),
-    ("s4", "1:25-2:00", 35, "次はクレーンです。新任の私には、どのクレーンにするかがすぐには分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。依頼文で 1 号バンクは止められないので、追加で止める案は出しません。止められるなら 25t 級、という比較は残します。"),
+    ("s4", "1:25-2:00", 35, "次はクレーンです。新任の私には、どのクレーンにするかがすぐには分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。据える場所は、緑のますの中で人が動かして確かめられます。依頼文で 1 号バンクは止められないので、追加で止める案は出しません。"),
     ("s5", "2:00-2:20", 20, "判定は計算で行い、根拠の表も残します。Claude に送る前に、名前や定格値は符号に置き換えます。採否は人が決め、停止範囲の結線図と、クレーンの位置を描いた平面図を書き出します。"),
 ]
 
@@ -57,9 +57,9 @@ def mask_demo_html() -> str:
         if isinstance(u, dict) and str(u.get("request", "")).startswith(REQ_TEXT_HEAD):
             before, after = REQ_TEXT, u["request"]
             break
-    box = "background:#11161c;border:1px solid #3a4452;border-radius:10px;padding:28px 36px;font-size:40px;line-height:1.6;width:1600px"
+    box = "background:#11161c;border:1px solid #3a4452;border-radius:10px;padding:28px 36px;font-size:34px;line-height:1.5;width:1600px"
     return (f'<div id="__ov" style="position:fixed;inset:0;z-index:99999;background:#0b0e12;display:flex;flex-direction:column;'
-            f'align-items:center;justify-content:center;gap:30px;color:#e6e8eb;font-family:\'Noto Sans CJK JP\',\'Noto Sans JP\',sans-serif">'
+            f'align-items:center;justify-content:flex-start;padding-top:70px;gap:22px;color:#e6e8eb;font-family:\'Noto Sans CJK JP\',\'Noto Sans JP\',sans-serif">'
             f'<div style="font-size:34px;color:#8b949e">Claude に送る前（agent/mask.py が置き換える。電圧・距離・重さは計算に要るので残す）</div>'
             f'<div style="{box}"><span style="color:#8b949e;font-size:28px">手元の文</span><br>{_h.escape(before)}</div>'
             f'<div style="font-size:48px">↓</div>'
