@@ -21,3 +21,10 @@ docs/img/onboarding-5.png
 docs/img/onboarding-mobile.png
 docs/img/ui-4-plan-crane.png
 docs/img/ui-1-use-draft.png
+scripts/demo_video/v8/assets/r7/a_gray.jpg
+scripts/demo_video/v8/assets/r7/a_live.jpg
+scripts/demo_video/v8/assets/r7/a_crane.jpg
+scripts/demo_video/v8/assets/r7/z_safe.jpg
+scripts/demo_video/v8/assets/draw/sld-1.png
+scripts/demo_video/v8/assets/draw/layout-1.png
+scripts/demo_video/v8/assets/rec/s4_verdict.png
