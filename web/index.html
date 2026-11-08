@@ -104,7 +104,7 @@
     <p class="todo">この画面でやること: 取り替える機器を選び、止める開閉器を出す。結線図で停電（緑）と充電（赤）を確かめる。</p>
     <h3>工事の依頼文を読む</h3>
     <div class="note">依頼文から、取り替える機器・止められない設備・資材置場・重さを Claude が読み取る。番号の実在と矛盾は計算で確かめ、人が確かめて「この内容で入れる」を押してから使う。</div>
-    <textarea id="reqText" rows="5" style="width:100%;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px/1.5 inherit">次の作業日に、66kV 1号ダイヤの遮断器 6T-110 を取り替えます。新しい遮断器は約 3.5 t です。資材は取り替える遮断器の西側、8 m ほど離れた空き地に仮置きします。1号バンクは系統の都合で今回は止められません。東線1L・東線2L は通常どおり運用します。</textarea>
+    <textarea id="reqText" rows="5" style="width:100%;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px/1.5 inherit">次の作業日に、220kV 東線1L の遮断器 20E1-110 を取り替えます。新しい遮断器は約 10 t です。資材は取り替える遮断器の西側、6 m ほど離れた空き地に仮置きします。東線1L は相手端も含めて停止します。220kV 母線 A 区間は系統の都合で今回は止められません。</textarea>
     <div class="row"><button class="act" id="btnIntake">Claude で読み取る</button><span class="note" id="intakeSrc"></span></div>
     <div id="intakeBox"></div>
     <h3>作業日の停止範囲</h3>
@@ -297,7 +297,7 @@ renderer.domElement.addEventListener('pointerup', e=>{
 });
 
 // ------------------------------------------------------------ データと操作
-const DEMO_TARGET='66-D1-CB1';   // 見本: 66kV 1号ダイヤの遮断器を取り替える作業日
+const DEMO_TARGET='220-L1-CB';   // 見本: 220kV 東線1L の遮断器を取り替える作業日（送電線ごと止める）
 let lastDraft=null, site=null, state=null, lastSteps=null, lastClearance=null, lastCrane=null, lastSelect=null, extraOutage=null, cranes=null, lastLoad={w:2.0,d:2.0,h:2.5}, view3d=false;
 const $=id=>document.getElementById(id);
 // HUD（web/hud.js）が読む内部の値と関数。読むだけで、判定・距離・配置の値はここでは決めない

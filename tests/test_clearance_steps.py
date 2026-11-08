@@ -152,3 +152,16 @@ def test_transformer_target_stops_its_own_bay_up_to_the_bus(topo, states):
     assert res.state_of("220-T2-CB.a") != LIVE and res.state_of("220-T2-CB.b") != LIVE   # 遮断器まわりも停電
     assert res.state_of("220-BUS-B") == LIVE                                              # 母線は運転継続
     assert r["state"]["switches"].get("66-D2-CB1", "closed") == "closed"                  # 共有の遮断器は入ったまま
+
+
+def test_line_bay_target_stops_the_line_too(topo, states):
+    """線路ベイの遮断器を取り替えるときは送電線ごと止める（相手端の条件）。1・1/2 母線の変圧器側の遮断器では送電線を止めない。"""
+    from engine.steps import generate
+    from engine.energize import energize
+    g = generate(topo, states["normal"], ["220-L1-CB"])
+    assert g["ok"] and g["state"]["sources"]["220-LINE-E1"] == "dead"
+    assert any("相手端" in c and "東線1L" in c for c in g["conditions"])
+    st = {c["state"] for c in energize(topo, g["state"]).to_dict()["components"] if "220-LINE-E1" in c["nodes"]}
+    assert st and "live" not in st
+    g66 = generate(topo, states["normal"], ["66-D1-CB1"])
+    assert all("相手端" not in c for c in g66["conditions"])

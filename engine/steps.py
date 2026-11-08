@@ -155,6 +155,15 @@ def generate(topo: Topology, normal_state: dict, targets: list[str], note: str =
         if t not in topo.nodes:
             return {"ok": False, "targets": targets, "steps": [], "ops": [], "conditions": [], "problems": [f"unknown node {t}"]}
     sc = outage_scope(topo, targets)
+    # 切る断路器が送電線（構外の電源）に直接つながっていれば、送電線ごと止める（相手端も切る）。
+    # 線路の機器を取り替えるとき、線路断路器の外側（引留鉄構からの下り線）が充電のまま残るとベイの中で吊れないため（本人の判断 2026-11-08）
+    cut = set(sc["disconnectors"]) | {t for t in targets if topo.nodes[t].kind == "disconnector"}
+    for e in topo.edges:
+        for here, there in ((e.a, e.b), (e.b, e.a)):
+            if here.split(".", 1)[0] in cut:
+                n = topo.node_of(there)
+                if n.kind == "source" and n.id not in sc["remote_sources"]:
+                    sc["remote_sources"].append(n.id)
     base_sw = dict(normal_state.get("switches", {}))
     base_src = dict(normal_state.get("sources", {}))
 
