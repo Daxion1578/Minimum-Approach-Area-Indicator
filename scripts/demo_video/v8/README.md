@@ -45,7 +45,7 @@ bash qa.sh out/maai-v8-shizuka-1080p.mp4 out/qa  # 尺・形式・音量・端�
 
 ## 録画（assets/rec/rec8.webm）
 
-**Git には入れていない**（51MB。公開前チェックの 1 ファイル 5MB の上限を超えるため）。`assets/rec/rec8.webm` に置くと compose8.py が使う（無いと止まる）。受け取り方: 〔未定〕
+**Git には入れていない**（51MB。公開前チェックの 1 ファイル 5MB の上限を超えるため）。`assets/rec/rec8.webm` に置くと compose8.py が使う（無いと止まる）。受け取り方: 本人が持っている `rec8.webm`（52,862,211 バイト、SHA-256 `83e83976c2b91cb93dee8d258c4e464c9cfcab37858f676031e95b353d087d15`）をセッションに添付してもらい、ここに置く（`.gitignore` 済みなのでコミットされない）
 
 564.8 秒、25fps、1920×1080。11/08 の d8624be の画面を `scripts/demo_video/record.py` で、Claude につないで撮った。ec8f230（220kV の配置の直し）より前なので、撮り直すと 220kV 側の見た目が変わる。区切りは `segments.json`。
 
