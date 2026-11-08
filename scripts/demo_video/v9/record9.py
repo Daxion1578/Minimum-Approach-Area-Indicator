@@ -45,8 +45,7 @@ def mask_demo_html() -> str:
     from agent.mask import Mask
     topo = json.loads((ROOT / "data/sites/SITE-01/truth/topology.json").read_text(encoding="utf-8"))
     line = next(n["name"] for n in topo["nodes"] if n["kind"] == "source")
-    amp = f"{2 * 1000}A"   # 定格値の例（公開前チェックの定格値の検出に当たらないよう、コードで組む）
-    before = f"{line} の 20E1-110 遮断器（定格 {amp}）を、合成変電所 の 220kV 母線から切り離す。クレーンとの距離 8.08 m、吊る重さ 10 t"
+    before = f"{line} の 20E1-110 遮断器を、合成変電所 の 220kV 母線から切り離す。クレーンとの距離 8.08 m、吊る重さ 10 t"   # v9: 定格の値は書かない（spec §12）
     after = Mask().text(before)
     # 依頼文を Claude に読ませたときの、実際の送信記録（logs/outbound/*-structure.request.json の request）があればそれを見せる
     logs = sorted(glob.glob(str(ROOT / "logs/outbound/*-structure.request.json")), key=lambda f: Path(f).stat().st_mtime)
