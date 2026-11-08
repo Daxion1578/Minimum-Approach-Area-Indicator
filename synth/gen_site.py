@@ -58,8 +58,8 @@ P = {
     "220": {
         "kv": 220, "code": "20",
         "phase_sp": 4.0,            # 相間（仮定値。220kV の一般的な標準離隔）
-        "bus": {"y": 96.0, "z": 10.5, "x0": 22.0, "x1": 114.0},
-        "sections": [("A", 54.0), ("B", 82.0)],     # セクション LS の x（A|B, B|C）
+        "bus": {"y": 96.0, "z": 10.5, "x0": 22.0, "x1": 126.0},   # 母線は両端の母線鉄構（母線と直角）から張る
+        "sections": [("A", 62.0), ("B", 90.0)],     # セクション LS の x（A|B, B|C）。変圧器ベイの分岐母線と分岐母線の間の真ん中
         "eq_z": EQUIP[220]["terminal_z"],   # 機器端子高さ（synth/equipment.py）
         "line_gantry": {"y": 121.0, "z": LINE_GANTRY_220["beam"], "column": LINE_GANTRY_220["column"]}, "gw_z": LINE_GANTRY_220["column"],
         "tower": {"y": 142.0, "z": TOWER_220["attach_z"], "height": TOWER_220["height"]},   # 構外の引留鉄塔
@@ -67,7 +67,7 @@ P = {
         "line_bay": {"la": 117.5, "ls": 114.0, "cb": 108.0},   # 線路ベイの y（北→南）。CT は遮断器のブッシング根元。母線側断路器は母線直下
         "tr_bay": {"cb": 87.0, "ls": 80.0, "la": 76.0},        # 変圧器ベイの y（北→南）。CT は遮断器のブッシング根元。母線側断路器は母線直下
         "tr_y": 69.0, "tr_z": TRANSFORMER["hv"]["top_z"],   # 変圧器タンク中心 y・一次ブッシング端子高さ
-        "lines": [("E1", "東線1L", 40.0, "A"), ("E2", "東線2L", 96.0, "C")],   # (符号, 名前, x, 区間)
+        "lines": [("E1", "東線1L", 32.0, "A"), ("E2", "東線2L", 116.0, "C")],   # (符号, 名前, x, 区間)。変圧器ベイの相と同じ南北の線上に並ばないよう外側へ
         "banks": [(1, 48.0, "A"), (2, 76.0, "B"), (3, 104.0, "C")],           # (番号, x, 区間)。線路ベイから 8m 東（パンタ型断路器の柱が重ならないように）
     },
     "66": {
@@ -187,6 +187,12 @@ class Site:
         prims.append({"type": "capsule", "a": r3((x0, y, bz)), "b": r3((x1, y, bz)), "r": GANTRY["beam_h"] / 2})
         self.layout["structures"].append({"id": sid, "kind": "gantry", "name": name, "primitives": prims})
 
+    def gantry_y(self, sid, x, y0, y1, z, name=None):
+        """南北に梁を渡す鉄構（柱 2 本と梁）。母線の端で 3 相を引き留める。"""
+        prims = [{"type": "capsule", "a": r3((x, yy, 0.0)), "b": r3((x, yy, z)), "r": GANTRY["col_w"] / 2} for yy in (y0, y1)]
+        prims.append({"type": "capsule", "a": r3((x, y0, z)), "b": r3((x, y1, z)), "r": GANTRY["beam_h"] / 2})
+        self.layout["structures"].append({"id": sid, "kind": "gantry", "name": name, "primitives": prims})
+
     def apparatus(self, sid, kind, kv, x, y, name=None):
         """避雷器など、結線上は区間の一部で、図面と 3D に形だけ出す機器（3 相）。CT は遮断器に内蔵（ブッシング形）。"""
         e = EQUIP[kv][kind]; sp = EQUIP[kv]["phase_sp"]
@@ -210,6 +216,9 @@ class Site:
         xs = [cfg["bus"]["x0"]] + [x for _, x in cfg["sections"]] + [cfg["bus"]["x1"]]
         names = ["A", "B", "C"]
         buses = {}
+        dsec = EQUIP[220]["ds_sec"]
+        sec_half = dsec["span"] / 2
+        sec_top = dsec["column"] + dsec["insulator"] + 0.15      # セクション断路器の端子（碍管の頭）
         for i, sec in enumerate(names):
             b = self.node(f"220-BUS-{sec}", "bus", kv, name=f"220kV 母線 {sec}区間")
             buses[sec] = b
@@ -217,12 +226,22 @@ class Site:
                     at=((xs[i] + xs[i + 1]) / 2, by - 2.0, 1.5))
             for ph in PHASES:
                 y = by - PHASE_IDX[ph] * sp
-                self.capsules(b, ph, [(xs[i] + (0.0 if i == 0 else 0.6), y, bz), (xs[i + 1] - (0.0 if i == 2 else 0.6), y, bz)], r=BUS_R)
+                # 両端は母線鉄構から水平に。セクション断路器の側は、断路器の碍管の頭へ少し下りてつながる
+                pts = []
+                if i > 0:
+                    pts += [(xs[i] + sec_half, y, sec_top), (xs[i] + sec_half + 2.0, y, bz)]
+                else:
+                    pts += [(xs[i], y, bz)]
+                if i < 2:
+                    pts += [(xs[i + 1] - sec_half - 2.0, y, bz), (xs[i + 1] - sec_half, y, sec_top)]
+                else:
+                    pts += [(xs[i + 1], y, bz)]
+                self.capsules(b, ph, pts, r=BUS_R)
         # セクション LS（母線上。両側の母線区間をつなぐ）
         for i, (sec, x) in enumerate(cfg["sections"]):
             left, right = names[i], names[i + 1]
             s = self.switch(f"220-SEC-{left}{right}", "disconnector", kv, "closed", name=f"220kV セクション断路器 {left}-{right}",
-                            at=(x, by, bz), number=f"{code}B-{i + 1}01")
+                            at=(x, by, bz), number=f"{code}B-{i + 1}01")   # 位置の高さは母線（図面の高さラベルと同じ）。碍管の頭は sec_top
             self.edge(buses[left], f"{s}.a"); self.edge(f"{s}.b", buses[right])
         # 引留鉄構・架空地線
         g = cfg["line_gantry"]
@@ -232,7 +251,9 @@ class Site:
             tw = cfg["tower"]
             self.layout["structures"].append({"id": f"220-TOWER-{cid}", "kind": "other", "name": f"{cname} 引留鉄塔（構外）",
                                               "primitives": [{"type": "capsule", "a": r3((x, tw["y"], 0.0)), "b": r3((x, tw["y"], tw["height"])), "r": 1.0}]})
-        self.gantry("220-GANTRY-BUS", cfg["bus"]["x0"], cfg["bus"]["x1"], by, bz + 1.5, "220kV 母線鉄構", spacing=23.0)
+        # 母線鉄構: 母線の両端に、母線と直角（南北）に立てて 3 相を張る（母線と同じ向きの梁は無い）
+        for end, x in (("W", cfg["bus"]["x0"]), ("E", cfg["bus"]["x1"])):
+            self.gantry_y(f"220-GANTRY-BUS-{end}", x, by - sp - 3.0, by + sp + 3.0, bz + 1.0, f"220kV 母線鉄構（{'西' if end == 'W' else '東'}）")
         # 線路ベイ（母線の北側）
         lb = cfg["line_bay"]
         for i, (cid, cname, x, sec) in enumerate(cfg["lines"]):

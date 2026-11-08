@@ -21,6 +21,12 @@ EQUIP = {
             "frame": 3.4,         # 架台の長さ（D）
             "frame_w": 0.6, "ins_d": 0.3, "base": 0.8,
         },
+        "ds_sec": {   # 母線のセクション断路器: 水平一点切を高い架台（H 形）に載せ、碍管の頭を母線の高さ近くに上げる。母線は少し下りてつながる
+            "type": "vertical_break",
+            "column": 7.6,        # 架台の高さ（母線 10.5 m − 碍管 − 0.6 m）
+            "insulator": 2.3, "head": 0.35, "span": 2.9, "frame": 3.4,
+            "frame_w": 0.6, "ins_d": 0.3, "base": 0.8,
+        },
         "ds_panto": {   # 母線側: パンタグラフ形断路器。母線の真下に 1 相ずつ置き、パンタが上へ伸びて母線に接する
             "type": "pantograph",
             "column": 2.5, "insulator": 2.3, "head": 0.4,

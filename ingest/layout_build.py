@@ -20,8 +20,9 @@ from synth.gen_site import BUS_R, PHASE_IDX, PHASES, Site     # 組み立ての�
 # 鉄構などの規則（gen_site.py と同じ仮定値）
 _GANTRY_RULES = {
     "220_line_margin": 6.0,     # 220kV 引留鉄構・架空地線は母線の両端から 6 m 外まで
-    "220_bus_gantry_dz": 1.5,   # 母線鉄構の頂部は母線の 1.5 m 上
-    "220_bus_gantry_spacing": 23.0,
+    "220_bus_gantry_dz": 1.0,   # 母線鉄構（母線の両端、母線と直角）の梁は母線の 1.0 m 上
+    "220_bus_gantry_half": 3.0, # 母線鉄構の柱は外側の相から 3 m 外
+    "sec_rise": 2.0,            # セクション断路器の碍管の頭から母線の高さへ 2 m で上がる
     "66_gantry_margin": 4.0,    # 66kV 引留鉄構は母線の両端から 4 m 外まで（架空地線は 5 m）
     "66_gw_margin": 5.0,
     "66_bus_gantry_spacing": 14.0,
@@ -189,14 +190,17 @@ def _yard_220(c: _Ctx):
     bus_nodes = sorted(i for i, n in c.nodes.items() if n["kind"] == "bus" and n.get("voltage_kv") == 220)
     secs = sorted((i for i, n in c.nodes.items() if re.fullmatch(r"220-SEC-[A-Z]{2}", i) and i in c.pos), key=lambda i: c.pos[i][0])
     pitch2 = EQUIP[220]["cb"]["bushing_pitch"] / 2
+    dsec = EQUIP[220]["ds_sec"]; sec_half = dsec["span"] / 2; sec_top = dsec["column"] + dsec["insulator"] + 0.15
+    rise = _GANTRY_RULES["sec_rise"]
     if len(secs) == len(bus_nodes) - 1:
         xs = [bx0] + [c.pos[s][0] for s in secs] + [bx1]
         for i, b in enumerate(bus_nodes):
             for ph in PHASES:
                 y = by - PHASE_IDX[ph] * sp
-                p0 = xs[i] + (0.0 if i == 0 else _GANTRY_RULES["sec_gap"])
-                p1 = xs[i + 1] - (0.0 if i == len(bus_nodes) - 1 else _GANTRY_RULES["sec_gap"])
-                _cap(c, b, ph, [(p0, y, bz), (p1, y, bz)], r=BUS_R)
+                # gen_site と同じ規則: 両端は母線鉄構から水平、セクション断路器の側は碍管の頭へ少し下りる
+                pts = [(xs[i] + sec_half, y, sec_top), (xs[i] + sec_half + rise, y, bz)] if i > 0 else [(xs[i], y, bz)]
+                pts += [(xs[i + 1] - sec_half - rise, y, bz), (xs[i + 1] - sec_half, y, sec_top)] if i < len(bus_nodes) - 1 else [(xs[i + 1], y, bz)]
+                _cap(c, b, ph, pts, r=BUS_R)
     else:
         c.ask(f"220kV 母線 {len(bus_nodes)} 区間に対しセクション断路器が {len(secs)} 台しか読めていない。母線の水平部を作らない")
 
@@ -271,7 +275,9 @@ def _yard_220(c: _Ctx):
                                                                 "b": [round(lsx, 3), round(tw["y_m"], 3), TOWER_220["height"]], "r": 1.0}]})
     else:
         c.ask("引留鉄塔の高さラベルが断面に無い。鉄塔を作らない")
-    c.site.gantry("220-GANTRY-BUS", bx0, bx1, by, bz + _GANTRY_RULES["220_bus_gantry_dz"], "220kV 母線鉄構", spacing=_GANTRY_RULES["220_bus_gantry_spacing"])
+    hw = sp + _GANTRY_RULES["220_bus_gantry_half"]
+    for end, x in (("W", bx0), ("E", bx1)):
+        c.site.gantry_y(f"220-GANTRY-BUS-{end}", x, by - hw, by + hw, bz + _GANTRY_RULES["220_bus_gantry_dz"], f"220kV 母線鉄構（{'西' if end == 'W' else '東'}）")
 
 
 def _yard_66(c: _Ctx):

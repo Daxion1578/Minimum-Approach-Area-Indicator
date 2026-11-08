@@ -61,7 +61,7 @@ def test_height_label_count(extracted):
 
 def test_bus_heights_and_plan_ranges(extracted):
     b = {x["label"]: x for x in extracted["buses"]}
-    assert b["220kV 1号母線"]["z_m"] == 10.5 and b["220kV 1号母線"]["x_range_m"] == [22.0, 114.0]
+    assert b["220kV 1号母線"]["z_m"] == 10.5 and b["220kV 1号母線"]["x_range_m"] == [22.0, 126.0]
     assert b["66kV 1号母線"]["z_m"] == 6.5 and b["66kV 2号母線"]["z_m"] == 4.5
 
 

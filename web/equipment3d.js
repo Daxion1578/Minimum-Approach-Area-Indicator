@@ -63,8 +63,9 @@ export function buildEquipment(site, dims) {
     const [x, y] = it.at; const kv = n.voltage_kv || 220; const E = dims.equip[String(kv)]; const sp = E.phase_sp;
     const eg = new THREE.Group(); byId[it.id] = eg; g.add(eg);
     if (n.kind === 'disconnector') {
-      const panto = kv === 220 && it.id.endsWith('-BLS'); const e = panto ? E.ds_panto : E.ds;
+      const panto = kv === 220 && it.id.endsWith('-BLS');
       const alongX = it.id.startsWith('220-SEC');
+      const e = panto ? E.ds_panto : (alongX && E.ds_sec) ? E.ds_sec : E.ds;   // セクション断路器は高い架台（H 形）
       for (const ph of ['R', 'S', 'T']) {
         let cx = x + PH[ph] * sp, cy = y; if (panto) { cy = y - PH[ph] * sp; } else if (alongX) { cx = x; cy = y - PH[ph] * sp; }
         if (panto) {
