@@ -108,3 +108,24 @@ def test_larger_classes_show_their_own_placement_area(topo, site, states):
     assert [x["class"] for x in r["larger"]] == ids[i + 1: i + 1 + len(r["larger"])] and r["larger"]
     for x in r["larger"]:
         assert all(c["crane"]["class"] == x["class"] for c in x["cells"] if c["ok"])
+
+
+def test_select_at_matches_the_chosen_base_and_grows_when_moved_closer(topo, site, states):
+    """人が動かした位置で一番小さい級を選び直す。選定で選んだ位置なら同じ級、置けるます目の配置は承認と同じ判定でも不可にならない。"""
+    from engine.crane_select import select_at
+    day = _day(topo, states, "66-D1-CB1")
+    r = select(topo, site.layout, day, "66-D1-CB1", suggest_outage=False)
+    ch = r["chosen"]
+    a = select_at(topo, site.layout, day, "66-D1-CB1", tuple(ch["crane"]["base"]), set_xy=tuple(r["set"]))
+    assert a["ok"] and a["chosen"]["class"] == ch["class"]
+    env = envelopes(topo, site.layout, energize(topo, day), ClearanceTable.load())
+    assert evaluate(env, Crane.from_dict(a["chosen"]["crane"]))["verdict"] != NG
+    ranks = [k["id"] for k in load_classes()]
+    # 50t 級の範囲（35t では置けないます目）へ動かせば、35t より大きい級になる
+    big = next(x for x in r["larger"] if x["class"] != ch["class"])
+    cell = next(c for c in big["cells"] if c["ok"] and not any(cc["ok"] and cc["x"] == c["x"] and cc["y"] == c["y"] for cc in ch["cells"]))
+    b = select_at(topo, site.layout, day, "66-D1-CB1", (cell["x"], cell["y"]), set_xy=tuple(r["set"]))
+    assert b["ok"] and ranks.index(b["chosen"]["class"]) > ranks.index(ch["class"])
+    # 向きを渡すとその向きで判定する
+    h = select_at(topo, site.layout, day, "66-D1-CB1", tuple(ch["crane"]["base"]), set_xy=tuple(r["set"]), heading_deg=ch["crane"]["heading_deg"] + 5)
+    assert h["chosen"] is None or abs(h["chosen"]["crane"]["heading_deg"] - (ch["crane"]["heading_deg"] + 5)) < 1e-6

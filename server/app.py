@@ -13,6 +13,7 @@ API（すべて契約 contracts/ の形でやり取りする）:
   POST /api/sites/{site_id}/approve    body: {"state","crane","clearance","steps","approver"} → approved/ に書き出し、承認ハッシュ
   GET  /api/sites/{site_id}/approved/{name}/{file}   書き出した JSON / PDF
   POST /api/sites/{site_id}/select     body: {"state", "pick_id", "weight_t"?, "set_xy"?} → 重機の選定 §7.9
+  POST /api/sites/{site_id}/select_at  body: {"state", "pick_id", "base", "weight_t"?, "set_xy"?, "heading_deg"?} → その位置で一番小さい級
   POST /api/sites/{site_id}/sld        body: {"state", "title"?} → 塗り分けた単線結線図 SVG と機器の位置
   GET  /api/cranes                     クレーンのクラスと吊る機器の例示値
   POST /api/sites/{site_id}/explain    body: {"proposal", "clearance"} → 修正案の説明（Claude。呼べなければ定型文）
@@ -187,6 +188,25 @@ def post_select(site_id: str, req: SelectRequest):
     site = load_site(site_id)
     return select_crane(_topo(site), site["layout"], req.state, req.pick_id, req.weight_t,
                         tuple(req.set_xy) if req.set_xy else None, unstoppable=req.unstoppable)
+
+
+class SelectAtRequest(BaseModel):
+    state: dict
+    pick_id: str
+    base: list[float]
+    weight_t: float | None = None
+    set_xy: list[float] | None = None
+    heading_deg: float | None = None
+    load: dict | None = None
+
+
+@app.post("/api/sites/{site_id}/select_at")
+def post_select_at(site_id: str, req: SelectAtRequest):
+    """人がクレーンを動かした・回したとき: その位置（と向き）で使える一番小さいクラスを選び直す。"""
+    from engine.crane_select import select_at
+    site = load_site(site_id)
+    return select_at(_topo(site), site["layout"], req.state, req.pick_id, tuple(req.base[:2]), req.weight_t,
+                     tuple(req.set_xy) if req.set_xy else None, req.heading_deg, req.load)
 
 
 class IntakeRequest(BaseModel):

@@ -160,12 +160,15 @@ def _worst(env_list: list[dict], caps: list[dict]):
     return worst
 
 
-def _try_cell(k: dict, base, pick, setp, need_t: float, load: dict, hook_need_z: float, env_list: list[dict], step: float):
-    """1 つの据付位置で、届く・吊れる・離隔の順に確かめる。戻り値 (理由, crane, worst)。理由 None なら置ける。"""
+def _try_cell(k: dict, base, pick, setp, need_t: float, load: dict, hook_need_z: float, env_list: list[dict], step: float,
+              heading: float | None = None):
+    """1 つの据付位置で、届く・吊れる・離隔の順に確かめる。戻り値 (理由, crane, worst)。理由 None なら置ける。
+    heading を渡さなければ、車体は吊る点と資材置場の真ん中を向く。"""
     spec = spec_of(k)
-    mid_az = _ang(pick[0] - base[0], pick[1] - base[1])
-    az2 = _ang(setp[0] - base[0], setp[1] - base[1])
-    heading = _norm(mid_az + _norm(az2 - mid_az) / 2.0)
+    if heading is None:
+        mid_az = _ang(pick[0] - base[0], pick[1] - base[1])
+        az2 = _ang(setp[0] - base[0], setp[1] - base[1])
+        heading = _norm(mid_az + _norm(az2 - mid_az) / 2.0)
     c = Crane(base=base, heading_deg=heading, spec=spec, crane_class=k["id"], hook_drop_m=_table()["hook_drop_m"], load=dict(load))
     px, py, pz = c.pivot()
     r1 = math.hypot(pick[0] - px, pick[1] - py)
@@ -286,6 +289,52 @@ def _select_on(env_list, layout, classes, pick, setp, weight_t, load, hook_need_
         if entry["ok"]:
             break
     return per_class
+
+
+def select_at(topo: Topology, layout: dict, state: dict, pick_id: str, base: tuple[float, float],
+              weight_t: float | None = None, set_xy: tuple[float, float] | None = None,
+              heading_deg: float | None = None, load: dict | None = None) -> dict:
+    """人がクレーンを動かした・回したとき: その据付位置（と向き）で使える一番小さいクラスを選び直す。
+    判定は select と同じ（ふるい分けのあと、承認と同じ 2° 刻みでやり直す）。置けるクラスが無ければ ok=False と理由。"""
+    rules = load_rules()
+    item = lift_item(topo, pick_id)
+    p = pick_point(layout, pick_id)
+    if p is None:
+        return {"ok": False, "problems": [f"{pick_id} の位置が配置に無い"]}
+    if weight_t is None:
+        if item is None:
+            return {"ok": False, "problems": [f"{pick_id} の重さの例示値が無い。重さを入れる"]}
+        weight_t = item["t"]
+    load = load or ({"w": item["w"], "d": item["d"], "h": item["h"]} if item else {"w": 2.0, "d": 2.0, "h": 2.5})
+    setp = tuple(set_xy) if set_xy else default_laydown(layout, p)
+    hook_need_z = max(p[2], 0.0) + load["h"] + _table()["sling_m"]
+    pick = (p[0], p[1])
+    env = envelopes(topo, layout, energize(topo, state), ClearanceTable.load(), False)["envelopes"]
+    tbl = _table()
+    tried = []
+    for k in load_classes():
+        need = weight_t + k["hook_t"] + tbl["rigging_t"]
+        why, c, w, _ = _try_cell(k, tuple(base), pick, setp, need, load, hook_need_z, env, SCREEN_STEP_DEG, heading_deg)
+        entry = {"class": k["id"], "name": k["name"], "need_t": round(need, 2)}
+        if why is None:
+            out = evaluate({"site_id": None, "step": None, "envelopes": env}, c, rules)
+            if out["verdict"] != NG:
+                entry.update({"ok": True, "crane": c.to_dict(), "verdict": out["verdict"], "verdict_ja": out["verdict_ja"],
+                              "min_distance_m": out["worst"]["distance_m"] if out["worst"] else None,
+                              "required_m": out["worst"]["required_m"] if out["worst"] else None,
+                              "margin_m": out["worst"]["margin_m"] if out["worst"] else None,
+                              "reasons": out["reasons"], "conditions": out["conditions"]})
+                tried.append(entry)
+                return {"ok": True, "pick_id": pick_id, "pick": list(p), "set": list(setp), "weight_t": weight_t, "load": load,
+                        "base": list(base), "chosen": entry, "tried": tried, "problems": []}
+            why = "clearance"
+        entry.update({"ok": False, "why": why})
+        tried.append(entry)
+    why_ja = {"near": "吊る点か資材置場に近すぎる", "weight": "作業半径で定格荷重が足りない",
+              "reach": "ブームが届かない（作業半径とフックの高さ）", "clearance": "充電部の離隔が足りない"}
+    last = tried[-1]["why"] if tried else None
+    return {"ok": False, "pick_id": pick_id, "pick": list(p), "set": list(setp), "weight_t": weight_t, "load": load, "base": list(base),
+            "chosen": None, "tried": tried, "problems": [f"この位置ではどの級も置けない（一番大きい級でも{why_ja.get(last, last)}）"]}
 
 
 def select(topo: Topology, layout: dict, state: dict, pick_id: str, weight_t: float | None = None,
