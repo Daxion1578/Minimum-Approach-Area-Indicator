@@ -50,3 +50,17 @@ body[data-stage=s2] #hudCard { width:300px; }
 #hudCard .crane .btns button:hover { border-color:var(--accent); }
 #hudCard .crane .btns button[aria-pressed="true"] { background:rgba(95,208,255,.16); border-color:var(--accent); color:var(--accent); }
 #hudCard .crane .how { font-size:12px; color:#c9d3de; }
+
+/* ---- 凡例（緑・灰・黄）。色の意味をそろえる: 赤は充電部、緑は据えてよい所、灰は置けない所、黄は一番近い充電部と距離 */
+#hudSide .s2leg { background:rgba(9,13,18,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line2);
+  padding:10px 14px; display:flex; flex-direction:column; gap:6px; font-size:13px; color:#c9d3de; }
+#hudSide .s2leg .sw { display:inline-block; width:14px; height:14px; margin-right:8px; vertical-align:-2px; }
+#hudSide .s2leg .sw.g { background:rgba(61,220,106,.55); border:1px solid var(--deadg); }
+#hudSide .s2leg .sw.x { background:rgba(141,151,163,.45); border:1px solid #8d97a3; }
+#hudSide .s2leg .sw.y { background:#ffb020; border-radius:50%; }
+body[data-stage=s2] #hudAnswer .lead2 .ex { font-size:12px; font-weight:400; color:var(--mute); }
+
+/* ---- 3D の上の距離の札（一番近い充電部への線の真ん中） */
+#s2Dist { position:fixed; z-index:5; transform:translate(-50%, -140%); pointer-events:none; display:none; white-space:nowrap;
+  background:rgba(9,13,18,.9); border:1px solid #ffb020; color:#ffd27a; font:600 15px/1.2 var(--mono); padding:4px 9px; }
+#s2Dist[data-v=ng] { border-color:var(--live); color:#ff9a9a; }

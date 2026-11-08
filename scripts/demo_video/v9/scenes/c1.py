@@ -125,6 +125,10 @@ def make(G):
             text(d, (x0 + 34, y), s, F(GOTH_B, 42), INK, anchor="ls", alpha=a)
 
         caption(d, "C1", t, True, skip=skip)
-        return flatten(f, ov)
+        out = flatten(f, ov)
+        k = (D - t) / 0.45   # 終わりの 0.45 秒で札を消し、C2 の始め（同じ静止画・同じ寄り）へ切れ目なくつなぐ
+        if k < 1:
+            out = Image.blend(f.convert("RGB"), out, max(0.0, k))
+        return out
 
     return c1

@@ -143,6 +143,18 @@ def make(G, act):
         a, b = span(2, D)
         hl_box(d, x["ans"], r, CYAN, inwin(None, t, a + 0.3, (a + b) / 2 - 0.1))
         hl_box(d, x["drw"], r, AMBER, inwin(None, t, (a + b) / 2 + 0.2, D), pad=-10)
+        k = inwin(None, t, (a + b) / 2 + 0.4, D)
+        if k > 0:   # Claude の役目: 今日の録画の実際の数（つながない回 15 件、つないだ回 6 件）
+            x0, y0 = 720, 60
+            card(d, x0, y0, x0 + 450, y0 + 196, k, outline=CYAN, r=16, op=246)
+            text(d, (x0 + 24, y0 + 52), "Claude につなぐと", F(GOTH_R, 26), SUBINK, anchor="ls", alpha=k)
+            text(d, (x0 + 24, y0 + 98), "確かめてほしいこと", F(GOTH_B, 30), INK, anchor="ls", alpha=k)
+            text(d, (x0 + 24, y0 + 168), "15 件", F(GOTH_B, 44), SUBINK, anchor="ls", alpha=k)
+            w15 = d.textlength("15 件", font=F(GOTH_B, 44)) / SS / K
+            text(d, (x0 + 36 + w15, y0 + 164), "→", F(GOTH_B, 40), SUBINK, anchor="ls", alpha=k)
+            k6 = back((t - (a + b) / 2 - 0.9) / 0.45)
+            if k6 > 0:
+                text(d, (x0 + 92 + w15, y0 + 168), "6 件", F(GOTH_B, int(round(56 * (0.85 + 0.15 * cl(k6))))), CYAN, anchor="ls", alpha=k * cl(k6))
         return f
 
     # ------------------------------------------------------------------ C6 STEP 2 対象を選ぶ（依頼文 → Claude → 送る前の置き換え → 停止範囲）
@@ -249,6 +261,15 @@ def make(G, act):
             tag(d, (640, 590), "緑のマス ＝ 据えてよい所（3 m 角）", 26, fg=WHITE, bg_=GREEN, alpha=k, anchor="ms")
         a5, b5 = span(5, D)
         hl_box(d, x["sel2"], r, AMBER, inwin(None, t, a5 + 0.4, b5 - 0.1), pad=-10)
+        k = inwin(None, t, a5 + 0.6, b5 - 0.1)
+        if k > 0:   # engine の with_outage の note と同じ中身
+            x0, y0 = 650, 70
+            card(d, x0, y0, x0 + 520, y0 + 222, k, outline=CYAN, r=16, op=246)
+            text(d, (x0 + 24, y0 + 54), "220kV 母線 A 区間を止められるなら", F(GOTH_R, 26), SUBINK, anchor="ls", alpha=k)
+            k2 = back((t - a5 - 1.0) / 0.45)
+            if k2 > 0:
+                text(d, (x0 + 24 + (1 - k2) * 16, y0 + 128), "25t 級で済む", F(GOTH_B, 54), CYAN, anchor="ls", alpha=k * cl(k2))
+            text(d, (x0 + 24, y0 + 190), "止めるかどうかは、人が決める", F(GOTH_B, 28), INK, anchor="ls", alpha=k * cl((t - a5 - 1.6) / 0.3))
         return f
 
     # ------------------------------------------------------------------ C8 STEP 4 確認して承認

@@ -22,7 +22,7 @@ VOICES = {
     "dan": {"speaker": 52, "speed": 0.98, "intonation": 0.85, "credit": "VOICEVOX:雀松朱司"},
     "kataru": {"speaker": 11, "speed": 1.0, "intonation": 1.15, "credit": "VOICEVOX:玄野武宏"},
     # v9: 本人の声（override/self/pNN.wav）。まだ録っていない段落は冥鳴ひまりの仮の読み上げで尺を合わせる（書き出しの表記は出さない）
-    "self": {"speaker": 14, "speed": 1.03, "intonation": 1.12, "credit": ""},
+    "self": {"speaker": 14, "speed": 1.03, "intonation": 1.12, "credit": "VOICEVOX:冥鳴ひまり"},   # 11/08 本人の判断: 読み上げは VOICEVOX（無料・クレジット表記が条件）
 }
 # 段落 → カット（v8 絵コンテの C1〜C10）
 ACT_OF = {i: f"C{i}" for i in range(1, 11)}

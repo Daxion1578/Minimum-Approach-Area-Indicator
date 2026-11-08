@@ -35,7 +35,9 @@ def make(G):
 
     def scene(t, D):
         f = bg(); ov = new_ov(); d = ImageDraw.Draw(ov)
-        b0, c0, e0, g0, h0 = cs(1), cs(2), cs(3), cs(4), cs(5)
+        b0, c0, e0, g0 = cs(1), cs(2), cs(3), cs(4)
+        # 台本に「この動画の場面も、係に手分けして作らせた。」が 5 文目の後に入ると文は 7 つ。そのときは 6 文目で札を出し、記録は 7 文目から
+        v0, h0 = (cs(5), cs(6)) if n >= 7 else (None, cs(5))
         # 0 判定は計算、承認は人（v8 と同じ 3 つの箱）
         a0 = 1 - cl((t - b0 + 0.25) / 0.35)
         if a0 > 0:
@@ -68,6 +70,14 @@ def make(G):
             text(d, (52, 468), "0", F(GOTH_B, int(round(170 * lerp(1.2, 1.0, ease((t - e0) / 0.4))))), CYAN, anchor="ls", alpha=a2)
             text(d, (196, 406), "言葉で", F(GOTH_B, 30), INK, anchor="ls", alpha=a2)
             text(d, (196, 448), "頼むだけ", F(GOTH_B, 30), INK, anchor="ls", alpha=a2)
+        # 5'（文が 7 つのときだけ）動画の場面づくりも係に手分け
+        if v0 is not None:
+            av = cl((t - v0) / 0.3) * (1 - cl((t - h0 + 0.25) / 0.3))
+            if av > 0:
+                kv = back((t - v0) / 0.45)
+                card(d, 60, 492, 560, 606, av, outline=GREEN, r=16, op=246)
+                tag(d, (84, 536), "動画の場面づくり", 24, fg=WHITE, bg_=GREEN, alpha=av)
+                text(d, (84 + (1 - cl(kv)) * 14, 586), "6 つの係が同時に（11/08）", F(GOTH_B, 28), INK, anchor="ls", alpha=av)
         # 5 テストの件数
         a3 = cl((t - h0 - 0.4) / 0.3)
         if a3 > 0:

@@ -57,6 +57,11 @@ export default {
         <label class="wbox"><input id="s2W" type="number" step="0.1" min="0" inputmode="decimal" aria-label="吊る物の重さ（t）"><span>t</span></label>
         ${note ? `<div class="how">${esc(note)}</div>` : ''}
       </div>
+      ${placed(m) || m.zoneCells ? `<div class="s2leg">
+        <div><i class="sw g"></i>緑 ＝ 据えてよい所（3 m 角）</div>
+        <div><i class="sw x"></i>灰 ＝ 置けない所</div>
+        <div><i class="sw y"></i>黄 ＝ 一番近い充電部と距離</div>
+      </div>` : ''}
     </div>`;
   },
 
@@ -67,7 +72,7 @@ export default {
     if (c && cr) {
       const v = tone(c.verdict), w = c.worst, cls = esc(cr.class || '');
       return `<div class="ans" data-verdict="${v}">
-        <div class="row1"><span class="v ${v}">${esc(c.verdict_ja)}</span><span class="lead2"><b class="n">${cls}</b> 級${v === 'ng' ? 'では近すぎる' : 'で置ける'}</span></div>
+        <div class="row1"><span class="v ${v}">${esc(c.verdict_ja)}</span><span class="lead2"><b class="n">${cls}</b> 級<span class="ex">（例示値）</span>${v === 'ng' ? 'では近すぎる' : 'で置ける'}</span></div>
         ${w ? `<div class="dist"><span class="lbl">最小離隔</span><span class="n lg">${f(w.distance_m)}</span><span class="unit">m</span><span class="need">必要 <span class="n">${f(w.required_m)}</span> m</span></div>` : ''}
         ${extra}</div>`;
     }
@@ -134,7 +139,7 @@ export default {
   },
   onEnter(m) {
     install(m); wrapVCrane(); sel = false; armed = false; notice = null;
-    topView(m); drawBox(m);
+    topView(m); drawBox(m); startDist();
     if (!m.lastSelect && !placed(m)) schedule(m);   // 依頼文などで置場と重さが入っていれば、そのまま選ぶ
   },
   onLeave() { sel = false; armed = false; clearTimeout(timer); },
@@ -187,7 +192,27 @@ addEventListener('maai-update', e => {
   }
   if (k === 'steps' || k === 'reset') { lastKey = ''; sel = false; armed = false; notice = null; }
   if (m) drawBox(m);
+  if (k === 'clearance') startDist();
 });
+
+// ---- 一番近い充電部までの距離の札（3D の上、最寄りの線の真ん中）。値は engine の lastClearance.worst をそのまま出す
+let distEl = null, distLoop = 0;
+function distTick() {
+  const m = window.maai, w = m?.lastClearance?.worst;
+  if (!distEl) { distEl = document.createElement('div'); distEl.id = 's2Dist'; document.body.appendChild(distEl); }
+  if (!inS2() || !w || !m.camera || !m.renderer) { distEl.style.display = 'none'; distLoop = 0; return; }
+  const v = new m.THREE.Vector3((w.p_crane[0] + w.p_conductor[0]) / 2, (w.p_crane[1] + w.p_conductor[1]) / 2, (w.p_crane[2] + w.p_conductor[2]) / 2).project(m.camera);
+  const r = m.renderer.domElement.getBoundingClientRect();
+  if (v.z < -1 || v.z > 1) distEl.style.display = 'none';
+  else {
+    distEl.style.display = 'block';
+    distEl.style.left = `${r.left + (v.x + 1) / 2 * r.width}px`; distEl.style.top = `${r.top + (1 - v.y) / 2 * r.height}px`;
+    const txt = `最小 ${f(w.distance_m)} m`; if (distEl.textContent !== txt) distEl.textContent = txt;
+    distEl.dataset.v = tone(m.lastClearance.verdict);
+  }
+  distLoop = requestAnimationFrame(distTick);
+}
+function startDist() { if (!distLoop) distLoop = requestAnimationFrame(distTick); }
 
 // ---- 動かす・回す: その位置（向き）で一番小さい級を engine に選び直してもらう。ok でなければ理由を出して動かさない
 async function selectAt(m, base, heading) {
