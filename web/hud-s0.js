@@ -45,6 +45,25 @@ function install() {
   $('ingestFile')?.addEventListener('change', () => { if (pickedFromHud && $('ingestFile').files[0]) $('btnIngest').click(); pickedFromHud = false; });
 }
 
+// 単線結線図で作った機器一覧と、装置図の平面の機器番号の一致（/api/ingest/layout の応答の match）。両方を読んだときだけ出す
+const sldCount = j => new Set([...(j.candidate?.switches || []).map(s => s.number), ...(j.candidate?.transformers || []).map(t => t.number),
+  ...(j.candidate?.loads || []).map(l => l.name)]).size;
+const list = a => a.slice(0, 10).map(n => `<span class="no">${esc(n)}</span>`).join('、') + (a.length > 10 ? ` ほか ${a.length - 10}` : '');
+function matchBlock(j, d) {
+  const mt = d?.match; if (!j || !mt) return '';
+  if (mt.sld_source === 'truth' || mt.sld !== sldCount(j))   // 装置図を先に読んだ: その照合は今の単線図とではない
+    return `<div class="sect match old"><div class="dim">機器の一致: 装置図を読み直すと、読んだ単線図と照合する</div></div>`;
+  const k = mt.only_sld.length + mt.only_plan.length;
+  const head = `機器の一致: 単線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台`;
+  if (!k) return `<div class="sect match ok" data-match="ok"><div class="mh">${head} — 一致</div></div>`;
+  const side = [mt.only_sld.length ? `<div class="ml"><span class="k">単線図だけ</span>${list(mt.only_sld)}</div>` : '',
+    mt.only_plan.length ? `<div class="ml"><span class="k">平面図だけ</span>${list(mt.only_plan)}</div>` : ''];
+  return `<div class="sect match ng" data-match="ng" title="平面図は装置図の平面（1/400）。一般平面図には機器番号が無い">
+    <div class="mh">機器の不一致 <b class="n">${k}</b> 件</div><div class="md">単線図 <b class="n">${mt.sld}</b> 台 ／ 平面図 <b class="n">${mt.plan}</b> 台</div>${side.join('')}
+    <div class="mn">図面どうしが合っていない。この 3D で続ける前に、どちらの図面が正しいか確かめる</div></div>`;
+}
+const mismatch = (j, d) => /data-match="ng"/.test(matchBlock(j, d));
+
 export default {
   id: 's0', caption: 'STEP 0', title: '図面を読む', short: '図面',
 
@@ -77,6 +96,7 @@ export default {
     const lw = warnOf('layoutBox');
     if (busyLayout()) parts.push(`<div class="sect"><div class="dim">装置図を読んでいる…</div></div>`);
     else if (lw) parts.push(`<div class="sect"><div class="warn">${esc(lw)}</div></div>`);
+    if (d && !busyLayout()) parts.push(matchBlock(j, d));
     if (d && !busyLayout()) {
       const e = d.eval || {}, dq = (d.questions || []).length, ub = $('btnUseDraft'), sw = busySwitch(), dr = isDraft(m);
       parts.push(`<div class="sect small"><div class="kv"><span>装置図 機器 <b class="n">${e.apparatus_matched ?? '—'} / ${e.apparatus_total ?? '—'}</b></span><span${dq ? ' class="qtxt"' : ''}>要確認 <b class="n">${dq}</b></span></div>
@@ -84,7 +104,7 @@ export default {
           ${dr ? `<button class="sub" data-act="truth"${sw ? ' disabled' : ''}>合成データに戻す</button>` : ''}</div></div>`);
     }
     const um = $('useMsg')?.querySelector('.warn')?.textContent; if (um) parts.push(`<div class="warn">${esc(um)}</div>`);
-    return `<div class="ans s0" data-verdict="${j ? (qn ? 'cond' : 'ok') : 'none'}">${parts.join('')}</div>`;
+    return `<div class="ans s0" data-verdict="${j ? (qn || mismatch(j, d) ? 'cond' : 'ok') : 'none'}">${parts.join('')}</div>`;
   },
 
   // 主役はサンプルの結線図のタイル 1 つ。ほかは小さく右に寄せる

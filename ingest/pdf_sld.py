@@ -233,6 +233,14 @@ def extract(pdf_path: str | Path, main_width: float = 0.85, bus_width: float = 1
     }
 
 
+def equipment_numbers(cand: dict) -> list[str]:
+    """候補グラフから、図面に書かれた機器番号の一覧（開閉器・遮断器・接地開閉器・変圧器・調相設備）。重複は 1 つにする。"""
+    nums = {s["number"] for s in cand.get("switches", [])}
+    nums |= {t["number"] for t in cand.get("transformers", [])}
+    nums |= {ld["name"] for ld in cand.get("loads", [])}
+    return sorted(nums)
+
+
 def kind_from_number(num: str) -> str:
     """開閉器番号の規則（合成）: 末尾 E=接地、ハイフンの後が 3 桁で末尾 0=遮断器、それ以外=断路器。"""
     if num.endswith("E"):

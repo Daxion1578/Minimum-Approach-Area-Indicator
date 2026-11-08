@@ -424,11 +424,12 @@ class Site:
         cfg = P["66"]; kv = cfg["kv"]
         bus_a = self.node("66-BUS-A", "bus", kv, name="66kV 1号母線")
         bus_b = self.node("66-BUS-B", "bus", kv, name="66kV 2号母線")
-        self.es(f"{bus_a}-ES", bus_a, kv, name="66kV 1号母線接地", number=f"{cfg['code']}A-10E")
-        self.es(f"{bus_b}-ES", bus_b, kv, name="66kV 2号母線接地", number=f"{cfg['code']}B-10E")
         n_bays = len(cfg["bays"])
         x_min = cfg["x0"] - cfg["bay_pitch"] / 2.0
         x_max = cfg["x0"] + cfg["bay_pitch"] * (n_bays - 0.5)
+        # 母線接地は母線の東端の外（平面にも置く。単線結線図の 6A-10E・6B-10E と一致させる）
+        self.es(f"{bus_a}-ES", bus_a, kv, name="66kV 1号母線接地", number=f"{cfg['code']}A-10E", at=(x_max + 1.5, cfg["busA"]["y"] - 2.0, 1.5))
+        self.es(f"{bus_b}-ES", bus_b, kv, name="66kV 2号母線接地", number=f"{cfg['code']}B-10E", at=(x_max + 1.5, cfg["busB"]["y"] + 2.0, 1.5))
         sp = cfg["phase_sp"]
         for ph in PHASES:
             for bus, b in (("A", bus_a), ("B", bus_b)):

@@ -373,10 +373,12 @@ class SLD:
                 self.cb(x, ys[k], kv, f"{pre}-{k}"); self.pos_mark(x + 2.6, ys[k] - 3.5, f"{pre}-{k}")
             if new_bay:
                 sh.text(x + 3.0, ys["T1"], "（新設予定）", 2.2, anchor="w"); sh.text(x + 3.0, ys["T2"], "（新設予定）", 2.2, anchor="w")
-                continue
+            # 接地開閉器は新設予定のダイヤにも置いてある（平面・topology と同じ）。単線結線図にも描く
             for k, yk in (("N1", (ys["LSA"] + ys["CB1"]) / 2), ("N2", (ys["CB1"] + ys["LS1B"]) / 2), ("N3", (ys["LS2A"] + ys["CB2"]) / 2),
                           ("N4", (ys["CB2"] + ys["LS2B"]) / 2), ("N5", (ys["LS3A"] + ys["CB3"]) / 2), ("N6", (ys["CB3"] + ys["LSB"]) / 2)):
                 self.es_mark(x, yk, kv, f"{pre}-{k}-ES"); self.pos_mark(x - 9.5, yk - 1.5, f"{pre}-{k}-ES")
+            if new_bay:
+                continue
             for k, c, up in (("T1", c1, True), ("T2", c2, False)):
                 yk = ys[k]; kind, cid, cname = c
                 xo = x + pitch / 2.0

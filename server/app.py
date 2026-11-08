@@ -47,7 +47,7 @@ from engine.topology import Topology, TopologyError
 from agent import client as agent_client
 from agent.explain import explain as explain_proposal
 from agent.structure import annotate
-from ingest.pdf_sld import extract, to_topology
+from ingest.pdf_sld import equipment_numbers, extract, to_topology
 
 ROOT = Path(__file__).resolve().parents[1]
 SITES = ROOT / "data" / "sites"
@@ -317,6 +317,9 @@ def get_agent():
     return {"available": agent_client.available(), "models": {k: agent_client.model_for(k) for k in ("structure", "propose")}}
 
 
+_LAST_SLD: dict = {}     # 最後に読んだ単線結線図の機器番号（{"numbers": [...]}）。装置図を読んだときの一致確認に使う
+
+
 @app.post("/api/ingest")
 async def post_ingest(file: UploadFile):
     """単線結線図 PDF → 候補グラフ → topology 下書き。合成変電所の図面なら真値と突き合わせた精度も返す。"""
@@ -327,6 +330,7 @@ async def post_ingest(file: UploadFile):
     try:
         cand = extract(tmp)
         topo = to_topology(cand)
+        _LAST_SLD.clear(); _LAST_SLD["numbers"] = equipment_numbers(cand)   # 装置図との機器の一致確認に使う
         if agent_client.available():
             # Claude の返事を待つ間も、ほかの要求に応えられるように別のスレッドで待つ（ブラウザ版は Claude を呼ばないので、そのまま）
             from starlette.concurrency import run_in_threadpool
@@ -350,16 +354,27 @@ async def post_ingest(file: UploadFile):
 # ---- 装置図（平面・断面）から起こす 3D の下書き。他のタブの計算には一切関わらない。
 from ingest.pdf_layout import extract_layout as _extract_layout
 from ingest.layout_build import build_layout as _build_layout, check_consistency as _check_consistency, to_contract
+from ingest.layout_build import match_equipment as _match_equipment, topology_numbers as _topology_numbers
 from scripts.eval_layout import evaluate_layout as _evaluate_layout
 SAMPLE_LAYOUT_PDF = SITES / "SITE-01" / "drawings" / "SITE-01_layout.pdf"
 
 
-def run_layout(pdf_path: Path) -> dict:
-    """装置図 PDF → 下書き layout と、正解（truth の layout）との一致。失敗は HTTP 400（日本語の理由）。"""
+def run_layout(pdf_path: Path, sld_numbers: list[str] | None = None) -> dict:
+    """装置図 PDF → 下書き layout と、正解（truth の layout）との一致。失敗は HTTP 400（日本語の理由）。
+
+    match: 単線結線図で作った機器一覧と平面の機器番号の一致。単線図側は sld_numbers → 最後に読んだ単線結線図
+    （/api/ingest）→ 無ければ合成データの topology の順に使い、どれを使ったかを match.sld_source に書く。"""
     try:
         site = _load_truth("SITE-01")      # 比べる相手は常に合成データ（切り替え後の配置ではない）
         extracted = _extract_layout(pdf_path, topology=site["topology"])
         consistency = _check_consistency(site["topology"], extracted)
+        if sld_numbers is not None:
+            sld, src = sld_numbers, "request"
+        elif _LAST_SLD.get("numbers") is not None:
+            sld, src = _LAST_SLD["numbers"], "ingest"
+        else:
+            sld, src = _topology_numbers(site["topology"]), "truth"
+        match = {**_match_equipment(sld, extracted["plan_numbers"]), "sld_source": src}
         draft = _build_layout(site["topology"], extracted)
         ev = _evaluate_layout(draft, site["layout"])
     except HTTPException:
@@ -369,18 +384,30 @@ def run_layout(pdf_path: Path) -> dict:
     return {"layout": draft, "questions": draft.get("questions", extracted.get("questions", [])),
             "truth_layout": site["layout"],
             "drawing_hash": hashlib.sha256(Path(pdf_path).read_bytes()).hexdigest()[:16],
-            "consistency": consistency, "eval": ev, "stats": extracted.get("stats", {})}
+            "consistency": consistency, "match": match, "eval": ev, "stats": extracted.get("stats", {})}
 
 
-def ingest_layout_sample() -> dict:
+def ingest_layout_sample(sld_numbers: list[str] | None = None) -> dict:
     if not SAMPLE_LAYOUT_PDF.is_file():
         raise HTTPException(400, "サンプルの装置図（SITE-01_layout.pdf）が見つからない")
-    return run_layout(SAMPLE_LAYOUT_PDF)
+    return run_layout(SAMPLE_LAYOUT_PDF, sld_numbers)
+
+
+def _sld_numbers_arg(v) -> list[str] | None:
+    """任意の sld_numbers（JSON の配列、またはフォームのカンマ区切り）。無ければ None。"""
+    if v is None:
+        return None
+    if isinstance(v, str):
+        v = [t.strip() for t in v.split(",")]
+    if not isinstance(v, list) or not all(isinstance(t, str) for t in v):
+        raise HTTPException(400, "sld_numbers は機器番号の文字列の配列")
+    return [t for t in v if t]
 
 
 @app.post("/api/ingest/layout")
 async def post_ingest_layout(request: Request):
-    """body: multipart の file（装置図 PDF）、または JSON {"sample": true}（合成変電所の装置図）。"""
+    """body: multipart の file（装置図 PDF）、または JSON {"sample": true}（合成変電所の装置図）。
+    任意で sld_numbers（単線結線図の機器番号。無ければ最後に読んだ単線結線図）。応答の match が機器の一致確認。"""
     import tempfile
     ctype = request.headers.get("content-type", "")
     if ctype.startswith("multipart/"):
@@ -392,7 +419,7 @@ async def post_ingest_layout(request: Request):
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
             f.write(data); tmp = Path(f.name)
         try:
-            return run_layout(tmp)
+            return run_layout(tmp, _sld_numbers_arg(form.get("sld_numbers")))
         finally:
             tmp.unlink(missing_ok=True)
     try:
@@ -400,7 +427,7 @@ async def post_ingest_layout(request: Request):
     except Exception:
         body = None
     if isinstance(body, dict) and body.get("sample"):
-        return ingest_layout_sample()
+        return ingest_layout_sample(_sld_numbers_arg(body.get("sld_numbers")))
     raise HTTPException(400, "装置図の PDF（file）か、サンプル指定（{\"sample\": true}）を送る")
 
 

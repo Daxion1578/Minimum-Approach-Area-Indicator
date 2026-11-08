@@ -42,8 +42,8 @@ def draft(topology, extracted):
 
 def test_all_apparatus_found_with_small_position_error(extracted, truth):
     at = {i["id"]: i["at"] for i in truth["items"] if "at" in i}
-    assert len(at) == 145
-    assert extracted["stats"]["apparatus_found"] == 145
+    assert len(at) == 147
+    assert extracted["stats"]["apparatus_found"] == 147
     found = {a["id"]: a for a in extracted["apparatus"]}
     assert set(found) == set(at)
     worst = max(math.hypot(found[k]["at"][0] - at[k][0], found[k]["at"][1] - at[k][1]) for k in at)
@@ -91,7 +91,7 @@ def test_conductor_match_rate(draft, truth):
     c = res["conductor_match"]
     rate = c["matched"] / c["total"]
     print(f"導体の一致率 {rate:.3f}（{c['matched']}/{c['total']}、許容 {c['tolerance_m']} m）")
-    assert res["apparatus_matched"] == res["apparatus_total"] == 145
+    assert res["apparatus_matched"] == res["apparatus_total"] == 147
     assert res["height_matched"] == res["apparatus_total"]
     assert rate >= 0.9
 
@@ -103,7 +103,7 @@ def test_consistency_on_site01(topology, extracted):
     for f in res:
         kinds.setdefault(f["kind"], []).append(f["id"])
     # 66kV 母線の接地開閉器は平面に番号が無い（truth でも at を持たない）
-    assert sorted(kinds["missing_in_plan"]) == ["66-BUS-A-ES", "66-BUS-B-ES"]
+    assert not kinds.get("missing_in_plan")   # 母線接地も平面に置いた（単線結線図と一致）
     assert "missing_in_sld" not in kinds
     assert len(kinds["no_height"]) > 0
 

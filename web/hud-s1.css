@@ -1,28 +1,29 @@
-/* 対象を選ぶ段（STEP 02）の見た目。結線図の全面 .sld-full（既定。上に暗い帯を敷き、見出し・一言・切替・答えを帯に載せる）と 3D。
+/* 対象を選ぶ段（STEP 1）の見た目。既定は左右 2 分割（左 = 単線結線図 .sld-split、右 = 一般平面図＝真上から見た 3D）。
+   「結線図を大きく」で今までの全面 .sld-full。どちらも結線図の上に暗い帯を敷き、見出し・一言・切替を帯に載せる。
    枠の共通の見た目と位置は hud.css。hud.css は全面の間ほとんどの枠を隠すので、ここで s1 の分だけ戻す */
 
 /* ---- 全面の結線図: 上 108px を暗い帯にし、図はその下。ズームは左下へ、説明の札はしまう */
-body.hud #sldView.sld-full::before { content:""; position:absolute; left:0; right:0; top:0; height:108px; z-index:1;
+body.hud #sldView:is(.sld-full,.sld-split)::before { content:""; position:absolute; left:0; right:0; top:0; height:108px; z-index:1;
   background:rgba(9,13,18,.97); border-bottom:1px solid var(--line2); }
-body.hud #sldView.sld-full #sldScroll { top:108px; }
+body.hud #sldView:is(.sld-full,.sld-split) #sldScroll { top:108px; }
 body.hud #sldView.sld-full #sldWrap { margin-bottom:150px; margin-right:230px; }   /* 右下の切替・次へと重なる分はスクロールで逃がす */
-body.hud #sldView.sld-full #sldTip { display:none; }
-body.hud #sldView.sld-full #sldZoom { z-index:2; left:28px; bottom:22px; right:auto; top:auto; }
-body.hud #sldView.sld-full #sldZoom button.sub { font-size:12px; padding:5px 12px; background:rgba(9,13,18,.92); color:var(--fg); border-color:var(--line2); }
-body.hud #sldView.sld-full #sldZoom button.sub:hover { border-color:var(--accent); }
-body.hud #sldView.sld-full .mk { width:26px; height:26px; margin:-13px 0 0 -13px; }
-body.hud #sldView.sld-full .mk.tgt { border-width:3px; border-color:#1f8fd6; background:rgba(31,143,214,.22); }
+body.hud #sldView:is(.sld-full,.sld-split) #sldTip { display:none; }
+body.hud #sldView:is(.sld-full,.sld-split) #sldZoom { z-index:2; left:28px; bottom:22px; right:auto; top:auto; }
+body.hud #sldView:is(.sld-full,.sld-split) #sldZoom button.sub { font-size:12px; padding:5px 12px; background:rgba(9,13,18,.92); color:var(--fg); border-color:var(--line2); }
+body.hud #sldView:is(.sld-full,.sld-split) #sldZoom button.sub:hover { border-color:var(--accent); }
+body.hud #sldView:is(.sld-full,.sld-split) .mk { width:26px; height:26px; margin:-13px 0 0 -13px; }
+body.hud #sldView:is(.sld-full,.sld-split) .mk.tgt { border-width:3px; border-color:#1f8fd6; background:rgba(31,143,214,.22); }
 
 /* 帯に戻す枠: 見出し・目標の 1 行・小さな道具（左）、答えの板（右） */
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudTitle { display:flex; }
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudLeft { display:flex; left:220px; top:calc(18px + var(--boot-h,0px)); width:auto; gap:6px; }
-body.hud[data-stage=s1].drawer-open:has(#sldView.on.sld-full) #hudLeft { display:none; }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudTitle { display:flex; }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudLeft { display:flex; left:220px; top:calc(18px + var(--boot-h,0px)); width:auto; gap:6px; }
+body.hud[data-stage=s1].drawer-open:has(#sldView.on:is(.sld-full,.sld-split)) #hudLeft { display:none; }
 body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudRight { display:flex; top:calc(18px + var(--boot-h,0px)); }
 body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudLegend { display:none; }
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudGoals { width:auto; }
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudGoals .k { display:none; }
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudGoals .goal { font-size:18px; padding:6px 14px 6px 12px; }
-body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudGoals .goal.done { color:var(--fg); }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudGoals { width:auto; }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudGoals .k { display:none; }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudGoals .goal { font-size:18px; padding:6px 14px 6px 12px; }
+body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudGoals .goal.done { color:var(--fg); }
 
 /* ---- 目標の 1 行（3D でも同じ） */
 body.hud[data-stage=s1] #hudGoals { width:auto; }
@@ -55,21 +56,62 @@ body.hud[data-stage=s1] #hudAnswer { padding:10px 14px; gap:6px; }
 #hudAnswer .s1ans .cond { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-top:5px; }
 #hudAnswer .s1ans .lead { font-size:13px; }
 
-/* ---- 右下: 全面⇄3D の切替 */
+/* ---- 右下: 2 分割⇄結線図を大きく、平面図の範囲 */
 #hudModes .mode.s1view { background:rgba(9,13,18,.92); }
 
-/* ---- 3D 上のカード: 取り替える機器 */
-body.hud[data-stage=s1] #hudCard { width:240px; }
-#hudCard .s1card { display:flex; flex-direction:column; gap:4px; }
-#hudCard .s1card .head { display:flex; align-items:baseline; gap:8px; }
-#hudCard .s1card .num { font-size:18px; font-weight:700; }
-#hudCard .s1card .nm { font-size:12px; color:var(--mute); }
-#hudCard .s1card .st { font-size:12px; } #hudCard .s1card .st.ok { color:var(--deadg); } #hudCard .s1card .st.ng { color:var(--live); }
+/* ---- 左右 2 分割: 結線図を左半分に。3D の canvas は全面のまま（投影の中心を右半分へずらすのは hud-s1.js） */
+body.hud #sldView.sld-split { right:50%; border-right:1px solid var(--line2); box-shadow:6px 0 18px rgba(0,0,0,.35); }
+body.hud #sldView.sld-split #sldWrap { margin-bottom:70px; }
+/* 3D の減光は右半分の下だけ（左の白い紙と、平面図の上は暗くしない） */
+body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudRoot::before { left:50%; background:linear-gradient(0deg,rgba(6,9,12,.62) 0,rgba(6,9,12,0) 24%); }
+body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudHints { left:50%; right:240px; bottom:30px; white-space:nowrap; }
+body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudCam { display:none; }
+/* 右半分の上に「一般平面図」の小さな見出し */
+body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudRoot::after { content:"一般平面図（真上から）  ·  機器を押すと結線図と同じ処理";
+  position:fixed; left:calc(50% + 24px); top:calc(22px + var(--boot-h,0px)); font:500 11px/1 var(--mono); letter-spacing:.12em; color:#c9d3de;
+  text-shadow:0 0 4px #000, 0 1px 2px rgba(0,0,0,.9); white-space:pre; }
+body.hud[data-stage=s1].drawer-open #hudRoot::after { display:none; }
+
+/* ---- 結線図と平面図の対応の目印（hud-s1.js が毎フレーム位置を置く。押せない） */
+#s1Link { display:none; }
+body.hud #s1Link.on { display:block; position:fixed; inset:0; z-index:450; pointer-events:none; }
+#s1Link > div { position:absolute; left:0; top:0; display:none; will-change:transform; }
+#s1Link > div.on { display:block; }
+/* 結線図: 機器の印を囲む四角（乗せた機器 = 水色の光、押した機器 = 青の太枠） */
+#s1Link .lk.sld { width:36px; height:36px; margin:-18px 0 0 -18px; box-sizing:border-box; }
+#s1Link .lk.sld.hot { border:2px solid #0fa3e8; background:rgba(95,208,255,.18); box-shadow:0 0 0 4px rgba(95,208,255,.35), 0 0 14px rgba(15,163,232,.7); }
+#s1Link .lk.sld.sel { border:3px solid #1f6fd6; box-shadow:0 0 0 2px rgba(255,255,255,.9); }
+/* 平面図: 機器の位置に輪と菱形 */
+#s1Link .lk.plan { width:34px; height:34px; margin:-17px 0 0 -17px; box-sizing:border-box; border-radius:50%; }
+#s1Link .lk.plan i { position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; transform:rotate(45deg); }
+#s1Link .lk.plan.hot { border:2px solid var(--accent); box-shadow:0 0 0 3px rgba(95,208,255,.25), 0 0 16px rgba(95,208,255,.8); }
+#s1Link .lk.plan.hot i { border:2px solid var(--accent); }
+#s1Link .lk.plan.sel { width:40px; height:40px; margin:-20px 0 0 -20px; border:3px solid #fff; box-shadow:0 0 0 2px rgba(31,111,214,.9), 0 0 12px rgba(0,0,0,.8); }
+#s1Link .lk.plan.sel i { background:#fff; }
+#s1Link .lk.plan.tgt { border:3px solid #1f8fd6; box-shadow:0 0 10px rgba(0,0,0,.8); }
+#s1Link .lk.plan.tgt i { background:#1f8fd6; }
+/* 札: 番号・名前・状態（入／切、充電／停電） */
+#s1Link .lktag { background:rgba(9,13,18,.92); border:1px solid var(--line2); border-left:2px solid var(--accent); padding:4px 9px 5px;
+  font-size:12px; line-height:1.45; color:var(--fg); white-space:nowrap; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+#s1Link .lktag .hd { display:flex; align-items:baseline; gap:8px; }
+#s1Link .lktag .hd .n { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:14px; }
+#s1Link .lktag .hd span { color:var(--mute); }
+#s1Link .lktag .st { display:flex; gap:6px; margin-top:2px; }
+#s1Link .lktag .st span { font-size:11px; padding:0 6px; border:1px solid var(--line2); }
+#s1Link .lktag .pos.closed { color:var(--fg); }
+#s1Link .lktag .pos.open { color:var(--accent); border-color:rgba(95,208,255,.6); }
+#s1Link .lktag .e.live { color:var(--live); border-color:rgba(255,77,77,.6); }
+#s1Link .lktag .e.dead { color:var(--deadg); border-color:rgba(61,220,106,.6); }
+#s1Link .lktag .e.inv { color:var(--invalid,#ff3cf0); }
+#s1Link .lktag .t { color:var(--accent); border-color:var(--accent) !important; }
+#s1Link .lktag .k { color:var(--mute); }
 
 /* 狭い画面（700〜1100px）: 帯を 2 段に（見出しの下に目標と道具） */
 @media (max-width:1100px) {
-  body.hud #sldView.sld-full::before { height:160px; }
-  body.hud #sldView.sld-full #sldScroll { top:160px; }
-  body.hud[data-stage=s1]:has(#sldView.on.sld-full) #hudLeft { left:28px; top:calc(84px + var(--boot-h,0px)); }
+  body.hud #sldView:is(.sld-full,.sld-split)::before { height:160px; }
+  body.hud #sldView:is(.sld-full,.sld-split) #sldScroll { top:160px; }
+  body.hud[data-stage=s1]:has(#sldView.on:is(.sld-full,.sld-split)) #hudLeft { left:28px; top:calc(84px + var(--boot-h,0px)); }
   body.hud[data-stage=s1] #hudRight { width:300px; }
+  body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudHints { display:none; }
+  body.hud[data-stage=s1]:has(#sldView.on.sld-split) #hudRoot::after { content:"一般平面図"; }
 }

@@ -36,3 +36,17 @@
 #hudBar .tile.s0t.mini { width:120px; height:32px; padding:0 8px; }
 #hudBar .tile.s0t.mini .lb { font-size:12px; font-weight:500; color:#c9d3de; }
 #hudAnswer .s0 .using { font-size:12px; color:var(--deadu); border-left:2px solid var(--deadu); padding:2px 8px; flex:1 1 100%; }
+
+/* 機器の一致（単線図と装置図の平面）。不一致は黄色で、「この 3D で続ける」の直前に出す */
+#hudAnswer .s0 .match .mh { font-size:13px; }
+#hudAnswer .s0 .match .mh b { font-weight:700; }
+#hudAnswer .s0 .match.ok .mh { color:var(--deadg); }
+#hudAnswer .s0 .match.ng { border:1px solid var(--deadu); border-left-width:4px; background:rgba(245,197,24,.10); padding:8px 10px; gap:3px; }
+#hudAnswer .s0 .match.ng .mh, #hudAnswer .s0 .match.ng .mh b { color:var(--deadu); font-weight:700; }
+#hudAnswer .s0 .match.ng .mh { font-size:15px; }
+#hudAnswer .s0 .match.ng .md { font-size:12px; color:#f3e3a0; }
+#hudAnswer .s0 .match.ng .ml { font-size:12px; color:#f3e3a0; line-height:1.5; }
+#hudAnswer .s0 .match.ng .ml .k { color:var(--deadu); margin-right:6px; }
+#hudAnswer .s0 .match.ng .ml .no { white-space:nowrap; font-family:var(--mono, ui-monospace, monospace); }
+#hudAnswer .s0 .match.ng .mn { font-size:11px; color:var(--deadu); }
+#hudAnswer .s0 .match.old .dim { font-size:12px; }

@@ -3,6 +3,7 @@
 
   build_layout(topology, extracted)        → layout の dict（"source": "drawing-draft"）
   check_consistency(topology, extracted)   → 三面（結線図・平面・断面）の照合結果
+  match_equipment(sld_numbers, plan_numbers) → 単線結線図の機器一覧と平面の機器番号の一致（台数と差分）
   to_contract(layout)                      → contracts/layout.schema.json に通る形（下書きの印を外す）
 
 位置と高さは必ず extracted から取る（synth.gen_site.P は使わない）。図面に無いものは synth/equipment.py の寸法表
@@ -79,6 +80,32 @@ def check_consistency(topology: dict, extracted: dict) -> list[dict]:
         out.append({"kind": "no_height", "id": n["id"], "severity": "注意",
                     "message": f"{a['number']}（{n['id']}）の高さラベルが断面に無い。寸法表の既定値 {_default_z(n):g} m で補う"})
     return out
+
+
+_KIND_JA = {"disconnector": "断路器", "breaker": "遮断器", "earthing": "接地開閉器", "transformer": "変圧器", "load": "調相設備"}
+
+
+def topology_numbers(topology: dict) -> list[str]:
+    """topology の番号つき機器（開閉器・遮断器・接地開閉器・変圧器・調相設備）の図面上の文字の一覧。"""
+    return sorted({_label_of(n) for n in topology["nodes"] if n["kind"] in _KINDS_WITH_NUMBER and _label_of(n)})
+
+
+def match_equipment(sld_numbers, plan_numbers) -> dict:
+    """単線結線図で作った機器一覧と、平面（装置図 1/400）の機器番号が一致しているか。決定論。
+
+    返り値: {"sld": 単線図の台数, "plan": 平面の台数, "matched": 両方にある台数, "ok": 完全一致か,
+             "only_sld": 単線図だけにある番号, "only_plan": 平面だけにある番号, "by_kind": 種類ごとの台数}
+    """
+    from ingest.pdf_layout import _guess_symbol
+    s, p = set(sld_numbers), set(plan_numbers)
+    by_kind: dict[str, dict] = {}
+    for label, side in ((s, "sld"), (p, "plan")):
+        for num in label:
+            g = _guess_symbol(num)
+            k = _KIND_JA.get(g["node_kind"], g["node_kind"]) if g else "不明"
+            by_kind.setdefault(k, {"sld": 0, "plan": 0})[side] += 1
+    return {"sld": len(s), "plan": len(p), "matched": len(s & p), "ok": s == p,
+            "only_sld": sorted(s - p), "only_plan": sorted(p - s), "by_kind": by_kind}
 
 
 # --------------------------------------------------------------------------

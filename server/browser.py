@@ -56,8 +56,9 @@ async def handle(method: str, path: str, body: str | None = None, pdf: bytes | N
             f.write(bytes(pdf)); f.seek(0)
             return _json(200, await A.post_ingest(UploadFile(file=f, filename="upload.pdf")))
         if method == "POST" and path == "/api/ingest/layout":   # ブラウザ版はサンプルの装置図だけ
-            if (json.loads(body) if body else {}).get("sample"):
-                return _json(200, A.ingest_layout_sample())
+            b = json.loads(body) if body else {}
+            if b.get("sample"):
+                return _json(200, A.ingest_layout_sample(A._sld_numbers_arg(b.get("sld_numbers"))))
             return _json(400, {"detail": "ブラウザ版ではサンプルの装置図だけ試せる"})
         m = re.fullmatch(r"/api/site/(?P<site>[A-Za-z0-9_-]+)/layout/(?P<act>use-draft|use-truth|source)", path)
         if m:

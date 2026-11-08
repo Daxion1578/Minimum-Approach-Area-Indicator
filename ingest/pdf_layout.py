@@ -122,7 +122,8 @@ def extract_layout(pdf_path, topology: dict | None = None, specs: dict | None = 
 
     specs: 断面の仕様（drawing_rules.section_specs の返り値）。省略時は synth.gen_site.P から作る
            （使うのは断面の枠: 原点・縮尺・y の範囲だけ。機器や鉄構の位置は読まない）。
-    返り値のキー: apparatus, heights, buses, arresters, questions, stats
+    返り値のキー: apparatus, heights, buses, arresters, unmatched_numbers, plan_numbers, questions, stats
+    plan_numbers は平面の文字のうち機器番号の形のもの全部（topology に関係なく拾う）
     """
     if specs is None:
         from synth.gen_site import P          # 断面の枠（原点・縮尺・範囲）を得るためだけ
@@ -276,5 +277,7 @@ def extract_layout(pdf_path, topology: dict | None = None, specs: dict | None = 
     }
     if topology is not None:
         stats["apparatus_expected"] = sum(len(v) for v in by_label.values())
+    # 平面に書かれた機器番号の一覧（結線図を見ずに、番号の形だけで拾う。単線結線図との一致確認に使う）
+    plan_numbers = sorted(t for t in by_text if _guess_symbol(t) is not None)
     return {"apparatus": apparatus, "heights": heights, "buses": buses, "arresters": arresters,
-            "unmatched_numbers": unmatched, "questions": questions, "stats": stats}
+            "unmatched_numbers": unmatched, "plan_numbers": plan_numbers, "questions": questions, "stats": stats}
