@@ -13,13 +13,35 @@ def _site_dicts(site):
     return json.loads(json.dumps(site.topo)), site.layout
 
 
-def test_rules_fallback_reads_only_numbers(site):
+def test_rules_fallback_reads_fixed_phrases_but_not_paraphrases(site):
     topo, _ = _site_dicts(site)
     ext = read_request(TEXT, topo)
     assert ext["source"] == "rules"
     assert ext["targets"] == ["66-D1-CB1"]
-    assert ext["unstoppable"] == [] and ext["weight_t"] is None      # 言い方（「1号バンク」）は規則では読めない
-    assert "読めていない" in ext["questions"][0]
+    assert ext["weight_t"] == 3.5                                     # 「約 3.5 t」は決まった書き方
+    assert ext["unstoppable"] == []                                   # 言い換え（「1号バンク」）は規則では読めない
+    assert ext["laydown"] is None and any("資材置場は読めなかった" in q for q in ext["questions"])
+    assert "決まった書き方" in ext["questions"][0]
+
+
+SAMPLE = ("次の作業日に、220kV 東線1L の遮断器 20E1-110 を取り替えます。新しい遮断器は約 10 t です。"
+          "資材は取り替える遮断器の西側、6 m ほど離れた空き地に仮置きします。東線1L は相手端も含めて停止します。"
+          "220kV 母線 A 区間は系統の都合で今回は止められません。")   # 画面の見本の依頼文（web/index.html）と同じ
+
+
+def test_rules_fallback_reads_the_sample_request_like_claude(site):
+    """Claude につながらない公開版でも、見本の依頼文から同じ 4 項目が読める。止める案を出すかの答えも同じになる。"""
+    topo, layout = _site_dicts(site)
+    ext = read_request(SAMPLE, topo)
+    assert ext["source"] == "rules"
+    assert ext["targets"] == ["220-L1-CB"]
+    assert ext["unstoppable"] == ["220-BUS-A"]                        # 「東線1L は…停止します」は止められない側に入れない
+    assert ext["laydown"] == {"near": "220-L1-CB", "dir": "west", "dist_m": 6.0}
+    assert ext["weight_t"] == 10.0
+    assert "止められません" in ext["quotes"]["unstoppable"] and "西側" in ext["quotes"]["laydown"]
+    c = check(ext, topo, layout)
+    at = next(i["at"] for i in layout["items"] if i["id"] == "220-L1-CB")
+    assert c["ok"] and c["problems"] == [] and c["laydown_xy"] == [round(at[0] - 6, 1), round(at[1], 1)]
 
 
 def test_check_accepts_claude_like_output_and_converts_laydown(site):

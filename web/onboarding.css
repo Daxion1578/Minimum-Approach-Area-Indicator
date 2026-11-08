@@ -36,6 +36,7 @@ details.more[open] > summary { color:var(--fg); }
 #prog .stages button.done i { border-color:var(--deadg); color:var(--deadg); }
 #prog .stages button.on.done i { border-color:var(--accent); color:#06121f; }
 #prog .next { display:flex; align-items:center; gap:10px; margin-left:auto; flex:0 0 auto; }
+@media (max-width: 1000px) { #prog { flex-wrap:wrap; row-gap:4px; overflow-x:visible; } }   /* 幅が狭いときは「次へ」を次の行へ（横に切れない） */
 #nextLabel { color:var(--mute); font-size:12px; white-space:nowrap; }
 #btnNext:disabled, #btnTour:disabled { opacity:.5; cursor:default; }
 #btnTour { flex:0 0 auto; white-space:nowrap; }

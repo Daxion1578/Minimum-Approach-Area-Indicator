@@ -62,7 +62,7 @@
 <link rel="stylesheet" href="./web/hud-s3.css">
 </head>
 <body>
-<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は engine/（決定論の計算）が行い、画面は表示だけ。データはすべて合成。</small><span id="guide" style="display:none"></span>
+<header><b>MAAI — 間合い</b><small>見えない間合いを、見えるように。判定は決まった計算が行い、画面は表示だけ。データはすべて合成。</small><span id="guide" style="display:none"></span>
   <span class="hbtns"><button class="sub" id="btnHelp" title="最初の案内をもう一度見る">使い方</button><button class="sub" id="btnJson" aria-pressed="false" title="画面と engine がやり取りしている JSON を右に出す">内部データを見る</button></span></header>
 <nav id="prog" aria-label="進み具合">
   <ol class="stages">
@@ -122,7 +122,7 @@
     <div id="errors"></div>
     <details class="bay"><summary>そのほか（状態の例・開閉器の一覧）</summary>
       <div class="row"><label class="k">状態の例</label><select id="stateSel"></select></div>
-      <div class="row"><label>近づけない範囲（包絡）を 3D に表示</label><input type="checkbox" id="showEnv" checked></div>
+      <div class="row"><label>近づけない範囲を 3D に表示</label><input type="checkbox" id="showEnv" checked></div>
       <div id="switchList"></div>
     </details>
     <div class="row" style="margin-top:10px"><button class="sub nav" onclick="go('s2')">重機へ →</button></div>
@@ -143,7 +143,7 @@
     <div class="note">3D の地面を押すとクレーンのベースがそこへ移る。向きは x 軸から反時計回り（0°=東、90°=北）。旋回は 2° 刻みで掃引し、刻みの間の動きも含める。</div>
     <div class="row"><label class="k">クラス</label><select id="cclass"></select></div>
     <div class="row"><label class="k">ベース x</label><input type="number" id="cx" value="88" step="1" style="width:70px"><label class="k">y</label><input type="number" id="cy" value="72" step="1" style="width:70px"><label class="k">向き°</label><input type="number" id="chead" value="0" step="5" style="width:70px"></div>
-    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">起伏角°</label><input type="number" id="celev" value="45" step="1" style="width:70px"><label class="k">置く側°</label><input type="number" id="celev2" step="1" style="width:60px" placeholder="—"></div>
+    <div class="row"><label class="k">ブーム長 m</label><input type="number" id="clen" value="14" step="1" style="width:70px"><label class="k">ブームの角度°</label><input type="number" id="celev" value="45" step="1" style="width:70px"><label class="k">置く側°</label><input type="number" id="celev2" step="1" style="width:60px" placeholder="—"></div>
     <div class="row"><label class="k">旋回 °</label><input type="number" id="cslo" value="-50" step="5" style="width:70px"><span>〜</span><input type="number" id="cshi" value="50" step="5" style="width:70px"><label class="k">フック m</label><input type="number" id="chook" value="2" step="0.5" style="width:60px"></div>
     <div class="row"><button class="act" id="btnClear">離隔を判定する</button><button class="sub" id="btnPropose">修正案を出す</button></div>
     <div id="verdictBox"></div>
@@ -153,12 +153,12 @@
   </section>
 
   <section class="step" id="s3">
-    <p class="todo">この画面でやること: 条件を確かめて承認する。承認時に engine がもう一度判定し、停止範囲図と計画を書き出す。</p>
+    <p class="todo">この画面でやること: 条件を確かめて承認する。承認すると、計算でもう一度判定してから、停止範囲の結線図とクレーン配置の平面図を書き出す。</p>
     <h3>計画確定</h3>
     <div id="planSummary" class="note">停止範囲と重機を済ませてから。</div>
     <div id="planConds"></div>
-    <div class="row"><label class="k">承認者（名前でなく符号）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
-    <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に engine がもう一度判定する。不可と、重機の無い計画は承認できない</span></div>
+    <div class="row"><label class="k">承認者（見本では符号のまま。あなたが押してよい）</label><input type="text" id="approver" value="APPROVER-01" style="width:140px;background:#0d1117;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 6px"></div>
+    <div class="row"><button class="act" id="btnApprove">承認して書き出す</button><span class="note">承認時に計算でもう一度判定する。不可と、重機の無い計画は承認できない</span></div>
     <div id="approveBox"></div>
   </section>
 </div>
@@ -492,12 +492,12 @@ $('btnIntake').onclick=async()=>{
   const j=await r.json(); lastIntake=j;
   if (!r.ok){ $('intakeBox').innerHTML=`<div class="warn">読み取りに失敗 ${r.status}: ${j.detail||''}</div>`; emit('intake'); return; }
   const e=j.extracted, c=j.checked, L=id=>c.labels[id]||id, q=k=>e.quotes?.[k]?`<div class="note" style="margin-left:8px">「${e.quotes[k]}」</div>`:'';
-  $('intakeSrc').textContent=e.source==='claude'?'読み取り: Claude':'読み取り: 規則（Claude 未接続。番号だけ）';
+  $('intakeSrc').textContent=e.source==='claude'?'読み取り: Claude':'読み取り: 規則（Claude 未接続。決まった書き方だけ）';
   let html=`<div class="bay" style="border-color:${c.ok?'var(--accent)':'var(--live)'}">`+
     `<div>取り替える機器: <b>${c.targets.map(L).join('、')||'—'}</b></div>${q('targets')}`+
-    `<div>止められない設備: <b>${c.unstoppable.map(L).join('、')||'—'}</b></div>${q('unstoppable')}`+
-    `<div>資材置場: <b>${c.laydown_xy?`(${c.laydown_xy.join(', ')})`:'—'}</b>${e.laydown?`<span class="note">　${L(e.laydown.near)} の ${({east:'東',west:'西',north:'北',south:'南'})[e.laydown.dir]||e.laydown.dir} ${e.laydown.dist_m} m</span>`:''}</div>${q('laydown')}`+
-    `<div>重さ: <b>${c.weight_t??'—'}${c.weight_t!=null?' t':''}</b></div>${q('weight_t')}`+
+    `<div>止められない設備: <b>${c.unstoppable.map(L).join('、')||'見つからない'}</b></div>${q('unstoppable')}`+
+    `<div>資材置場: <b>${c.laydown_xy?`(${c.laydown_xy.join(', ')})`:'未入力（STEP 3 で入れる）'}</b>${e.laydown?`<span class="note">　${L(e.laydown.near)} の ${({east:'東',west:'西',north:'北',south:'南'})[e.laydown.dir]||e.laydown.dir} ${e.laydown.dist_m} m</span>`:''}</div>${q('laydown')}`+
+    `<div>重さ: <b>${c.weight_t??'未入力（STEP 3 で入れる）'}${c.weight_t!=null?' t':''}</b></div>${q('weight_t')}`+
     (c.problems.length?`<h4>計算で確かめた問題</h4>`+c.problems.map(x=>`<div class="warn">${x}</div>`).join(''):'<div class="note" style="color:var(--deadg)">番号はすべて構内に実在し、矛盾なし（計算で確認）</div>')+
     ((e.questions||[]).length?`<h4>人に確かめてほしいこと</h4>`+e.questions.map(x=>`<div class="note">・${x}</div>`).join(''):'')+
     `<div class="row"><button class="act" id="btnIntakeUse" ${c.ok?'':'disabled'}>この内容で入れる</button></div></div>`;
@@ -508,7 +508,9 @@ $('btnIntake').onclick=async()=>{
     await $('btnSteps').onclick();          // 停止範囲を作る（ここで吊る機器も対象に合わせる）
     if (c.weight_t!=null) $('pickT').value=c.weight_t;   // そのあと依頼文の値を入れる（既定値で上書きしない）
     if (c.laydown_xy){ $('setX').value=c.laydown_xy[0]; $('setY').value=c.laydown_xy[1]; }
-    $('intakeBox').insertAdjacentHTML('beforeend','<div class="note" style="color:var(--deadg)">入れた: 取り替える機器・止められない設備・資材置場・重さ。次は停止範囲を確かめ、重機へ</div>');
+    const got=[['取り替える機器',true],['止められない設備',c.unstoppable.length>0],['資材置場',!!c.laydown_xy],['重さ',c.weight_t!=null]];
+    const yes=got.filter(g=>g[1]).map(g=>g[0]), no=got.filter(g=>!g[1]).map(g=>g[0]);
+    $('intakeBox').insertAdjacentHTML('beforeend',`<div class="note" style="color:var(--deadg)">入れた: ${yes.join('・')}。</div>`+(no.length?`<div class="note">入っていない: ${no.join('・')}（重機の画面で入れる。止められない設備は、無ければそのままでよい）</div>`:'')+'<div class="note">次は停止範囲を確かめ、重機へ</div>');
     emit('intake-used');
   };
 };
@@ -543,7 +545,7 @@ $('btnSelect').onclick=async()=>{
   if (j.problems?.length && !j.chosen) html+=`<div class="warn">${j.problems.join('。')}</div>`;
   if (j.chosen){ const c=j.chosen;
     html+=`<div class="bay" style="border-color:${col(c.verdict)}"><div class="big"><span class="cls" style="background:${col(c.verdict)};color:#06121f">${c.class}</span>${c.name} で置ける（${c.verdict_ja}）</div>`+
-      `<div class="note">据付 (${c.crane.base.map(v=>v.toFixed(0)).join(', ')})、ブーム ${c.crane.boom_len_m} m、起伏角 ${c.crane.boom_elev_deg.toFixed(0)}°${c.crane.boom_elev2_deg?'／'+c.crane.boom_elev2_deg.toFixed(0)+'°':''}、旋回 ${c.crane.slew_deg.map(v=>v.toFixed(0)+'°').join('〜')}。最小離隔 ${c.min_distance_m?.toFixed(2)} m／必要 ${c.required_m?.toFixed(2)} m</div>`+
+      `<div class="note">据付 (${c.crane.base.map(v=>v.toFixed(0)).join(', ')})、ブーム ${c.crane.boom_len_m} m、ブームの角度 ${c.crane.boom_elev_deg.toFixed(0)}°${c.crane.boom_elev2_deg?'／'+c.crane.boom_elev2_deg.toFixed(0)+'°':''}、旋回 ${c.crane.slew_deg.map(v=>v.toFixed(0)+'°').join('〜')}。最小離隔 ${c.min_distance_m?.toFixed(2)} m／必要 ${c.required_m?.toFixed(2)} m</div>`+
       (j.by_weight?.note?`<div style="margin-top:4px">${j.by_weight.note}</div>`:'')+
       (j.smaller_why_not?`<div class="note">一つ下のクラスが使えない理由: ${j.smaller_why_not}</div>`:'')+
       `<div class="row"><button class="sub" id="btnAdoptSel">この配置を採用</button></div>`+
@@ -552,7 +554,8 @@ $('btnSelect').onclick=async()=>{
   if (j.with_outage){ const w=j.with_outage;
     html+=`<div class="bay" style="border-color:var(--accent)"><div><b>${w.blocked?'止められない設備（依頼文）':'追加で止めた場合'}</b>: ${w.note}</div>`+
       (w.ops.length?`<div class="note">追加で切る機器: ${w.ops.map(o=>o.number||o.id).join('、')}。止めるかどうかは人が決める（停止の調整が要る）</div>`:'')+
-      (w.chosen?`<div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
+      (w.chosen?`<div class="note">採用する前に、依頼文で止められないとされていないか、系統側と停止を調整できるかを確かめる</div><div class="row"><button class="sub" id="btnAdoptOutage">追加停止を採用して ${w.chosen.class} にする</button></div>`:'')+`</div>`; }
+  html+=`<div class="note">数字は例示値。実際の工事では、会社の離隔の決まりとクレーンの荷重表に置き換え、工事担当と工事会社が現地と合わせて確かめる</div>`;
   if (j.pick) html+=`<div class="note">荷重表・重さ: ${j.table_status||'要確認'}（例示値）。吊る点 (${j.pick.slice(0,2).map(v=>v.toFixed(0)).join(', ')})、資材置場 (${j.set.map(v=>(+v).toFixed(0)).join(', ')})</div>`;
   $('selectBox').innerHTML=html; bindZoneButtons(); emit('select');
   if ($('btnAdoptSel')) $('btnAdoptSel').onclick=()=>{ extraOutage=null; document.querySelector('#zoneBox .zbtn')?.click(); if (lastSteps) state=structuredClone(lastSteps.state); craneToForm(j.chosen.crane); buildSwitchList(); update(); evaluateClearance().then(()=>$('vCrane').onclick()); emit('adopt'); };
@@ -620,14 +623,14 @@ $('btnApprove').onclick=async()=>{
   catch(e){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${e.message||e}</div>`; emit('approve'); return; }
   lastApprove=j;
   if (!r.ok){ $('approveBox').innerHTML=`<div class="warn">承認できない: ${j.detail}</div>`; emit('approve'); return; }
-  $('approveBox').innerHTML=`<div class="bay"><div>承認の記録番号 <b>${j.approval_hash}</b></div><div class="note">書き出した場所（内部）: ${j.dir}</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${f}</a></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
+  $('approveBox').innerHTML=`<div class="bay"><div>承認の記録番号 <b>${j.approval_hash}</b></div><div class="note">書き出した場所（内部）: ${j.dir}</div>`+`<div class="note" style="color:var(--deadg)">承認済み。申請に添えるのは、作業日の停止範囲の結線図とクレーン配置の平面図</div>`+j.files.map(f=>`<div><a style="color:var(--accent)" target="_blank" href="/api/sites/${site.site_id}/approved/${j.name}/${f}">${({'step-0-sld.pdf':'作業前の結線図','step-1-sld.pdf':'作業日の停止範囲の結線図','plan-crane.pdf':'クレーン配置の平面図','plan.json':'計画のデータ','steps.json':'停止の手順のデータ','envelope.json':'近づけない範囲のデータ'})[f]||f}</a> <span class="note">${f}</span></div>`).join('')+(j.drawing_error?`<div class="warn">図面: ${j.drawing_error}</div>`:'')+`</div>`;
   guide(); emit('approve');
 };
 // ---- 次に何を押すか（上の帯）
 function guide(){
   let g='';
   if (!site) g='';
-  else if (!lastSteps) g=`例: 66kV 遮断器を取り替える作業日。<b>2 停止範囲</b>で「停止範囲を作る」`;
+  else if (!lastSteps) g=`例: 220kV 東線1L の遮断器を取り替える作業日。<b>2 停止範囲</b>で「停止範囲を作る」`;
   else if (!lastCrane) g=`停止範囲ができた。<b>3 重機</b>で「一番小さいクレーンを選ぶ」→ 配置を<b>採用</b>`;
   else if (lastClearance?.verdict==='ng') g=`離隔が不可。<b>修正案</b>か<b>選定</b>からやり直す`;
   else if (!$('approveBox').innerHTML) g=`<b>4 計画確定</b>で条件を確かめて「承認して書き出す」`;

@@ -2,7 +2,9 @@
 
 Claude に渡すのは、マスクした依頼文と機器の一覧（番号・種別・名前）だけ。Claude が返すのは「どの機器のことか」の候補で、
 番号の実在・矛盾の確かめと座標への換算は engine/intake.py（決定論）が行う。画面に入れるのは人が確かめてから。
-呼べないときは規則の代替: 文中の開閉器番号だけを拾う（「1 号バンク」のような言い方や、止められない・置き場・重さは読めない）。
+呼べないときは規則の代替: 決まった書き方だけを拾う。開閉器の番号、「〜は止められません」の文に出る設備の名前、
+「〜の西側、6 m」の置き場（基準は文中の番号、無ければ取り替える機器）、「約 10 t」の重さ。言い換え（「1 号バンク」など）は読めない。
+どちらで読んでも、確かめは engine/intake.py、入れるかは人が決める。
 """
 from __future__ import annotations
 
@@ -24,6 +26,10 @@ SYSTEM = """あなたは変電所の工事担当の助手です。入力は、�
 安全の判定や数値の計算はしないこと。"""
 
 _NUMBER = re.compile(r"\b\d{1,2}[A-Z][A-Z0-9]*-\d{3,4}E?\b")
+_HOLD = re.compile(r"止められ(?:ない|ません)|運転を続け")
+_DIR = {"東": "east", "西": "west", "南": "south", "北": "north"}
+_LAYDOWN = re.compile(r"(東|西|南|北)側[、,\s]*(?:約)?\s*(\d+(?:\.\d+)?)\s*(?:m|ｍ|メートル)")
+_WEIGHT = re.compile(r"(?:重さ|重量|は)[はがの]?\s*約?\s*(\d+(?:\.\d+)?)\s*(?:t|ｔ|トン)(?!\s*級)(?![A-Za-z])")
 
 
 def catalog(topo: dict) -> list[dict]:
@@ -32,13 +38,70 @@ def catalog(topo: dict) -> list[dict]:
             for n in topo["nodes"] if n["kind"] in keep]
 
 
+def _flat(s: str) -> str:
+    return re.sub(r"\s+", "", s)
+
+
+def _sentences(text: str) -> list[str]:
+    return [s.strip() + "。" for s in re.split(r"[。\n]", text) if s.strip()]
+
+
+def _rules(text: str, cat: list[dict]) -> dict:
+    """Claude を呼べないときの読み取り。決まった書き方だけ。読めなかった項目は None / [] のまま（人が STEP 3 で入れる）。"""
+    by_num = {c["number"]: c["id"] for c in cat if c["number"]}
+    targets = list(dict.fromkeys(by_num[m] for m in _NUMBER.findall(text) if m in by_num))
+    quotes: dict[str, str] = {}
+    if targets:
+        quotes["targets"] = next((s for s in _sentences(text) if any(m in by_num for m in _NUMBER.findall(s))), "")
+    # 止められない設備: その文に出る設備の名前（空白を詰めて比べる）か番号。変圧器は「1号変圧器」の部分だけでもよい
+    names = []
+    for c in cat:
+        if c["kind"] not in ("bus", "transformer", "source", "load"):
+            continue
+        keys = [_flat(c["name"])] if c["name"] else []
+        if c["kind"] == "transformer" and c["name"]:
+            keys.append(_flat(c["name"].split()[0]))
+        if c["number"]:
+            keys.append(c["number"])
+        names.append((c["id"], [k for k in keys if len(k) >= 3]))
+    unstoppable, held = [], []
+    for s in _sentences(text):
+        if not _HOLD.search(s):
+            continue
+        fs = _flat(s)
+        hit = [i for i, keys in names if any(k in fs for k in keys)]   # 開閉器の番号は拾わない（操作の文に出やすい）
+        if hit:
+            unstoppable += hit; held.append(s)
+    unstoppable = list(dict.fromkeys(unstoppable))   # 取り替える機器と重なれば engine/intake.py が矛盾として出す
+    if held:
+        quotes["unstoppable"] = " ".join(held)
+    laydown = None
+    for s in _sentences(text):
+        m = _LAYDOWN.search(s)
+        if not m:
+            continue
+        near = next((by_num[n] for n in _NUMBER.findall(s[:m.start()]) if n in by_num), targets[0] if targets else None)
+        if near:
+            laydown = {"near": near, "dir": _DIR[m.group(1)], "dist_m": float(m.group(2))}
+            quotes["laydown"] = s
+        break
+    weight = None
+    for s in _sentences(text):
+        m = _WEIGHT.search(s)
+        if m:
+            weight = float(m.group(1)); quotes["weight_t"] = s
+            break
+    q = ["Claude につながっていないので、決まった書き方だけを規則で読んだ（番号、「〜は止められません」、「〜の西側、6 m」、「約 10 t」）。"
+         "言い換え（「1 号バンク」など）は読めない。原文と並べて確かめる"]
+    q += [f"{k}は読めなかった（STEP 3 で入れる）" for k, v in (("資材置場", laydown), ("重さ", weight)) if v is None]
+    return {"source": "rules", "targets": targets, "unstoppable": unstoppable, "laydown": laydown, "weight_t": weight,
+            "questions": q, "quotes": quotes}
+
+
 def read_request(text: str, topo: dict) -> dict:
     """依頼文 → 取り出した候補（まだ確かめていない）。source は "claude" か "rules"。"""
     cat = catalog(topo)
-    by_num = {c["number"]: c["id"] for c in cat if c["number"]}
-    found = [by_num[m] for m in _NUMBER.findall(text) if m in by_num]
-    rules = {"source": "rules", "targets": list(dict.fromkeys(found)), "unstoppable": [], "laydown": None, "weight_t": None,
-             "questions": ["Claude 未接続のため、文中の開閉器番号だけを拾った。止められない設備・資材置場・重さは読めていない"], "quotes": {}}
+    rules = _rules(text, cat)
     out = client.ask_json("structure", SYSTEM, {"request": text, "equipment": cat}, Mask(), max_tokens=4000)
     if not out:
         return rules

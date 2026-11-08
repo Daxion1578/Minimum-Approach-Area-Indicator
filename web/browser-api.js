@@ -33,7 +33,7 @@
     s.src = PYODIDE + 'pyodide.js';
     await new Promise((ok, ng) => { s.onload = ok; s.onerror = () => ng(new Error('Pyodide を読み込めない')); document.head.append(s); });
     py = await loadPyodide({ indexURL: PYODIDE });
-    say('準備中 2/3: 計算部品（Python パッケージと本体のコード）を読み込み中…');
+    say('準備中 2/3: 計算の部品と本体のコードを読み込み中…（初回だけ。1 分ほど）');
     await py.loadPackage(['micropip', 'pydantic', 'Pillow']);
     const zip = await (await realFetch(base + 'py.zip')).arrayBuffer();
     py.unpackArchive(zip, 'zip', { extractDir: '/repo' });

@@ -35,7 +35,7 @@ function refresh(){
     b.classList.toggle('on', b.dataset.goto === s);
     b.classList.toggle('done', isDone[b.dataset.goto]());
     b.setAttribute('aria-current', b.dataset.goto === s ? 'step' : 'false');
-    const i = b.querySelector('i'), n = stages.indexOf(b.dataset.goto)+1; i.textContent = isDone[b.dataset.goto]() && b.dataset.goto !== s ? '✓' : n;
+    const i = b.querySelector('i'), n = stages.indexOf(b.dataset.goto)+1; i.textContent = isDone[b.dataset.goto]() ? '✓' : n;   // 今いる段も、終わっていれば ✓（承認の後の STEP 4 など）
   });
   $('nextLabel').textContent = nextText();
   $('btnNext').disabled = busy || (s === 's3' && isDone.s3());
