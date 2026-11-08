@@ -1,12 +1,12 @@
-# デモ動画 v9（220kV の見本・新しい画面・本人の声）
+# デモ動画 v9（220kV の見本・新しい画面）
 
-v8 の作り方を引き継ぐ。違いは 4 つ。語りは `scripts/self.txt`（本人が読む。録るまでは冥鳴ひまりの仮の読み上げで尺を合わせる）、場面は `scenes/c1.py`〜`c10.py`（compose9.py が見つけると差し替える）、
+v8 の作り方を引き継ぐ。違いは 4 つ。語りは `scripts/self.txt`（読み上げは VOICEVOX:WhiteCUL、話速 1.14・抑揚 0.9。本人の声で撮るなら override/self/pNN.wav に置く）、場面は `scenes/c1.py`〜`c10.py`（compose9.py が見つけると差し替える）、
 3D の静止画は 220kV の新しい配置で撮り直した `assets/r9/`（`tools/stills/`）、C5〜C8 は新しい画面を Claude につないで撮った `assets/rec/rec9.webm`（`record9.py`。押した所と時刻は `assets/rec/segments9.json`）。
 
 ```sh
 cd scripts/demo_video/v9
 python est_timing.py self          # 声が無いうちの見積もりの時刻（narr.py を回すと上書き）
-python narr.py self                # 仮の読み上げ（VOICEVOX）。本人の声は override/self/pNN.wav に置いて回し直す
+python narr.py self                # 読み上げ（VOICEVOX:WhiteCUL）。別の声の WAV は override/self/pNN.wav に置いて回し直す
 python compose9.py self --at C2:6  # 1 コマ → out/v9-C2-006.0.png
 python compose9.py self --res 1080 --jobs 2
 ```
