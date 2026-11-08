@@ -100,7 +100,7 @@ function render() {
     $('hudTitle').querySelector('.t').textContent = p.title;
     const done = id => !!document.querySelector(`#prog [data-goto="${id}"].done`);
     setHtml($('hudTitle').querySelector('.seg'), ORDER.map(id =>
-      `<button data-goto="${id}" class="${id === p.id ? 'now' : done(id) ? 'done' : ''}" title="${esc(P[id].title)}" aria-label="${esc(P[id].title)}"></button>`).join(''));
+      `<button data-goto="${id}" class="${id === p.id ? 'now' : done(id) ? 'done' : ''}" title="${esc(P[id].short || P[id].title)}" aria-label="${esc(P[id].short || P[id].title)}"></button>`).join(''));
     drawer.querySelector('.dhead b').textContent = p.title;
   });
   safe('goals', () => {
@@ -190,10 +190,12 @@ function setMode(name) {
 function expandSld(onOff) { return safe('expandSld', () => P.s1.expandSld?.(onOff, m())); }
 // 今表示中の範囲（maai.zoneCells）の ok なます目の i 番目にクレーンを移す（録画スクリプトが使う）
 function placeAtCell(i) {
+  if (curId() === 's2' && P.s2.placeAtCell) return P.s2.placeAtCell(i, m());   // s2 の段: その位置で級も選び直す（select_at）
   const M = m(), cell = (M.zoneCells || []).filter(c => c.ok)[i]; if (!cell) return null;
   M.craneToForm(cell.crane); return M.evaluateClearance();
 }
 function rotate(deg) {
+  if (curId() === 's2' && P.s2.rotate && m().lastCrane) return P.s2.rotate(deg, m());   // s2 の段: 向きを変えて級も選び直す（select_at）
   const el = $('chead'); el.value = Math.round((((+el.value + deg) % 360) + 360) % 360 * 10) / 10;
   return m().evaluateClearance();
 }

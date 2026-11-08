@@ -1,7 +1,4 @@
-/* 図面取込の段（STEP 01）の見た目。枠の位置と共通の見た目は hud.css、ここは答えの板の数とタイルの中身だけ */
-#hudAnswer .s0 .site { display:flex; flex-wrap:wrap; gap:2px 14px; font-size:12px; color:var(--mute); border-top:1px solid var(--line); padding-top:8px; }
-#hudAnswer .s0 .site b { color:var(--fg); font-weight:500; }
-#hudAnswer .s0 .site .id { color:#c9d3de; }
+/* 図面を読む段（STEP 0）の見た目。枠の位置と共通の見た目は hud.css、ここは答えの板の数とタイルの中身だけ */
 #hudAnswer .s0 .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 #hudAnswer .s0 .stats > div { display:flex; flex-direction:column; gap:2px; }
 #hudAnswer .s0 .stats .lbl { font-size:12px; color:var(--mute); }
@@ -9,8 +6,6 @@
 #hudAnswer .s0 .stats .big { font-size:28px; font-weight:700; line-height:1.05; }
 #hudAnswer .s0 .stats .of { font-size:13px; color:var(--mute); }
 #hudAnswer .s0 .stats .q .big, #hudAnswer .s0 .qtxt, #hudAnswer .s0 .qtxt b { color:var(--deadu); }
-#hudAnswer .s0 .src { color:#c9d3de; }
-#hudAnswer .s0 .src.claude { color:#b48cff; }
 #hudAnswer .s0 .btnrow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 #hudAnswer .s0 .btnrow button:disabled { opacity:.45; cursor:default; }
 #hudAnswer .s0 .cnt { font-size:12px; color:var(--deadg); }
@@ -18,18 +13,26 @@
 #hudAnswer .s0 .sect { display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--line); padding-top:10px; }
 #hudAnswer .s0 .kv b { color:var(--fg); font-weight:500; }
 
-/* タイル: 上に小さな図記号、真ん中に文言、下に薄い補足 */
-#hudBar .tile.s0t { gap:4px; }
-#hudBar .tile.s0t .lb { font-size:12px; font-weight:600; line-height:1.25; text-align:center; }
-#hudBar .tile.s0t small { font-size:10px; }
-#hudBar .tile.s0t .ic { width:22px; height:16px; border:1.5px solid var(--mute); position:relative; flex:0 0 auto; }
-#hudBar .tile.s0t .ic.sld { border-width:0 0 0 0; }
-#hudBar .tile.s0t .ic.sld::before { content:""; position:absolute; left:10px; top:0; bottom:0; width:2px; background:var(--mute); }
-#hudBar .tile.s0t .ic.sld::after { content:""; position:absolute; left:6px; top:5px; width:10px; height:6px; border:1.5px solid var(--mute); background:rgba(9,13,18,1); box-sizing:border-box; }
-#hudBar .tile.s0t .ic.lay::before { content:""; position:absolute; left:3px; top:3px; width:6px; height:6px; border:1px solid var(--mute); }
-#hudBar .tile.s0t .ic.lay::after { content:""; position:absolute; right:3px; bottom:3px; width:6px; height:6px; border:1px solid var(--mute); }
-#hudBar .tile.s0t .ic.file { width:14px; height:18px; clip-path:polygon(0 0,70% 0,100% 30%,100% 100%,0 100%); background:var(--mute); border:0; opacity:.8; }
-#hudBar .tile.s0t.primary .ic, #hudBar .tile.s0t.primary .ic::before, #hudBar .tile.s0t.primary .ic::after { border-color:var(--accent); }
-#hudBar .tile.s0t.primary .ic.sld::before { background:var(--accent); }
-#hudBar .tile.s0t.primary small { color:var(--accent); opacity:.8; }
+/* 装置図の行は小さく（主役は結線図） */
+#hudAnswer .s0 .sect.small { gap:4px; padding-top:8px; }
+#hudAnswer .s0 .sect.small .kv { font-size:11px; color:var(--mute); }
+#hudAnswer .s0 .sect.small button { font-size:12px; padding:3px 10px; }
+
+/* タイル: 主役（サンプルの結線図）は大きく、ほか 3 つは小さく縦に並べる */
+#hudBar .tile.s0t.hero { width:300px; height:104px; flex-direction:row; justify-content:flex-start; gap:16px; padding:0 20px;
+  border:1px solid var(--accent); border-top:3px solid var(--accent); background:rgba(14,32,44,.9); }
+#hudBar .tile.s0t.hero:hover:not(:disabled) { background:rgba(22,54,74,.94); }
+#hudBar .tile.s0t.hero .tx { display:flex; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; }
+#hudBar .tile.s0t.hero .lb { font-size:17px; font-weight:700; color:var(--accent); line-height:1.25; }
+#hudBar .tile.s0t.hero small { font-size:11px; color:#c9d3de; }
+#hudBar .tile.s0t.hero .ic { width:34px; height:46px; flex:0 0 auto; position:relative; }
+#hudBar .tile.s0t.hero .ic::before { content:""; position:absolute; left:16px; top:0; bottom:0; width:2px; background:var(--accent); }
+#hudBar .tile.s0t.hero .ic::after { content:""; position:absolute; left:9px; top:15px; width:16px; height:12px; border:2px solid var(--accent); background:rgba(14,32,44,1); box-sizing:border-box; }
+#hudBar .tile.s0t.hero.done { border-color:var(--deadg); border-top-color:var(--deadg); background:rgba(9,13,18,.86); }
+#hudBar .tile.s0t.hero.done .lb { color:var(--fg); font-size:15px; }
+#hudBar .tile.s0t.hero.done .ic::before { background:var(--deadg); }
+#hudBar .tile.s0t.hero.done .ic::after { border-color:var(--deadg); background:rgba(9,13,18,1); }
+#hudBar .minis { display:flex; flex-direction:column; gap:4px; }
+#hudBar .tile.s0t.mini { width:120px; height:32px; padding:0 8px; }
+#hudBar .tile.s0t.mini .lb { font-size:12px; font-weight:500; color:#c9d3de; }
 #hudAnswer .s0 .using { font-size:12px; color:var(--deadu); border-left:2px solid var(--deadu); padding:2px 8px; flex:1 1 100%; }

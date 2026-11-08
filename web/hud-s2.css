@@ -1,16 +1,52 @@
-/* 重機の段（STEP 03）の部品。枠の位置と共通の見た目は hud.css、ここは 3D 上のクレーンのカードと資材置場のタイルだけ */
+/* 置場と重さの段（STEP 03）の部品。枠の位置と共通の見た目は hud.css、ここは入れるもの 2 つ・結果の板・3D 上のクレーンのカード・小さなタイル */
+
+/* ---- 入れるもの 2 つ（左の目標の下、大きく） */
+body[data-stage=s2] #hudSide { padding:0; background:none; border:0; backdrop-filter:none; -webkit-backdrop-filter:none; gap:0; }
+#hudSide .s2in { display:flex; flex-direction:column; gap:10px; }
+#hudSide .s2in .inp { background:rgba(9,13,18,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line2);
+  border-left:3px solid var(--line2); padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+#hudSide .s2in .inp.now { border-left-color:var(--accent); background:rgba(14,30,42,.9); }
+#hudSide .s2in .inp.done { border-left-color:var(--deadg); }
+#hudSide .s2in .inp.now.done { border-left-color:var(--accent); }
+#hudSide .s2in .hd { display:flex; align-items:center; gap:12px; }
+#hudSide .s2in .hd b { font-size:20px; font-weight:700; letter-spacing:.06em; }
+#hudSide .s2in .no { width:26px; height:26px; flex:0 0 26px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line2);
+  font:600 14px/1 var(--mono); color:var(--mute); }
+#hudSide .s2in .now .no { border-color:var(--accent); color:var(--accent); }
+#hudSide .s2in .done .no { border-color:var(--deadg); background:var(--deadg); color:#06121f; }
+#hudSide .s2in .st { margin-left:auto; font-size:16px; color:#d9c2ff; }
+#hudSide .s2in .st::before { content:""; display:inline-block; width:12px; height:12px; margin-right:8px; vertical-align:-1px; border:2px solid #b48cff; background:rgba(180,140,255,.35); }
+#hudSide .s2in .how { font-size:13px; color:#c9d3de; }
+#hudSide .s2in .wbox { display:flex; align-items:baseline; gap:10px; cursor:text; }
+#hudSide .s2in .wbox input { width:140px; font:700 30px/1.1 var(--mono); font-variant-numeric:tabular-nums; padding:6px 10px; color:var(--fg);
+  background:rgba(4,8,12,.8); border:1px solid var(--line2); border-radius:0; }
+#hudSide .s2in .wbox input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+#hudSide .s2in .wbox span { font-size:20px; color:var(--mute); }
+
+/* ---- 結果の板（級と可否と最小離隔だけ） */
+body[data-stage=s2] #hudAnswer .lead2 { font-size:17px; font-weight:600; }
+body[data-stage=s2] #hudAnswer .lead2 .n { font-size:20px; }
+body[data-stage=s2] #hudAnswer .warn { font-size:13px; color:var(--live); border-top:1px solid var(--line); padding-top:6px; margin:0; }
+
+/* ---- 下のバー: 予備の「選ぶ」と級ごとの範囲は小さく */
+body[data-stage=s2] #hudBar .tile { width:88px; height:58px; }
+body[data-stage=s2] #hudBar .tile .n { font-size:17px; }
+body[data-stage=s2] #hudBar .tile[aria-pressed="true"] { width:96px; height:64px; }
+body[data-stage=s2] #hudBar .tile[aria-pressed="true"] .n { font-size:19px; }
+body[data-stage=s2] #hudBar .tile.primary { font-size:11px; }
+body[data-stage=s2] #hudModes .modes:empty { display:none; }
+
+/* ---- 3D 上のクレーンのカード（押したときだけ） */
+body[data-stage=s2] #hudCard { width:300px; }
+#hudCard .crane { display:flex; flex-direction:column; gap:10px; }
 #hudCard .crane .head { display:flex; align-items:baseline; gap:10px; }
 #hudCard .crane .cls { font-size:26px; font-weight:700; color:var(--accent); line-height:1; }
 #hudCard .crane .nm { font-size:15px; font-weight:700; }
-#hudCard .crane .ex { margin-left:auto; font-size:11px; color:var(--mute); white-space:nowrap; }
-#hudCard .crane .g4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; font-size:11px; color:var(--mute); }
-#hudCard .crane .g4 b { display:block; font-size:17px; font-weight:500; color:var(--fg); white-space:nowrap; }
-#hudCard .crane .g4 small { font-size:11px; color:var(--mute); }
+#hudCard .crane .ex { margin-left:auto; font-size:12px; color:var(--mute); white-space:nowrap; }
+#hudCard .crane .ex .n { color:var(--fg); }
 #hudCard .crane .btns { display:flex; gap:6px; }
-#hudCard .crane .btns button { flex:1; padding:6px 0; background:transparent; border:1px solid var(--line2); color:var(--fg); font-size:12px; }
-#hudCard .crane .btns button kbd { margin-right:4px; color:var(--mute); }
+#hudCard .crane .btns button { flex:1; padding:8px 0; background:transparent; border:1px solid var(--line2); color:var(--fg); font-size:14px; }
+#hudCard .crane .btns button.x { flex:0 0 34px; color:var(--mute); }
 #hudCard .crane .btns button:hover { border-color:var(--accent); }
-#hudCard .crane .btns button[aria-pressed="true"] { background:rgba(95,208,255,.12); border-color:var(--accent); }
-#hudCard .crane .btns button[aria-pressed="true"] kbd { color:var(--accent); }
-#hudBar .tile .mark { width:22px; height:22px; border:2px solid #b48cff; }
-#hudBar .tile[aria-pressed="true"] .mark { background:rgba(180,140,255,.3); }
+#hudCard .crane .btns button[aria-pressed="true"] { background:rgba(95,208,255,.16); border-color:var(--accent); color:var(--accent); }
+#hudCard .crane .how { font-size:12px; color:#c9d3de; }
