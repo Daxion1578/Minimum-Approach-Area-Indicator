@@ -34,3 +34,12 @@ _site/
 # 動画の素材（engine の出力の写しと、描いた映像。作り直せる）
 scripts/ar_concept/concept.json
 *.mp4
+
+# 動画 v8 の書き出し・途中のファイル（scripts/demo_video/v8/README.md）
+scripts/demo_video/v8/out/
+scripts/demo_video/v8/vv/
+scripts/demo_video/v8/audio/*/jobs.json
+scripts/demo_video/v8/audio/*/*.wav
+scripts/demo_video/v8/audio/*/seg/*.wav
+# 操作の録画は 51MB で公開前チェックの上限（5MB）を超えるので入れない（受け取り方は v8/README.md）
+scripts/demo_video/v8/assets/rec/*.webm
