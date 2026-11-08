@@ -53,3 +53,4 @@ scripts/demo_video/v9/audio/*/seg/*.wav
 scripts/demo_video/v9/assets/rec/*.webm
 scripts/demo_video/v9/override/
 scripts/demo_video/v9/scenes/__pycache__/
+scripts/demo_video/v9/audio/*/seg/keys.json

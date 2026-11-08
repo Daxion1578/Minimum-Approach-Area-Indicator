@@ -133,9 +133,10 @@ def make(G, act):
         beats.append((a, b, [(te - 2.4, te, 1)], FULL, tighter(FULL, 0.10)))
         a, b = span(2, D)
         beats.append((a, (a + b) / 2, [(te - 2.2, te, 1)], around(ans, 50, 760), None))
-        beats.append(((a + b) / 2, b, [(tq + 0.2, tq + 3.8, 1)], around(drw, 30, 760), None))
+        drw_top = (drw[0], drw[1], drw[2], drw[1] + 560)
+        beats.append(((a + b) / 2, b, [(tq + 0.2, tq + 3.8, 1)], around(drw_top, 20, 760), None))
         segs, zooms = build(beats, D)
-        return segs, zooms, ripples_for(segs, M, ["click #btnIngest"]), {"ans": ans, "drw": drw}
+        return segs, zooms, ripples_for(segs, M, ["click #btnIngest"]), {"ans": ans, "drw": drw_top}
 
     def over_c5(f, d, t, D, r):
         x = plans["C5"][3]
@@ -154,11 +155,12 @@ def make(G, act):
         tgt = M.rect("c6_green", '.mk[data-id="220-L1-CB"]')
         beats = []
         a, b = span(0, D)
-        beats.append((a, b, [(tc - 2.6, tc + 0.6, 1.5), (tc + 0.6, tr, 0.5), (tr, tr + 2.2, 1.1)], around(drw, 20, 760), None))
+        top = (drw[0], drw[1], drw[2], drw[1] + 600)
+        beats.append((a, b, [(tc - 2.6, tc + 0.6, 1.5), (tc + 0.6, tr, 0.5), (tr, tr + 2.2, 1.1)], around(top, 10, 760), None))
         a, b = span(1, D)
         beats.append((a, b, [(tm + 0.2, tm + 4.0, 1)], FULL, tighter(FULL, 0.05)))
         a, b = span(2, D)
-        beats.append((a, b, [(tu - 0.4, ts + 1.2, 1)], FULL, around(ans, 80, 900)))
+        beats.append((a, b, [(tu - 0.4, tu + 0.8, 1.0), (ts - 0.2, ts + 1.8, 1.4)], FULL, around(ans, 80, 900)))
         a, b = span(3, D)
         z = around(tgt, 260, 900) if tgt else FULL
         beats.append((a, b, [(tg - 1.6, te, 1)], z, tighter(z, 0.06)))

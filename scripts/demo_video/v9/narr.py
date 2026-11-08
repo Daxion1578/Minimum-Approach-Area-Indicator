@@ -4,7 +4,9 @@
   python narr.py <案> --kana     読み（カナ）だけ確かめる
 
 原稿の決まり: 空行で段落（= 1 ファイル）。<#秒#> は無音。段落の番号 pNN は上から 01, 02, ...
-差し替え: override/<案>/p01.wav ... を置いて再実行すると、その段落だけ差し替わる（字幕は文字数で按分）。
+差し替え: override/<案>/p01.wav ... を置いて再実行すると、その段落だけ差し替わる。字幕の時刻は無音で文の切れ目を探し、
+  数が足りなければ文字数で按分する。本人の録音は take_voice.py で override に入れる。
+同じ文・同じ声の seg の wav は作り直さない（seg/keys.json）。今ある wav を今の原稿のものとして登録するだけなら --seed-cache。
 """
 from __future__ import annotations
 import json, os, re, subprocess, sys, wave
@@ -83,6 +85,91 @@ def trim(x: np.ndarray, thr=0.004) -> np.ndarray:
     return x[a:b]
 
 
+# ------------------------------------------------------------------ 本人の声: 無音で文の切れ目を探す（take_voice.py も使う）
+HOP, WIN = 0.01, 0.03
+
+
+def frame_db(x: np.ndarray) -> np.ndarray:
+    """10 ms おきの 30 ms 窓の音の大きさ（dBFS）。"""
+    h, w = int(HOP * SR), int(WIN * SR)
+    if len(x) < w:
+        return np.array([-120.0])
+    c = np.concatenate([[0.0], np.cumsum(x.astype(np.float64) ** 2)])
+    idx = np.arange(0, len(x) - w + 1, h)
+    return 10 * np.log10((c[idx + w] - c[idx]) / w + 1e-12)
+
+
+def runs(m: np.ndarray) -> list[tuple[int, int]]:
+    """bool の列 → True が続く所 [(始め, 終わり)) の一覧。"""
+    d = np.diff(np.concatenate([[0], m.astype(np.int8), [0]]))
+    return list(zip(np.where(d == 1)[0].tolist(), np.where(d == -1)[0].tolist()))
+
+
+def speech_frames(x: np.ndarray) -> np.ndarray:
+    """声のある窓（True）。しきい値は雑音の床と声の大きさから決める（スマホの録音の雑音に合わせる）。"""
+    db = frame_db(x)
+    noise, loud = np.percentile(db, 10), np.percentile(db, 97)
+    m = db > max(noise + 6.0, noise + 0.3 * (loud - noise))
+    for a, b in runs(m):            # 50 ms 未満の音（ぷつっという雑音）は無音
+        if b - a < 5:
+            m[a:b] = False
+    for a, b in runs(~m):           # 60 ms 未満の無音（子音の閉じ）は声のうち
+        if b - a < 6 and a > 0 and b < len(m):
+            m[a:b] = True
+    return m
+
+
+def frame_t(i: int) -> float:
+    return i * HOP + (WIN - HOP) / 2
+
+
+def pause_cues(x: np.ndarray, segs: list[tuple[str, float]], min_gap: float = 0.16) -> list[tuple[float, float]] | None:
+    """文ごとの（始め, 終わり）秒。文の数 − 1 個の無音（min_gap 秒以上）が、文字数から見込んだ位置の近くに見つからなければ None。"""
+    m = speech_frames(x)
+    sp = runs(m)
+    if not sp:
+        return None
+    on, off = frame_t(sp[0][0]), min(len(x) / SR, frame_t(sp[-1][1]) + WIN / 2)
+    k = len(segs) - 1
+    if k == 0:
+        return [(on, off)]
+    gaps = [(frame_t(b), frame_t(a2)) for (_, b), (a2, _) in zip(sp, sp[1:]) if frame_t(a2) - frame_t(b) >= min_gap]
+    if len(gaps) < k:
+        return None
+    w = [len(re.sub(r"[、。\s]", "", s)) + 6 * p for s, p in segs]
+    tot = sum(w)
+    exp = [on + (off - on) * sum(w[:j + 1]) / tot for j in range(k)]   # j 番目の文の後の切れ目の見込み
+    # 見込みに近く、長い無音ほど選ぶ（短い読点の間より、文の間の長い無音を取る）。並びの順は崩さない
+    cost = lambda i, j: 0.5 * abs((gaps[i][0] + gaps[i][1]) / 2 - exp[j]) - 2.0 * min(gaps[i][1] - gaps[i][0], 0.8)
+    n, INF = len(gaps), float("inf")
+    best = [[INF] * n for _ in range(k)]; prev = [[-1] * n for _ in range(k)]
+    for i in range(n):
+        best[0][i] = cost(i, 0)
+    for j in range(1, k):
+        run_min, run_arg = INF, -1
+        for i in range(n):
+            if i - 1 >= 0 and best[j - 1][i - 1] < run_min:
+                run_min, run_arg = best[j - 1][i - 1], i - 1
+            if run_arg >= 0:
+                best[j][i] = run_min + cost(i, j); prev[j][i] = run_arg
+    i = min(range(n), key=lambda q: best[k - 1][q])
+    if best[k - 1][i] == INF:
+        return None
+    pick = [i]
+    for j in range(k - 1, 0, -1):
+        i = prev[j][i]; pick.append(i)
+    pick.reverse()
+    edges = [on] + [v for i in pick for v in gaps[i]] + [off]
+    out = [(edges[2 * j], edges[2 * j + 1]) for j in range(k + 1)]
+    if any(b - a < 0.3 for a, b in out):
+        return None
+    return out
+
+
+def job_key(j: dict) -> str:
+    return json.dumps([j["speaker"], j["text"], j["speed"], j["intonation"], j["pre"], j["post"]], ensure_ascii=False)
+
+
 def main():
     variant = sys.argv[1]
     kana_only = "--kana" in sys.argv
@@ -105,6 +192,15 @@ def main():
         for si, (s, _) in enumerate(segs):
             jobs.append({"speaker": v["speaker"], "text": say_text(s), "out": str(seg_dir / f"p{pi:02d}_{si:02d}.wav"),
                          "speed": v["speed"], "intonation": v["intonation"], "pre": 0.05, "post": 0.05})
+    # 同じ文・同じ声で作った wav があれば作り直さない（原稿を少し直したときは、変わった文だけ作る）
+    kf = seg_dir / "keys.json"
+    keys = json.loads(kf.read_text(encoding="utf-8")) if kf.exists() else {}
+    if "--seed-cache" in sys.argv:      # 今ある seg の wav が今の原稿から作ったものだと分かっているときだけ使う
+        keys.update({Path(j["out"]).stem: job_key(j) for j in jobs if Path(j["out"]).exists()})
+        kf.write_text(json.dumps(keys, ensure_ascii=False, indent=0), encoding="utf-8")
+        print("keys", len(keys)); return
+    if not kana_only:
+        jobs = [j for j in jobs if not (Path(j["out"]).exists() and keys.get(Path(j["out"]).stem) == job_key(j))]
     if jobs:
         jf = out / "jobs.json"
         jf.write_text(json.dumps(jobs, ensure_ascii=False), encoding="utf-8")
@@ -118,6 +214,8 @@ def main():
                 if "\t" in ln: old[ln.split("\t")[0]] = ln.split("\t")[1]
         for k in kana: old[Path(k["out"]).stem] = k["kana"]
         (out / "kana.txt").write_text("\n".join(f"{k}\t{v}" for k, v in sorted(old.items())), encoding="utf-8")
+        keys.update({Path(j["out"]).stem: job_key(j) for j in jobs})
+        kf.write_text(json.dumps(keys, ensure_ascii=False, indent=0), encoding="utf-8")
         if kana_only:
             print((out / "kana.txt").read_text(encoding="utf-8")); return
     timing = []
@@ -127,12 +225,17 @@ def main():
         if ov.exists():
             x = trim(read_wav(ov))
             dur = len(x) / SR
-            w = [len(re.sub(r"[、。\s]", "", s)) + 6 * p for s, p in segs]   # 文字数＋無音で按分
-            tot, acc = sum(w), 0.0
-            for (s, p), wi in zip(segs, w):
-                t0 = dur * acc / tot; acc += wi; t1 = dur * (acc - 6 * p) / tot
-                cues.append({"t0": round(t0, 3), "t1": round(t1, 3), "text": sub_text(s)})
+            pc = pause_cues(x, segs)
+            if pc:                       # 無音で文を切れた
+                cues = [{"t0": round(a, 3), "t1": round(b, 3), "text": sub_text(s)} for (a, b), (s, _) in zip(pc, segs)]
+            else:                        # 切れ目が数だけ見つからない: 文字数＋無音で按分
+                w = [len(re.sub(r"[、。\s]", "", s)) + 6 * p for s, p in segs]
+                tot, acc = sum(w), 0.0
+                for (s, p), wi in zip(segs, w):
+                    t0 = dur * acc / tot; acc += wi; t1 = dur * (acc - 6 * p) / tot
+                    cues.append({"t0": round(t0, 3), "t1": round(t1, 3), "text": sub_text(s)})
             src = "override"
+            print(f"p{pi:02d} 本人の声 {dur:.1f} 秒、字幕の時刻は" + ("無音の切れ目" if pc else "文字数の按分（切れ目が足りない）"))
         else:
             parts, t = [], 0.0
             for si, (s, p) in enumerate(segs):
