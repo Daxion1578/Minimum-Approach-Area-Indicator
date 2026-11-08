@@ -6,7 +6,7 @@
 
 語り（scripts/self.txt の 2 段落目、4 文）: 0 変電所では、近づいてよい距離が、目に見えない。
 1 近づきすぎると、触れていなくても電気が飛び移り、クレーンを伝って人が感電する。2 感電の重大事故は、4年間で35件。
-3 設備が止まれば、需要家や発電事業者にも影響が出る。
+3 電気が飛び移れば設備は自動で切れ、戻るまでの10分から30分、工場や発電所に損害が出ることもある。
 35 件は変電所に限った数ではない（令和4〜7年度に報告された感電死傷の重大事故）ので、札にも「変電所で」とは書かない。
 
 静止画は assets/r9/（gray.jpg・live.jpg・crane.jpg・points.json の crane.boom_tip・crane.conductor）があればそれを、
@@ -243,7 +243,8 @@ def make(G):
                 r = L(13)
                 d.ellipse([P(xx - r), P(yy - r), P(xx + r), P(yy + r)], fill=AMBER + (A(dm),))
                 text(d, (xx, yy + L(9)), "!", fs(24), WHITE, anchor="ms", alpha=a * dm)
-            text(d, (X(26), Y(330)), "送電線の先まで、影響が出る", fs(30), INK, anchor="ls", alpha=a * dm)
+            text(d, (X(26), Y(322)), "戻るまで 10〜30 分", fs(30), INK, anchor="ls", alpha=a * dm)   # 札の幅に収まるよう 2 行に
+            text(d, (X(26), Y(358)), "工場や発電所に、損害が出ることも", fs(26), INK, anchor="ls", alpha=a * dm)
 
     # ------------------------------------------------------------ 場面
     def scene(t, D):
