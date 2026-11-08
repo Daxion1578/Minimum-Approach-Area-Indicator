@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>MAAI v9 の 3D 静止画</title>
+<!--
+  動画 v9 の場面（C1・C2・C3・C10）に使う 3D の静止画を描く。課電・包絡・承認したクレーンの配置は stills.json（engine の出力）をそのまま描くだけ。
+  危ない構図（crane）のクレーンだけは、閃絡を見せるための絵として手で置いた形（計算の結果ではない）。
+  ?w=480&h=270 で小さく描いて試す。window.show('gray'|'live'|'crane'|'safe') が描いて、画面上の点（画素）を返す。
+-->
+<style>
+  html, body { margin: 0; background: #f3f1ec; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<script type="module">
+import * as THREE from '../../../../../web/vendor/three/three.module.js';
+import { buildEquipment, buildConductors } from '../../../../../web/equipment3d.js';
+
+const q = new URLSearchParams(location.search);
+const W = +(q.get('w') || 1920), H = +(q.get('h') || 1080);
+const PAPER = 0xf3f1ec;
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(PAPER);
+scene.fog = new THREE.Fog(PAPER, 140, 330);
+const camera = new THREE.PerspectiveCamera(48, W / H, 0.5, 800); camera.up.set(0, 0, 1);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a877e, 1.05));
+{ const sun = new THREE.DirectionalLight(0xfff6e8, 1.15); sun.position.set(-70, -40, 120); scene.add(sun); }
+{ const fill = new THREE.DirectionalLight(0xe8f0ff, 0.35); fill.position.set(80, 120, 60); scene.add(fill); }
+
+const data = await (await fetch('./stills.json')).json();
+const site = data.site;
+
+// 地面: 紙の色の広い面 ＋ 機械器具装置図の平面（1/400）を薄く敷いた面
+{
+  const base = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshBasicMaterial({ color: PAPER }));
+  base.position.set(65, 70, -0.05); scene.add(base);
+  const gr = data.ground;
+  const tex = await new THREE.TextureLoader().loadAsync('./ground.png');
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(gr.x1 - gr.x0, gr.y1 - gr.y0), new THREE.MeshBasicMaterial({ map: tex }));
+  m.position.set((gr.x0 + gr.x1) / 2, (gr.y0 + gr.y1) / 2, -0.02); scene.add(m);
+}
+
+// 機器と導体（形は web/equipment3d.js、アプリと同じ寸法）。明るい地で読めるよう、鉄の色を少し濃くする
+const eq = buildEquipment(site, data.dims); scene.add(eq.group);
+const cond = buildConductors(site); scene.add(cond.group);
+const recolor = new Map([[0x93a0b0, 0x737e8b], [0x5d6878, 0x485261], [0xb4bec9, 0x8d98a4], [0x6f7b88, 0x5d6976], [0xd6ecff, 0x2b3139]]);
+const seen = new Set();
+eq.group.traverse(o => {
+  const m = o.material; if (!m || seen.has(m)) return; seen.add(m);
+  const hx = m.color && m.color.getHex();
+  if (recolor.has(hx)) m.color.setHex(recolor.get(hx));
+  if (m.isLineBasicMaterial && hx === 0xd6ecff) { m.opacity = 0.16; }
+});
+
+const liveOf = en => { const s = {}; for (const c of en.components) for (const n of c.nodes) s[n] = c.state; return id => (s[id] || 'live') === 'live'; };
+const liveNormal = liveOf(data.normal.energization), liveDay = liveOf(data.energization);
+function paintConductors(mode) {
+  for (const [id, c] of Object.entries(cond.byId)) {
+    if (mode === 'gray') { c.mat.color.setHex(0x5b636d); c.mat.emissive.setHex(0x000000); c.mat.metalness = 0.3; continue; }
+    const live = mode === 'day' ? liveDay(id) : liveNormal(id);
+    c.mat.color.setHex(live ? 0xc63a3a : 0x2f9e5e); c.mat.emissive.setHex(live ? 0x240000 : 0x001a08); c.mat.metalness = 0.3;
+  }
+}
+
+// 近づけない範囲（engine の包絡の半径のまま）。薄い赤を重ねる（重なるほど濃い、v8 の r7 と同じ見え方）
+const zoneMat = new THREE.MeshStandardMaterial({ color: 0xe0403c, transparent: true, opacity: 0.085, depthWrite: false, roughness: 1, metalness: 0 });
+function zones(envs) {
+  const g = new THREE.Group();
+  for (const e of envs) {
+    const p = e.primitive; if (p.type !== 'capsule') continue;
+    const va = new THREE.Vector3(...p.a), vb = new THREE.Vector3(...p.b); const len = va.distanceTo(vb);
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(p.r, Math.max(len, 0.001), 3, 16), zoneMat);
+    m.position.copy(va.clone().add(vb).multiplyScalar(0.5));
+    if (len > 1e-6) m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize());
+    m.renderOrder = 2; g.add(m);
+  }
+  g.visible = false; scene.add(g); return g;
+}
+const zNormal = zones(data.normal.envelope.envelopes), zDay = zones(data.envelope.envelopes);
+
+// クレーン: 車体・上部・運転席・タイヤ・アウトリガ・ブーム・ロープ・吊荷
+function makeCrane(car, boomA, boomB, hookZ, L) {
+  const grp = new THREE.Group();
+  const Y = new THREE.MeshStandardMaterial({ color: 0xd8a51c, roughness: 0.5, metalness: 0.2 });
+  const D = new THREE.MeshStandardMaterial({ color: 0x353a41, roughness: 0.8 });
+  const a = new THREE.Vector3(...car.a), b = new THREE.Vector3(...car.b); const len = a.distanceTo(b) + 2 * car.r, wid = 2 * car.r;
+  const yaw = Math.atan2(b.y - a.y, b.x - a.x); const mid = a.clone().add(b).multiplyScalar(0.5);
+  const body = new THREE.Group(); body.position.set(mid.x, mid.y, 0); body.rotation.z = yaw; grp.add(body);
+  const bx = (w, d, h, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, d, h), m); o.position.set(x, y, z); body.add(o); return o; };
+  bx(len, wid, 0.9, Y, 0, 0, 0.95);
+  bx(len * 0.3, wid * 0.9, 1.3, Y, -len * 0.2, 0, 2.0);
+  bx(1.6, 1.2, 1.4, D, len * 0.15, wid * 0.25, 2.1);
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.5, 14), D); w.rotation.x = Math.PI / 2; w.position.set(sx * len * 0.3, sy * (wid / 2 + 0.05), 0.55); body.add(w); }
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) { bx(0.3, 2.6, 0.3, Y, sx * len * 0.33, sy * 1.8, 0.5); bx(0.5, 0.5, 0.5, D, sx * len * 0.33, sy * 3.0, 0.25); }
+  const ba = new THREE.Vector3(...boomA), bb = new THREE.Vector3(...boomB); const bl = ba.distanceTo(bb);
+  const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.55, bl, 12), Y); bm.position.copy(ba.clone().add(bb).multiplyScalar(0.5)); bm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bb.clone().sub(ba).normalize()); grp.add(bm);
+  const rl = bb.z - hookZ;
+  const rp = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, rl, 6), D); rp.position.set(bb.x, bb.y, (bb.z + hookZ) / 2); rp.rotation.x = Math.PI / 2; grp.add(rp);
+  const lb = new THREE.Mesh(new THREE.BoxGeometry(L.w, L.d, L.h), new THREE.MeshStandardMaterial({ color: 0x8e9aa6, roughness: 0.6 })); lb.position.set(bb.x, bb.y, hookZ - L.h / 2); lb.rotation.z = yaw; grp.add(lb);
+  grp.visible = false; scene.add(grp); return grp;
+}
+// 承認した配置（engine の crane_capsules、旋回の真ん中の姿勢）
+const cc = data.clearance.crane_capsules;
+const car = cc.find(c => c.part === 'carrier');
+// ブームは「起伏 1 で据える位置（対象の上）」「起伏 2 で資材置場から吊る」の 2 姿勢 × 旋回 3 方向。据える姿勢の真ん中の旋回を描く
+const booms = cc.filter(c => c.part === 'boom'), ropes = cc.filter(c => c.part === 'rope');
+const half = booms.length % 2 === 0 && booms.length > 1 ? booms.length / 2 : booms.length;
+const bi = Math.floor(half / 2); const boom = booms[bi]; const ropeOf = ropes[bi];
+const craneSafe = makeCrane(car, boom.a, boom.b, ropeOf.b[2], data.crane.load);
+// 危ない構図: 同じ所に据えたクレーンのブームを寝かせ、吊荷が 220kV 母線 A 区間のすぐそばまで来た絵（閃絡を重ねるための絵。計算の結果ではない）
+const DANGER = { tip: [32.0, 102.2, 15.2], hookZ: 13.0, conductor: [32.0, 100.0, 10.5] };
+const craneDanger = makeCrane(car, boom.a, DANGER.tip, DANGER.hookZ, data.crane.load);
+
+const target = site.layout.items.find(i => i.id === data.scenario.target).at;
+// 資材置場（承認した配置、遮断器の西 6 m）を地面に薄い四角で
+const lay = new THREE.Mesh(new THREE.BoxGeometry(5.0, 3.6, 0.06), new THREE.MeshBasicMaterial({ color: 0x8e7cc3, transparent: true, opacity: 0.45 }));
+lay.position.set(26.0, 108.0, 0.04); lay.visible = false; scene.add(lay);
+// 試し撮り用の印（?mark=1）
+const mark = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), new THREE.MeshBasicMaterial({ color: 0x00a0ff }));
+mark.position.set(...target); mark.visible = q.get('mark') === '1'; scene.add(mark);
+const VIEWS = {   // 斜め上（南西）から。対象の遮断器が鉄構に隠れない高さ
+  gray:  { eye: [4, 66, 44], look: [42, 108, 2], fov: 46, cond: 'gray', zones: null, crane: null },
+  live:  { eye: [4, 66, 44], look: [42, 108, 2], fov: 46, cond: 'normal', zones: zNormal, crane: null },
+  crane: { eye: [6, 79, 26], look: [31, 104, 9], fov: 50, cond: 'normal', zones: zNormal, crane: craneDanger },
+  safe:  { eye: [2, 70, 38], look: [34, 108, 7], fov: 48, cond: 'day', zones: zDay, crane: craneSafe },
+};
+for (const [k, v] of Object.entries(VIEWS)) {
+  if (q.get(k + '_eye')) v.eye = q.get(k + '_eye').split(',').map(Number);
+  if (q.get(k + '_look')) v.look = q.get(k + '_look').split(',').map(Number);
+  if (q.get(k + '_fov')) v.fov = +q.get(k + '_fov');
+}
+const project = p => { const v = new THREE.Vector3(...p).project(camera); return [Math.round((v.x + 1) / 2 * W * 10) / 10, Math.round((1 - v.y) / 2 * H * 10) / 10]; };
+
+window.show = function (name) {
+  const v = VIEWS[name];
+  zNormal.visible = zDay.visible = false; craneSafe.visible = craneDanger.visible = false;
+  if (v.zones) v.zones.visible = true;
+  if (v.crane) v.crane.visible = true;
+  lay.visible = name === 'safe';
+  paintConductors(v.cond);
+  camera.fov = v.fov; camera.aspect = W / H; camera.updateProjectionMatrix();
+  camera.position.set(...v.eye); camera.lookAt(new THREE.Vector3(...v.look)); camera.updateMatrixWorld();
+  renderer.render(scene, camera);
+  const pts = { target: project(target) };
+  if (name === 'crane') { pts.boom_tip = project(DANGER.tip); pts.conductor = project(DANGER.conductor); pts.load_near = project([DANGER.tip[0], DANGER.tip[1] - 0.8, DANGER.hookZ - data.crane.load.h * 0.5]); }
+  if (name === 'safe') { pts.crane = project([(car.a[0] + car.b[0]) / 2, (car.a[1] + car.b[1]) / 2, 2.0]); pts.laydown = project([26.0, 108.0, 0.0]); pts.hook = project(ropeOf.b); }
+  return { points: pts, camera: { eye: v.eye, look: v.look, fov: v.fov, up: [0, 0, 1], w: W, h: H } };
+};
+window.ready = true;
+</script>
+</body>
+</html>

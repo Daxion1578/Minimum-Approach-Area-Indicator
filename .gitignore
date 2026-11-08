@@ -43,3 +43,13 @@ scripts/demo_video/v8/audio/*/*.wav
 scripts/demo_video/v8/audio/*/seg/*.wav
 # 操作の録画は 51MB で公開前チェックの上限（5MB）を超えるので入れない（受け取り方は v8/README.md）
 scripts/demo_video/v8/assets/rec/*.webm
+
+# 動画 v9 の書き出し・途中のファイル・録画・本人の声（scripts/demo_video/v9/README.md）
+scripts/demo_video/v9/out/
+scripts/demo_video/v9/vv/
+scripts/demo_video/v9/audio/*/jobs.json
+scripts/demo_video/v9/audio/*/*.wav
+scripts/demo_video/v9/audio/*/seg/*.wav
+scripts/demo_video/v9/assets/rec/*.webm
+scripts/demo_video/v9/override/
+scripts/demo_video/v9/scenes/__pycache__/
