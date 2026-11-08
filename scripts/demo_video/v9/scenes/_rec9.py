@@ -144,7 +144,7 @@ def make(G, act):
         hl_box(d, x["ans"], r, CYAN, inwin(None, t, a + 0.3, (a + b) / 2 - 0.1))
         hl_box(d, x["drw"], r, AMBER, inwin(None, t, (a + b) / 2 + 0.2, D), pad=-10)
         k = inwin(None, t, (a + b) / 2 + 0.4, D)
-        if k > 0:   # Claude の役目: 今日の録画の実際の数（つながない回 15 件、つないだ回 6 件）
+        if k > 0:   # Claude の役目: 今日の録画の実際の数（つながない回 15 件、つないだ回 5 件。録り直したら画面の数に合わせる）
             x0, y0 = 720, 60
             card(d, x0, y0, x0 + 450, y0 + 196, k, outline=CYAN, r=16, op=246)
             text(d, (x0 + 24, y0 + 52), "Claude につなぐと", F(GOTH_R, 26), SUBINK, anchor="ls", alpha=k)
@@ -154,7 +154,7 @@ def make(G, act):
             text(d, (x0 + 36 + w15, y0 + 164), "→", F(GOTH_B, 40), SUBINK, anchor="ls", alpha=k)
             k6 = back((t - (a + b) / 2 - 0.9) / 0.45)
             if k6 > 0:
-                text(d, (x0 + 92 + w15, y0 + 168), "6 件", F(GOTH_B, int(round(56 * (0.85 + 0.15 * cl(k6))))), CYAN, anchor="ls", alpha=k * cl(k6))
+                text(d, (x0 + 92 + w15, y0 + 168), "5 件", F(GOTH_B, int(round(56 * (0.85 + 0.15 * cl(k6))))), CYAN, anchor="ls", alpha=k * cl(k6))
         return f
 
     # ------------------------------------------------------------------ C6 STEP 2 対象を選ぶ（依頼文 → Claude → 送る前の置き換え → 停止範囲）
