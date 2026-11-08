@@ -30,9 +30,9 @@ LINES = [
     ("s1", "0:00-0:15", 15, "機器を取り替える日も、変電所は全部は止められません。止める範囲は減らしたい。でもその案で大丈夫か。今は図面を見ながら、頭の中で想像しています。"),
     ("s2", "0:15-0:45", 30, "MAAI は、単線結線図と、平面図・断面図を読んで、構内の 3D を組み立てます。機器の位置と高さは図面から、どこがつながっているかは結線図から。読めなかったところは、要確認として人に返します。"),
     ("s2b", "0:45-1:05", 20, "工事の依頼は文章で来ます。Claude がそこから、取り替える機器、止められない設備、置き場、重さを読み取ります。番号が本当にあるかは計算で確かめ、入れるかどうかは人が決めます。"),
-    ("s3", "1:05-1:25", 20, "取り替える機器に電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が出ます。緑が停電、赤が充電。見えなかった充電部が、目に見えるようになります。"),
-    ("s4", "1:25-2:00", 35, "次はクレーンです。新任の私には、どのクレーンにするかがすぐには分かりません。MAAI は、吊る場所と置き場と重さから、充電部に近づかずに吊れる一番小さいクレーンを計算で選びます。今回は 35t 級。据える場所は、緑のますの中で人が動かして確かめられます。依頼文で 1 号バンクは止められないので、追加で止める案は出しません。"),
-    ("s5", "2:00-2:20", 20, "判定は計算で行い、根拠の表も残します。Claude に送る前に、名前や定格値は符号に置き換えます。採否は人が決め、停止範囲の結線図と、クレーンの位置を描いた平面図を書き出します。"),
+    ("s3", "1:05-1:25", 20, "単線結線図で、取り替える機器を押します。電気が流れ込んでくる側すべてで、最初の断路器まで切る範囲が自動で出ます。緑が停電、赤が充電。見えなかった充電部が見えます。"),
+    ("s4", "1:25-2:00", 35, "次はクレーンです。新任の私には、どのクレーンにするかがすぐには分かりません。平面図で資材の置き場を押し、重さを入れると、充電部に近づかずに吊れる一番小さいクレーンが自動で置かれます。今回は 35t 級。動かすと、その場所で使える級に選び直します。依頼文で 1 号バンクは止められないので、追加で止める案は出しません。"),
+    ("s5", "2:00-2:20", 20, "判定は計算で行い、根拠の表も残します。Claude に送る前に、名前や定格値は符号に置き換えます。この配置で OK と人が押すと承認され、停止範囲の結線図と、クレーンの位置を描いた平面図が出ます。"),
 ]
 
 REQ_TEXT = ("次の作業日に、66kV 1号ダイヤの遮断器 6T-110 を取り替えます。新しい遮断器は約 3.5 t です。資材は取り替える遮断器の西側、"
@@ -100,7 +100,14 @@ JS_PLACE_FAR = """(maxm)=>{ const m=window.maai, h=window.hud; if(!m||!m.zoneCel
   const ok=m.zoneCells.filter(c=>c.ok); if(!ok.length) return null;
   const b=(m.lastCrane&&m.lastCrane.base)||[NaN,NaN]; let best=-1, bd=-1, far=-1, fd=-1;
   ok.forEach((c,i)=>{ const d=Math.hypot(c.x-b[0],c.y-b[1]); if(!(d>=0)) return; if(d>fd){fd=d;far=i;} if(d<=maxm && d>bd){bd=d;best=i;} });
-  const i = best>=0?best:(far>=0?far:0); h.placeAtCell(i); return {i, n:ok.length, x:ok[i].x, y:ok[i].y, d:(best>=0?bd:fd)}; }"""
+  const i = best>=0?best:(far>=0?far:0); const info={i, n:ok.length, x:ok[i].x, y:ok[i].y, d:(best>=0?bd:fd)};
+  return Promise.resolve(h.placeAtCell(i)).then(()=>{ info.cls=m.lastCrane&&m.lastCrane.class; return info; }); }"""
+# 3D の点（地面の x,y,z）を画面の座標に（page.mouse.click で押すため）
+JS_SCREEN_XY = """([x,y,z])=>{ const m=window.maai, v=new m.THREE.Vector3(x,y,z||0).project(m.camera), r=m.renderer.domElement.getBoundingClientRect();
+  return [r.left+(v.x+1)/2*r.width, r.top+(1-v.y)/2*r.height]; }"""
+# 単線図で取り替える機器（見本 66-D1-CB1 = 6T-110）の .mk に寄せて、押すための CSS セレクタを返す
+JS_TARGET_MK = """(id)=>{ let e=document.querySelector('.mk[data-id="'+id+'"]') || document.querySelector('.mk[title^="6T-110 "]');
+  if(!e) return null; e.scrollIntoView({block:'center',inline:'center'}); return '.mk[data-id="'+e.dataset.id+'"]'; }"""
 JS_CAM = "()=>{const c=window.maai&&window.maai.controls; return c?[c.target.x,c.target.y,c.radius,c.theta,c.phi].map(v=>+v.toFixed(3)):null;}"
 # 結線図で押す開閉器: 停止範囲の「切る機器」のうち最初の断路器（無ければ最初の機器）。.mk に寄せて、押すための CSS セレクタを返す
 JS_PICK_MK = """()=>{ const m=window.maai, st=m&&m.lastSteps; let id=null;
@@ -246,19 +253,13 @@ def main() -> int:
             """緑のます目へクレーンを移して判定し直す（window.hud.placeAtCell）。HUD が無ければ None。"""
             if not HUD:
                 return None
-            n0 = mark("clearance")
-            r = page.evaluate(JS_PLACE_FAR, max_m)
-            if r:
-                wait_update("clearance", n0)
-            return r
+            return page.evaluate(JS_PLACE_FAR, max_m)   # 選び直しと判定が終わるまで待つ
 
         def rotate(deg: float, hold: int):
             """クレーンを deg 度回して判定し直し（window.hud.rotate）、hold ミリ秒止める。HUD が無ければ何もしない。"""
             if not HUD:
                 return
-            n0 = mark("clearance")
-            hud("rotate", deg)
-            wait_update("clearance", n0)
+            hud("rotate", deg)                          # s2 では向きを変えて級も選び直す。終わるまで待つ
             page.wait_for_timeout(hold)
 
         def pan(pdf: Path, hold: int):
@@ -312,14 +313,16 @@ def main() -> int:
                 drawer(False)                        # 図面から起こした配置の 3D を全面で見せる
                 page.wait_for_timeout(2500)
             elif sid == "s2b":
-                tab("s1")                            # 3D は全面のまま、右上に結線図の小窓
-                page.wait_for_timeout(1000)
-                drawer(True)                         # 依頼文の欄は引き出しの中
+                tab("s1")                            # 単線図が全面に出る
+                page.wait_for_timeout(1200)
+                if not page.evaluate("()=>{const b=document.querySelector('#hudSide [data-act=\"intake\"]'); if(b){b.click(); return true;} return false;}"):
+                    drawer(True)                     # 「依頼文から入れる」→ 引き出しの依頼文の欄
+                page.wait_for_timeout(500)
                 page.evaluate("(t)=>{const e=document.getElementById('reqText'); e.value=t;}", REQ_TEXT)
                 smooth("#reqText", "start")
                 page.wait_for_timeout(2500)
                 click("#btnIntake")
-                wait_in("#intakeBox .bay", 120000)   # Claude の返事を待つ（待ちの静止は compose が縮める）
+                wait_in("#intakeBox .bay", 120000)   # Claude の返事を待つ（オフラインでは規則の読み取り。待ちの静止は compose が縮める）
                 page.wait_for_timeout(1000)
                 shot("s2b_intake")
                 smooth("#intakeBox", "start")        # 読み取った 4 項目と引用、計算で確かめた結果、「この内容で入れる」
@@ -327,21 +330,27 @@ def main() -> int:
                 click("#btnIntakeUse")
                 wait_in("#stepsBox .bay", 30000)
                 page.wait_for_timeout(800)
-                drawer(False)                        # 3D の上: 「依頼文から読み取った」の札（紫）と、停止範囲の答え
+                drawer(False)                        # 単線図の上: 停止範囲の答え
                 page.wait_for_timeout(2500)
             elif sid == "s3":
-                tab("s1")
-                page.wait_for_timeout(1500)          # 答えの板: 停電にできる・切る開閉器 n・条件（3D の上）
-                shot("s3_answer")
-                sld_full(True)                       # 結線図を全面に
-                page.wait_for_timeout(800)
-                click('#sldZoom button[data-z="2.6"]')
-                page.wait_for_timeout(2500)
-                shot("s3_green")
-                set_mode("toggle")                   # 押すと開閉器の入・切
+                tab("s1")                            # 単線図は全面、押すと「取り替える機器に選ぶ」
+                page.wait_for_timeout(1200)
+                page.evaluate("()=>{const b=document.querySelector('#sldZoom button[data-z=\"2.6\"]'); if(b) b.click();}")
+                page.wait_for_timeout(1500)
+                tgt = page.evaluate(JS_TARGET_MK, "66-D1-CB1")
+                if tgt:
+                    page.wait_for_timeout(1500)
+                    n0 = mark("steps")
+                    click(tgt)                       # 取り替える機器を押す → 停止範囲が自動で出る
+                    wait_update("steps", n0)
+                    page.wait_for_timeout(3000)
+                    shot("s3_green")
+                else:
+                    print("単線図に取り替える機器が見つからない", file=sys.stderr)
+                set_mode("toggle")                   # 全面の単線図の上の小さな切替（W）: 押すと開閉器の入・切
                 mk = page.evaluate(JS_PICK_MK)       # 切る機器のうち母線側の断路器（入れると対象の区間が赤になる）。Playwright の locator は 1 回 15 秒ほどかかるので使わない
                 if mk:
-                    page.wait_for_timeout(1500)
+                    page.wait_for_timeout(1200)
                     toggle_mk(mk)                    # 入れる → 赤
                     page.wait_for_timeout(2000)
                     shot("s3_red")
@@ -349,39 +358,57 @@ def main() -> int:
                     page.wait_for_timeout(1500)
                 else:
                     print("結線図に押す開閉器が見つからない", file=sys.stderr)
-                sld_full(False)                      # 3D へ戻す（結線図は小窓）
-                page.wait_for_timeout(800)
-                click("#vTarget")                    # 見えなかった充電部（赤）と停電（緑）を 3D で
+                set_mode("target")
+                sld_full(False)                      # 3D へ（取り替える機器に寄る）: 見えなかった充電部（赤）と停電（緑）
+                settle_cam(20000)                    # 寄る動き（frameTo）が終わってから次の段へ（残っていると s2 の真上の視点を上書きする）
+                page.wait_for_timeout(1500)
             elif sid == "s4":
-                tab("s2")
+                for _ in range(2):                   # 真上の視点（段に入ると hud-s2 が動かす。前の段の寄る動きに上書きされたら入り直す）
+                    tab("s2")
+                    try:
+                        page.wait_for_function("()=>window.maai.controls.phi>1.4", polling=300, timeout=10000)
+                        break
+                    except Exception:
+                        print("真上の視点にならない。入り直す", file=sys.stderr)
                 page.wait_for_timeout(1000)
-                click("#btnSelect")                  # 吊る場所・置き場・重さから、一番小さいクレーンを探す
-                wait_in("#selectBox .big", 60000)
-                page.wait_for_timeout(3000)          # 3D の上: 選ばれた級と判定、地面に据えてよい範囲（緑）、下のバーに級のタイル
-                shot("s4_select")
+                page.evaluate("()=>{const t=document.getElementById('pickT'); if(t) t.value=''; window.hud&&window.hud.render();}")   # 重さは画面で入れる（例示値の既定を空けて、入れる順を見せる）
+                page.wait_for_timeout(1200)
+                shot("s4_top")
+                xy = page.evaluate(JS_SCREEN_XY, [26, 38, 0])   # 資材置場: 取り替える遮断器の西 8 m の地面を押す → 箱
+                page.mouse.click(xy[0], xy[1])
+                page.wait_for_timeout(2500)
+                shot("s4_box")
                 n0 = mark("clearance")
-                click("#btnAdoptSel")                # 選んだ配置を置く → 判定 → クレーンへ寄る
-                wait_in("#verdictBox .bay", 30000)
-                wait_update("clearance", n0)
-                settle_cam()
-                page.wait_for_timeout(3000)          # 答えの板: 可、最小離隔／必要、クレーンの札
+                page.evaluate("()=>{const i=document.getElementById('s2W'); if(i){ i.value='3.5'; i.dispatchEvent(new Event('input',{bubbles:true})); } else { const t=document.getElementById('pickT'); t.value='3.5'; } }")
+                wait_update("clearance", n0, timeout=120000)   # 重さが入ると自動で選定 → 自動で採用 → 判定（人は押さない）
+                settle_cam(6000)
+                page.wait_for_timeout(3500)          # 答えの板: 35t 級で置ける（可）、最小離隔／必要
                 shot("s4_verdict")
-                # 見せ場: 一つ上の級に切り替えると置ける範囲が広がる → 緑のます目へ移して判定し直す → 回して判定し直す
+                base = page.evaluate("()=>{const c=window.maai.lastCrane; return c?[c.base[0],c.base[1],2]:null}")
+                if base:                             # クレーンを押す → 「動かす」「↺/↻ 5°」のカード
+                    xy = page.evaluate(JS_SCREEN_XY, base)
+                    page.mouse.click(xy[0], xy[1])
+                    page.wait_for_timeout(2000)
+                    shot("s4_card")
+                # 見せ場: 一つ上（50t）の範囲を塗る → 緑のます目へ動かすと、その位置で級を選び直す → 回しても選び直す
                 if zone_tile(1):
                     page.wait_for_timeout(2500)
                     shot("s4_tile")
-                if place_far_cell():
+                moved = place_far_cell()
+                print("動かした:", moved, file=sys.stderr)
+                if moved:
                     page.wait_for_timeout(3000)
                     shot("s4_moved")
-                for _ in range(2):                   # 1 回の判定し直しに数秒かかるので 2 回
+                for _ in range(2):                   # 1 回の選び直しに数秒かかるので 2 回
                     rotate(5, 1600)
                 shot("s4_rotated")
-                n0 = mark("clearance")
-                click("#btnAdoptSel")                # 計算で選んだ配置（一番小さい級）に戻す
-                wait_update("clearance", n0)
-                settle_cam()
-                page.wait_for_timeout(1500)
-                drawer(True)                         # 根拠は引き出し: 重さだけなら 10t・離隔で 35t、一つ下が使えない理由、止められない設備（依頼文）と止められる場合の比較
+                n0 = mark("clearance")               # 「一番小さいクレーンを選ぶ」のタイル → 自動で採用し、35t 級の配置に戻る
+                if page.evaluate("()=>{const b=document.querySelector('#hudBar .tile[data-act=\"select\"]'); if(b){b.click(); return true;} return false;}"):
+                    wait_update("clearance", n0, timeout=120000)
+                    settle_cam(6000)
+                page.wait_for_timeout(2000)
+                shot("s4_back")
+                drawer(True)                         # 根拠は引き出し: 重さだけなら 10t・離隔で 35t、一つ下が使えない理由、止められない設備（依頼文）
                 smooth("#selectBox", "start")
                 page.wait_for_timeout(3000)
                 scroll_text("#selectBox .bay", ["止められない設備", "追加で止めた場合"], "center")
@@ -389,6 +416,7 @@ def main() -> int:
             elif sid == "s5":
                 # 根拠: 導体ごとの距離・必要・余裕の表（引き出し。s4 の終わりから開いたまま）
                 drawer(True)
+                page.evaluate("()=>{const b=document.getElementById('manualBox'); if(b) b.open=true;}")
                 smooth("#verdictBox", "start")
                 page.wait_for_timeout(3000)
                 shot("s5_evidence")
@@ -398,11 +426,11 @@ def main() -> int:
                 page.wait_for_timeout(3200)
                 page.evaluate(JS_REMOVE_OV)
                 drawer(False)
-                tab("s3")                            # 答えの板: 対象・切る機器・クレーン級・離隔と、承認の条件
-                page.wait_for_timeout(1500)
-                click("#btnApprove")
+                tab("s3")                            # 答えの板: 対象・切る開閉器・クレーン級・離隔と条件
+                page.wait_for_timeout(2000)
+                click("#hudNext")                    # 「この配置で OK（承認）」（= #btnApprove）
                 wait_in("#approveBox .bay", 60000)
-                page.wait_for_timeout(2000)          # 承認ハッシュと書き出したファイル（3D の上）
+                page.wait_for_timeout(3000)          # 承認済みと、ステップ図のタイル（停止範囲の単線図・クレーン配置の平面図）
                 shot("s5_approved")
 
                 def overlay(name: str, hold: int):
